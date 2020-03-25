@@ -984,6 +984,11 @@ public class Main {
                         argsUsed[i] = true;
                     }
                     
+                    if(s.equals("-R") || s.equals("--no-protein-graphs")){
+                        Settings.set("plcc_B_compute_protein_graphs", "false");
+                        argsUsed[i] = true;
+                    }
+                    
                     if(s.equals("-f") || s.equals("--folding-graphs")) {
                         Settings.set("plcc_B_folding_graphs", "true");
                         argsUsed[i] = true;
@@ -11182,6 +11187,7 @@ public class Main {
         System.out.println("-q | --fg-notations <list> : draw only the folding graph notations in <list>, e.g. 'kars' = KEY, ADJ, RED and SEQ.");
         System.out.println("-r | --recreate-tables     : drop and recreate database tables and add base type data, then exit (see -u). Creates a reday-to-use database.*");
         System.out.println("     --recreate-tables-empty : drop and recreate database tables without adding base type data, then exit (see -u). Creates a completely empty database, suitable for restoring a dump exported from another server.*");        
+        System.out.println("-R | --no-protein-graphs   : don't compute protein graphs.");
         System.out.println("-s | --draw-linnots        : not only compute the folding graph linear notations, but draw all 4 of them to image files");
         System.out.println("-S | --sim-measure <m>     : use similarity measure <m>. Valid settings include 'string_sse', 'graph_set' and 'graph_compat'.");
         System.out.println("-t | --draw-tgf-graph <f>  : read graph in TGF format from file <f> and draw it to <f>.png, then exit (pdbid will be ignored)*");

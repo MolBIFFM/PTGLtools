@@ -3084,7 +3084,7 @@ public class Main {
                         Main.doExit(0);
                     }
                     
-                    if(separateContactsByChain) {
+                    if(separateContactsByChain){// && Settings.getBoolean("plcc_B_compute_protein_graphs")) {
                         calculateSSEGraphsForChains(theChain, residues, cInfoThisChain, pdbid, outputDir);
                     }
                     
@@ -3103,7 +3103,7 @@ public class Main {
                 Main.doExit(0);
             }
             
-            if( ! separateContactsByChain){  // no chainName separation active                
+            if( ! separateContactsByChain){// && Settings.getBoolean("plcc_B_compute_protein_graphs")){  // no chainName separation active                
                 calculateSSEGraphsForChains(handleChains, residues, cInfo, pdbid, outputDir);
                 //calculateComplexGraph(handleChains, residues, cInfo, pdbid, outputDir);
                 if(Settings.getBoolean("plcc_B_useDB")) {
@@ -3111,6 +3111,15 @@ public class Main {
                         DBManager.commit();
                     }
                 }
+            }
+            
+            // Calculate Complex Graph
+            if(Settings.getBoolean("plcc_B_complex_graphs")) {
+            // calculate ALBELIG CG           
+            calculateComplexGraph(handleChains, residues, cInfo, pdbid, outputDir, SSEGraph.GRAPHTYPE_ALBELIG);
+            
+            // test: also calculate ALBE CG
+            //calculateComplexGraph(allChains, resList, resContacts, pdbid, outputDir, SSEGraph.GRAPHTYPE_ALBE);
             }
             
             if(! silent) {
@@ -4280,19 +4289,6 @@ public class Main {
             DBManager.commit();
             
         }
-        
-        // Calculate Complex Graph
-        if(Settings.getBoolean("plcc_B_complex_graphs")) {
-            // calculate ALBELIG CG           
-            calculateComplexGraph(allChains, resList, resContacts, pdbid, outputDir, SSEGraph.GRAPHTYPE_ALBELIG);
-            
-            // test: also calculate ALBE CG
-            //calculateComplexGraph(allChains, resList, resContacts, pdbid, outputDir, SSEGraph.GRAPHTYPE_ALBE);
-        }
-        
-        
-        
-        
         //System.out.println("All " + allChains.size() + " chains done.");                
     }
     

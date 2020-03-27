@@ -373,7 +373,7 @@ public class Settings {
         defSet("plcc_I_img_minPageHeight", "600", "The minimum image height in pixels, used in output images.");
 
         //Protein graphs
-        defSet("plcc_B_compute_protein_graphs", "true", "Whether Protein graphs are computed or not.");
+        defSet("plcc_B_compute_protein_graphs", "false", "Whether Protein graphs are computed or not.");
 
         // Folding graphs: "KEY", "ADJ", "RED", "SEQ
         defSet("plcc_B_folding_graphs", "false", "Determines whether folding graphs (connected components of the protein graph) are computed. This does NOT mean they are drawn.");
@@ -410,7 +410,7 @@ public class Settings {
         defSet("plcc_I_cg_contact_threshold", "1", "The lowest amount of interchain residue contacts where an edge in complex graphs is drawn." );
 
         // amino acid (AA) graphs
-        defSet("plcc_B_AAgraph_allchainscombined", "false", "Whether to compute and output cobined amino acid graphs (one for all chains) as well (vertices are AAs, not SSEs).");
+        defSet("plcc_B_AAgraph_allchainscombined", "false", "Whether to compute and output combined amino acid graphs (one for all chains) as well (vertices are AAs, not SSEs).");
         defSet("plcc_B_AAgraph_perchain", "false", "Whether to compute and output amino per-chain acid graphs as well (vertices are AAs, not SSEs).");
 
         // Database stuff

@@ -1184,7 +1184,7 @@ class CifParser {
         m.addChain(c);
         
         c.setHomologues(FileParser.homologuesMap.get(cID));
-        //c.setMacromolID(entityID);
+        c.setMacromolID(entityID);
         pmi.setMacromolID(entityID);
         
         FileParser.s_chains.add(c);

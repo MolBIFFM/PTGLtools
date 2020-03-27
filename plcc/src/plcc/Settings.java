@@ -373,7 +373,7 @@ public class Settings {
         defSet("plcc_I_img_minPageHeight", "600", "The minimum image height in pixels, used in output images.");
 
         //Protein graphs
-        defSet("plcc_B_compute_protein_graphs", "false", "Whether Protein graphs are computed or not.");
+        defSet("plcc_B_compute_protein_graphs", "true", "Whether Protein graphs are computed or not.");
 
         // Folding graphs: "KEY", "ADJ", "RED", "SEQ
         defSet("plcc_B_folding_graphs", "false", "Determines whether folding graphs (connected components of the protein graph) are computed. This does NOT mean they are drawn.");

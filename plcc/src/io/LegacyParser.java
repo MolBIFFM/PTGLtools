@@ -1291,6 +1291,10 @@ SITE     4 AC1 15 HOH A 621  HOH A 622  HOH A 623
 
         ProtMetaInfo pmi = new ProtMetaInfo(pdbid, chainid);
         String mol_id = pmi.setYourMolID(FileParser.pdbLines);
+        
+        // jnw_2020: Add this line to set Mol ID for chain. Is not the best place to do so but fixes error if only CG is computed.
+        //  Accept this ugly code b/c legacy parser will be fully superseded by CIF parser in future.
+        FileParser.getChainByPdbChainID(chainid).setMacromolID(mol_id);
 
         if(pmi.isReady()) {
             //System.out.println("    Extracted MOL_ID '" + mol_id + "' for chain '" + chainid + "' from PDB header.");

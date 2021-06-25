@@ -129,11 +129,13 @@ cl_parser.add_argument('--version',
 
 cl_parser.add_argument('-f',
                        '--first-line',
+                       metavar = 'first line',
                        type = int,
                        default = 1,
                        help = 'save results to file')
 
 cl_parser.add_argument('--headerfile',
+                       metavar = 'headerfile',
                        default = '',
                        help='The headerfile is used as a header for the mmCIF files.')
 

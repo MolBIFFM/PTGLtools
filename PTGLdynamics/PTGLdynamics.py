@@ -6,7 +6,7 @@
 #   patch: fixes, small changes
 #   no version change: fix typos, changes to comments, debug prints, small changes to non-result output, changes within git branch
 # -> only increment with commit / push / merge not while programming
-version = "1.0.0"  # TODO version of this template, change this to 1.0.0 for a new script or 2.0.0 if you upgrade another script to this template's architecture
+version = "1.0.1"  # TODO version of this template, change this to 1.0.0 for a new script or 2.0.0 if you upgrade another script to this template's architecture
 
 
 ########### built-in imports ###########
@@ -174,19 +174,19 @@ cl_parser.add_argument('-p',
                        default = '',
                        help = 'specify a path to your output files. Otherwise the current folder is used.')
 
-cl_parser.add_argument('-c',
-                       '--compoundfile',
-                       metavar = 'compoundfile',
+cl_parser.add_argument('-H',
+                       '--headerfile',
+                       metavar = 'headerfile',
                        default = '',
-                       help = 'to integrate a header in pdb files specify the path of your compound file.')
+                       help = 'to integrate a header in your files specify the path of your header file.')
 
 cl_parser.add_argument('-a',
                        '--applications',
                        metavar = 'applications',
                        nargs = "*",
                        type = str,
-                       default = ['toLegacyPDB.py', 'dsspcmbi', 'postProcessDssp.py', 'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py', 'getAttributeDataFromGml.py', 'evalEdgesWeights.py', 'changeEdgeNames.py', 'sumEdgeWeights.py', 'plotSnapshots.py'],
-                       help = "to execute only the specified scripts. The scripts must be part of the PTGLdynamics set which contains: 'toLegacyPDB.py', 'dsspcmbi', 'postProcessDssp.py', 'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py', 'getAttributeDataFromGml.py', 'evalEdgesWeights.py', 'changeEdgeNames.py', 'sumEdgeWeights.py', 'plotSnapshots.py'")
+                       default = ['toLegacyPDB.py', 'toMmCIF.py', 'dsspcmbi', 'postProcessDssp.py', 'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py', 'getAttributeDataFromGml.py', 'evalEdgesWeights.py', 'changeEdgeNames.py', 'sumEdgeWeights.py', 'plotSnapshots.py'],
+                       help = "to execute only the specified scripts. The scripts must be part of the PTGLdynamics set which contains: 'toLegacyPDB.py' or 'toMmCIF.py', 'dsspcmbi', 'postProcessDssp.py', 'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py', 'getAttributeDataFromGml.py', 'evalEdgesWeights.py', 'changeEdgeNames.py', 'sumEdgeWeights.py', 'plotSnapshots.py'")
 
 cl_parser.add_argument('-m',
                        '--dssp-input-dir',
@@ -242,6 +242,16 @@ cl_parser.add_argument('-j',
                        '--different-dssp-folders',
                        action = 'store_true',
                        help = 'saves the dssp from dsspcmbi and the post processed dssp in different folders if the sub directory structure is activated.')
+                       
+cl_parser.add_argument('-I',
+                       '--toMmCIF',
+                       action='store_true',
+                       help = 'converts non legacy PDB files to mmCIF format.')
+                       
+cl_parser.add_argument('--toMmCIF-args',
+                       type = str,
+                       default = '',
+                       help = 'a string with the arguments for toMmCIF you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: --toMmCIF-args="<arguments and their inputs>" ')
 
 cl_parser.add_argument('-t',
                        '--getAttributeDataFromGml-args',
@@ -300,29 +310,37 @@ input_dir = check_dir_args(args.input_dir)
 # output directory
 original_output_dir = check_dir_args(args.output_dir)
     
-# compoundfile directory
-if (args.compoundfile != ""):
-    if(os.access(args.compoundfile, os.R_OK)):
-        compound = os.path.abspath(args.compoundfile)
-        cmd_compound = ' -c ' + compound
+# headerfile directory
+if (args.headerfile != ""):
+    if(os.access(args.headerfile, os.R_OK)):
+        header = os.path.abspath(args.headerfile)
+        if (args.toMmCIF):
+            cmd_header = ' --headerfile ' + header
+        else:
+            cmd_header = ' -c ' + header
     else:
-        logging.error("Specified compound file '%s' is not readable. Continuing without compound file.", args.compoundfile)
-        compound = ''
-        cmd_compound = ''
+        logging.error("Specified header file '%s' is not readable. Continuing without header file.", args.headerfile)
+        header = ''
+        cmd_header = ''
 else:
-    compound = ''
-    cmd_compound = ''
+    header = ''
+    cmd_header = ''
 
 # list of applications
 programm_list = []
 if (args.applications != []):
     for programm in args.applications:
-        if programm in ['toLegacyPDB.py', 'dsspcmbi', 'postProcessDssp.py', 'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py', 'getAttributeDataFromGml.py', 'evalEdgesWeights.py', 'changeEdgeNames.py', 'sumEdgeWeights.py', 'plotSnapshots.py']:
+        if programm in ['toLegacyPDB.py', 'toMmCIF.py', 'dsspcmbi', 'postProcessDssp.py', 'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py', 'getAttributeDataFromGml.py', 'evalEdgesWeights.py', 'changeEdgeNames.py', 'sumEdgeWeights.py', 'plotSnapshots.py']:            
             programm_list.append(programm)
         else:
             logging.error("Specified programm '%s' is not part of the ptglDynamics pipeline. Continuing without it.", programm)
 else:
-    programm_list = ['toLegacyPDB.py', 'dsspcmbi', 'postProcessDssp.py', 'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py', 'getAttributeDataFromGml.py', 'evalEdgesWeights.py', 'changeEdgeNames.py', 'sumEdgeWeights.py', 'plotSnapshots.py']
+    programm_list = ['toLegacyPDB.py', 'toMmCIF.py', 'dsspcmbi', 'postProcessDssp.py', 'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py', 'getAttributeDataFromGml.py', 'evalEdgesWeights.py', 'changeEdgeNames.py', 'sumEdgeWeights.py', 'plotSnapshots.py']
+    
+if (args.toMmCIF):
+    programm_list.remove('toLegacyPDB.py')
+else:
+    programm_list.remove('toMmCIF.py')
 
 # dssp directory
 dssp_input_dir = check_dir_args(args.dssp_input_dir)
@@ -341,6 +359,9 @@ add_gml_comparison_args = check_arguments_args(args.gmlCompareEdgeWeightsAndSubs
 
 # dsspcmbi arguments
 add_dsspcmbi_args = check_arguments_args(args.dsspcmbi_args)
+
+# toMmCIF arguments
+add_toMmCIF_args = check_arguments_args(args.toMmCIF_args)
 
 # getAttributeDataFromGml arguments
 add_getAttributeDataFromGml_args = check_arguments_args(args.getAttributeDataFromGml_args)
@@ -362,9 +383,9 @@ add_plotSnapshots_args = check_arguments_args(args.plotSnapshots_args)
     
 # different dssp folders
 if (args.different_dssp_folders):
-    dir_names = {'toLegacyPDB.py':'legacyPDB', 'dsspcmbi':'oldDssp', 'postProcessDssp.py':'newDssp', 'PTGLgraphComputation':'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py': 'gml', 'getAttributeDataFromGml.py': 'csv', 'evalEdgesWeights.py':'csv', 'changeEdgeNames.py':'csv', 'sumEdgeWeights.py':'pdf', 'plotSnapshots.py':'pdf'}
+    dir_names = {'toLegacyPDB.py':'legacyPDB', 'toMmCIF.py':'mmCIF', 'dsspcmbi':'oldDssp', 'postProcessDssp.py':'newDssp', 'PTGLgraphComputation':'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py': 'gml', 'getAttributeDataFromGml.py': 'csv', 'evalEdgesWeights.py':'csv', 'changeEdgeNames.py':'csv', 'sumEdgeWeights.py':'pdf', 'plotSnapshots.py':'pdf'}
 else:
-    dir_names = {'toLegacyPDB.py':'legacyPDB', 'dsspcmbi':'dssp', 'postProcessDssp.py':'dssp', 'PTGLgraphComputation':'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py': 'csv', 'getAttributeDataFromGml.py': 'csv', 'evalEdgesWeights.py':'csv', 'changeEdgeNames.py':'csv', 'sumEdgeWeights.py':'pdf', 'plotSnapshots.py':'pdf'}
+    dir_names = {'toLegacyPDB.py':'legacyPDB', 'toMmCIF.py':'mmCIF', 'dsspcmbi':'dssp', 'postProcessDssp.py':'dssp', 'PTGLgraphComputation':'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py': 'csv', 'getAttributeDataFromGml.py': 'csv', 'evalEdgesWeights.py':'csv', 'changeEdgeNames.py':'csv', 'sumEdgeWeights.py':'pdf', 'plotSnapshots.py':'pdf'}
 
 ########### vamos ###########
 
@@ -382,7 +403,7 @@ cmd_start = 'python3 ' + ptglDynamics_path + '/codes/'
 input_dir = os.path.abspath(input_dir) + '/'
 original_output_dir = os.path.abspath(original_output_dir) + '/'
 
-pdb_dir = input_dir
+file_dir = input_dir
 plotting_dir = ptglDynamics_path + '/codes/plotting-scripts/'
 
 # define dssp_dir considering that it can be specified via command line
@@ -427,19 +448,30 @@ for elem in programm_list:
     #execute different scripts:
     if (elem == 'toLegacyPDB.py'):
 
-        work_dir = get_working_dir(pdb_dir)
-        exec_string = cmd_start + elem + ' ' + add_toLegacyPDB_args + ' -i ' + work_dir + ' -p ' + out_dir + cmd_compound
+        work_dir = get_working_dir(file_dir)
+        exec_string = cmd_start + elem + ' ' + add_toLegacyPDB_args + ' -i ' + work_dir + ' -p ' + out_dir + cmd_header
         log('exec_string ' + exec_string, 'd')
         os.chdir(out_dir)
         os.system(exec_string)
-        pdb_dir = os.path.abspath(out_dir) + '/'
+        file_dir = os.path.abspath(out_dir) + '/'
         
         log('toLegacyPDB computations are done.', 'i')
+        
+    elif (elem == 'toMmCIF.py'):
+
+        work_dir = get_working_dir(file_dir)
+        exec_string = cmd_start + elem + ' ' + add_toMmCIF_args + ' -i ' + work_dir + ' -p ' + out_dir + cmd_header
+        log('exec_string ' + exec_string, 'd')
+        os.chdir(out_dir)
+        os.system(exec_string)
+        file_dir = os.path.abspath(out_dir) + '/'
+        
+        log('toMmCIF computations are done.', 'i')
         
       
     elif (elem == 'dsspcmbi'):
 
-        work_dir = get_working_dir(pdb_dir)
+        work_dir = get_working_dir(file_dir)
         
         list_work_dir = os.listdir(work_dir)
         list_work_dir = sorted_nicely(list_work_dir)
@@ -471,7 +503,7 @@ for elem in programm_list:
     
     elif (elem == 'PTGLgraphComputation'):
 
-        work_dir = get_working_dir(pdb_dir)
+        work_dir = get_working_dir(file_dir)
         
         list_work_dir = os.listdir(work_dir)
         list_work_dir = sorted_nicely(list_work_dir)
@@ -670,7 +702,6 @@ for elem in programm_list:
         
     elif (elem == 'sumEdgeWeights.py'):
         work_dir = get_working_dir(changeEdgeNames_dir)
-        print(work_dir)
         log(work_dir, 'd')
         
         if (add_sumEdgeWeights_args == ''):  
@@ -678,7 +709,6 @@ for elem in programm_list:
             list_work_dir = sorted_nicely(list_work_dir)     
             for file in list_work_dir:      
                 if ('all_edges_values_biological_names.csv' in file):
-                    print(file)
                     sumEdgeWeights = 'python3 ' + plotting_dir + elem + ' ' + work_dir + file + ' -n ' + out_dir + 'edge_sum.pdf'
                     log(sumEdgeWeights, 'd')
                     os.chdir(out_dir) 

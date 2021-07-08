@@ -37,7 +37,7 @@ You can test the program and access the help by running `java -jar PTGLgraphComp
 
 If you use our software, please [cite us](http://ptgl.uni-frankfurt.de/citing.php):
 
-Wolf JN, Keßler M, Ackermann J, Koch I (2020). PTGL: extension to graph-based topologies of cryo-EM data for large protein structures. Bioinformatics. ([DOI 10.1093/bta706 at Oxford University Press](https://academic.oup.com/bioinformatics/article/37/7/1032/5891172?guestAccessKey=c5d067b4-1e81-4893-81a4-55076e9c0e17))
+Wolf JN, Keßler M, Ackermann J, Koch I (2020). PTGL: extension to graph-based topologies of cryo-EM data for large protein structures. *Bioinformatics*. ([DOI 10.1093/bta706 at Oxford University Press](https://academic.oup.com/bioinformatics/article/37/7/1032/5891172?guestAccessKey=c5d067b4-1e81-4893-81a4-55076e9c0e17))
 
 ## License
 

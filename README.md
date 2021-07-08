@@ -1,11 +1,11 @@
 # PTGLtools (formerly labeled VPLG)
 
-This package includes software for the analysis of protein structure topologies.
+This package contains software for the analysis of topologies of protein structures.
 The main part of this package is the computation of topology graphs based on three-dimensional structures from the Protein Data Bank (PDB) and the secondary structure assignment from Define Secondary Structure of Proteins (DSSP).
 This software is able to read in legacy PDB files and macromolecular Crystallographic Information Files (mmCIFs) and therefore able to process large structures of > 62 chains or > 99,999 atoms.
 The software is used to fill the Protein Topology Graph Library (PTGL).
 
-## Included software
+## Contained software
 
 Each top-level directory contains one software part of this package.
 
@@ -32,6 +32,12 @@ You can test the program and access the help by running `java -jar PTGLgraphComp
 - [PTGL website](http://ptgl.uni-frankfurt.de/): the website PTGLgraphComputation fills with data
 - [PTGLgraphComputation website](http://www.bioinformatik.uni-frankfurt.de/tools/PTGLgraphComputation/index.html)
 - [Molbi group](https://www.uni-frankfurt.de/57211826/People)
+
+## Cite us
+
+If you use our software, please [cite us](http://ptgl.uni-frankfurt.de/citing.php):
+
+Wolf JN, Keßler M, Ackermann J, Koch I (2020). PTGL: extension to graph-based topologies of cryo-EM data for large protein structures. Bioinformatics. ([DOI 10.1093/bta706 at Oxford University Press](https://academic.oup.com/bioinformatics/article/37/7/1032/5891172?guestAccessKey=c5d067b4-1e81-4893-81a4-55076e9c0e17))
 
 ## License
 

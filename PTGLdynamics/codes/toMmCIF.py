@@ -132,7 +132,7 @@ cl_parser.add_argument('-f',
                        metavar = 'first line',
                        type = int,
                        default = 1,
-                       help = 'save results to file')
+                       help = 'Enter the first line including the atom information for _atom_site.')
 
 cl_parser.add_argument('--headerfile',
                        metavar = 'headerfile',

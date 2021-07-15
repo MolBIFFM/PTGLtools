@@ -6,7 +6,7 @@
 #   patch: fixes, small changes
 #   no version change: fix typos, changes to comments, debug prints, small changes to non-result output, changes within git branch
 # -> only increment with commit / push / merge not while programming
-version = "1.0.0"  # TODO version of this template, change this to 1.0.0 for a new script or 2.0.0 if you upgrade another script to this template's architecture
+version = "1.0.0"  
 
 
 ########### built-in imports ###########
@@ -100,7 +100,7 @@ logging.basicConfig(format = "[%(levelname)s] %(message)s")
 However, in the command line call the hyphen is used: --input-dir <path> """
 
 ## create the parser
-cl_parser = argparse.ArgumentParser(description="Overwrites a differing pdb file to mmCIF format. ",
+cl_parser = argparse.ArgumentParser(description="Creates a mmCIF file out of a pseudo legacyPDB file. ",
                                     fromfile_prefix_chars="@")
 
 ## add arguments
@@ -128,11 +128,11 @@ cl_parser.add_argument('--version',
                        version='%(prog)s ' + version)
 
 cl_parser.add_argument('-f',
-                       '--first-line',
-                       metavar = 'first line',
+                       '--starting-line',
+                       metavar = 'starting line',
                        type = int,
                        default = 1,
-                       help = 'Enter the first line including the atom information for _atom_site.')
+                       help = 'Enter the starting line for the _atom_site loop.')
 
 cl_parser.add_argument('--headerfile',
                        metavar = 'headerfile',
@@ -244,7 +244,7 @@ for file in list_input_dir:
         os.chdir(output_dir)
         output = open(file, "w")
 
-        del data[0:args.first_line]
+        del data[0:args.starting_line]
 
         line = str(header) + str(loop_mmCIF) 
         output.write(line)

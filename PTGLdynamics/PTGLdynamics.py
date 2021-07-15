@@ -6,7 +6,7 @@
 #   patch: fixes, small changes
 #   no version change: fix typos, changes to comments, debug prints, small changes to non-result output, changes within git branch
 # -> only increment with commit / push / merge not while programming
-version = "1.0.1"  # TODO version of this template, change this to 1.0.0 for a new script or 2.0.0 if you upgrade another script to this template's architecture
+version = "1.1.0"  # TODO version of this template, change this to 1.0.0 for a new script or 2.0.0 if you upgrade another script to this template's architecture  
 
 
 ########### built-in imports ###########
@@ -23,6 +23,9 @@ import time
 
 
 ########### functions ###########
+
+# Add new subscripts here
+programs = ['toLegacyPDB.py', 'toMmCIF.py', 'dsspcmbi', 'postProcessDssp.py', 'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py', 'getAttributeDataFromGml.py', 'evalEdgesWeights.py', 'changeEdgeNames.py', 'sumEdgeWeights.py', 'plotSnapshots.py']
 
 
 def check_file_writable(fp):
@@ -178,15 +181,15 @@ cl_parser.add_argument('-H',
                        '--headerfile',
                        metavar = 'headerfile',
                        default = '',
-                       help = 'to integrate a header in your files specify the path of your header file.')
+                       help = 'to integrate a header in your files containing 3D structural data specify the path of your header file.')
 
 cl_parser.add_argument('-a',
                        '--applications',
                        metavar = 'applications',
                        nargs = "*",
                        type = str,
-                       default = ['toLegacyPDB.py', 'toMmCIF.py', 'dsspcmbi', 'postProcessDssp.py', 'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py', 'getAttributeDataFromGml.py', 'evalEdgesWeights.py', 'changeEdgeNames.py', 'sumEdgeWeights.py', 'plotSnapshots.py'],
-                       help = "to execute only the specified scripts. The scripts must be part of the PTGLdynamics set which contains: 'toLegacyPDB.py' or 'toMmCIF.py', 'dsspcmbi', 'postProcessDssp.py', 'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py', 'getAttributeDataFromGml.py', 'evalEdgesWeights.py', 'changeEdgeNames.py', 'sumEdgeWeights.py', 'plotSnapshots.py'")
+                       default = list(programs),
+                       help = "to execute only the specified scripts. The scripts must be part of the PTGLdynamics set which contains: " + str(programs))
 
 cl_parser.add_argument('-m',
                        '--dssp-input-dir',
@@ -203,36 +206,31 @@ cl_parser.add_argument('--PTGLgraphComputation-path',
                        default = (os.path.dirname(__file__) + '/PTGLgraphComputation/dist/PTGLgraphComputation.jar'),
                        help = 'Absolute path to a custom PTGLgraphComputation JAR file. Otherwise assuming built version of PTGLtools.')
 
-cl_parser.add_argument('-k', 
-                       '--PTGLgraphComputation-args',
+cl_parser.add_argument('--PTGLgraphComputation-args',
                        metavar = 'PTGLgraphComputation-args',
                        type = str,
                        default = '',
                        help = 'a string with the PTGLgraphComputation arguments you want to use and its values to execute PTGLgraphComputation in different ways using PTGLgraphComputations command line arguments. Insert arguments like this: -a="<arguments and their inputs>" ')
 
-cl_parser.add_argument('-b',
-                       '--toLegacyPDB-args',
+cl_parser.add_argument('--toLegacyPDB-args',
                        metavar = 'toLegacyPDB-arguments',
                        type = str,
                        default = '',
                        help = 'a string with the arguments for toLegacyPDB you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: -b="<arguments and their inputs>" ')
 
-cl_parser.add_argument('-e',
-                       '--dsspcmbi-args',
+cl_parser.add_argument('--dsspcmbi-args',
                        metavar = 'dsspcmbi-arguments',
                        type = str,
                        default = '',
                        help = 'a string with the arguments for dsspcmbi you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: -e="<arguments and their inputs>" ')
 
-cl_parser.add_argument('-f',
-                       '--postProcessDssp-args',
+cl_parser.add_argument('--postProcessDssp-args',
                        metavar = 'postProcessDssp-arguments',
                        type = str,
                        default = '',
                        help = 'a string with the arguments for postProcessDssp you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: -f="<arguments and their inputs>" ')
 
-cl_parser.add_argument('-g',
-                       '--gmlCompareEdgeWeightsAndSubsets-args',
+cl_parser.add_argument('--gmlCompareEdgeWeightsAndSubsets-args',
                        metavar = 'gmlCompareEdgeWeightsAndSubsets-args',
                        type = str,
                        default = '',
@@ -253,32 +251,27 @@ cl_parser.add_argument('--toMmCIF-args',
                        default = '',
                        help = 'a string with the arguments for toMmCIF you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: --toMmCIF-args="<arguments and their inputs>" ')
 
-cl_parser.add_argument('-t',
-                       '--getAttributeDataFromGml-args',
+cl_parser.add_argument('--getAttributeDataFromGml-args',
                        metavar = 'getAttributeDataFromGml-args',
                        default = 'numAllResResContacts -c',
                        help = 'a string with the arguments for getAttributeDataFromGml you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: -t="<arguments and their inputs>". Put the positional attribute argument first, followed by optional arguments. Default attribute argument is numAllResResContacts. ')
                        
-cl_parser.add_argument('-z',
-                       '--evalEdgesWeights-args',
+cl_parser.add_argument('--evalEdgesWeights-args',
                        metavar = 'evalEdgesWeights-args',
                        default = '',   
                        help = 'a string with the arguments for evalEdgesWeights you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: -z="<arguments and their inputs>". For default are two csv files in your output folder created, all_edge_values.csv and edges_weights.csv. If the second file name is altered, changeEdgeNames.py has to be executed manually on that file.')
                        
-cl_parser.add_argument('-y',
-                       '--changeEdgeNames-args',
+cl_parser.add_argument('--changeEdgeNames-args',
                        metavar = 'changeEdgeNames-args',
                        default = '',   
                        help = 'a string with the arguments for changeEdgeNames you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: -y="<arguments and their inputs>". Using the files from the inputfolder as default. Executing the script alone needs at least all positional arguments, only one csv at a time can be executed.')
                        
-cl_parser.add_argument('-x',
-                       '--sumEdgeWeights-args',
+cl_parser.add_argument('--sumEdgeWeights-args',
                        metavar = 'sumEdgeWeights-args',
                        default = '',   
                        help = 'a string with the arguments for sumEdgeWeights you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: -x="<arguments and their inputs>".')
 
-cl_parser.add_argument('-n',
-                       '--plotSnapshots-args',
+cl_parser.add_argument('--plotSnapshots-args',
                        metavar = 'plotSnapshots-args',
                        default = '',   
                        help = 'a string with the arguments for plotSnapshots you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: -n="<arguments and their inputs>".')
@@ -327,20 +320,20 @@ else:
     cmd_header = ''
 
 # list of applications
-programm_list = []
+program_list = []
 if (args.applications != []):
-    for programm in args.applications:
-        if programm in ['toLegacyPDB.py', 'toMmCIF.py', 'dsspcmbi', 'postProcessDssp.py', 'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py', 'getAttributeDataFromGml.py', 'evalEdgesWeights.py', 'changeEdgeNames.py', 'sumEdgeWeights.py', 'plotSnapshots.py']:            
-            programm_list.append(programm)
+    for program in args.applications:
+        if program in programs:            
+            program_list.append(program)
         else:
-            logging.error("Specified programm '%s' is not part of the ptglDynamics pipeline. Continuing without it.", programm)
+            logging.error("Specified program '%s' is not part of the ptglDynamics pipeline. Continuing without it.", program)
 else:
-    programm_list = ['toLegacyPDB.py', 'toMmCIF.py', 'dsspcmbi', 'postProcessDssp.py', 'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py', 'getAttributeDataFromGml.py', 'evalEdgesWeights.py', 'changeEdgeNames.py', 'sumEdgeWeights.py', 'plotSnapshots.py']
+    program_list = list(programs)
     
 if (args.toMmCIF):
-    programm_list.remove('toLegacyPDB.py')
+    program_list.remove('toLegacyPDB.py')
 else:
-    programm_list.remove('toMmCIF.py')
+    program_list.remove('toMmCIF.py')
 
 # dssp directory
 dssp_input_dir = check_dir_args(args.dssp_input_dir)
@@ -423,12 +416,12 @@ list_work_dir = []
 
 log("work_dir: ", 'd')
 log(work_dir, 'd')
-log("programm list: ", 'd')
-log(programm_list, 'd')
+log("program list: ", 'd')
+log(program_list, 'd')
 
 
 ################## Go through the given applications and execute them #####################
-for elem in programm_list:
+for elem in program_list:
     log("elem: " + elem, 'd')
     
     # Get the output directory

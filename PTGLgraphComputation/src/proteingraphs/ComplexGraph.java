@@ -42,6 +42,7 @@ import io.IO;
 import io.FileParser;
 import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.math.MathContext;
 import java.math.RoundingMode;
 import java.util.ArrayList;
@@ -78,12 +79,11 @@ public class ComplexGraph extends UAdjListGraph {
     public Map<Edge, Integer> numCoilCoilInteractionsMap;
     public Map<Edge, Integer> numCoilLigandInteractionsMap;
     public Map<Edge, Integer> numLigandLigandInteractionsMap;
-    public Map<Edge, Integer> numAllInteractionsMap;  // number of residue-residue contacts
-    public Map<Edge, BigDecimal> multiplicativeLengthNormalizedEdgeWeight;  // normalized by chain length: num res contact / #res1 * #res2. Using BigDecimal for precision.
-    private BigDecimal minimumMultiplicativeLengthNormalizedEdgeWeight;  // the smallest normalized edge weight: used for the lucid normalized edge weights
-    private Map<Edge, BigDecimal> lucidMultiplicativeLengthNormalizedEdgeWeight;  // norm. edge weight / smallest edge weight => factor of smallest norm. edge weight in [1;n]
-    public Map<Edge, Double> additiveLengthNormalizedEdgeWeight;  // normalized by chain length: num res contact / #res1 + #res2
     public Map<Edge, Integer> numDisulfidesMap;
+    
+    private Map<String, Map<Edge, BigDecimal>> mapWeightNamesToMapEdgeValues = new HashMap<>();  // <name of weight / normalization, <edge, value>>
+    private BigDecimal minimumMultiplicativeLengthNormalizedEdgeWeight;  // the smallest normalized edge weight: used for the lucid normalized edge weights
+
     public Map<Vertex, String> proteinNodeMap;
     public Map<Vertex, String> molMap;  // contains for each vertex (= protein chain) the corresponding molecule name
     public Map<Vertex, Integer> chainLengthMap;  // used for the GML file output
@@ -108,8 +108,8 @@ public class ComplexGraph extends UAdjListGraph {
      */
     private final String pdbid;
     
-    private final static int PRECISION = 35;  // used as precision for the BigDecimal normalized edge weight, i.e., number of digits left and right of decimal point
     private final static String CLASS_TAG = "CG";
+    private final static int PRECISION = 35;  // used as precision for the BigDecimal normalized edge weight, i.e., number of digits left and right of decimal point
     
     /**
      * Constructor.
@@ -134,10 +134,11 @@ public class ComplexGraph extends UAdjListGraph {
         numCoilCoilInteractionsMap = createEdgeMap();
         numCoilLigandInteractionsMap = createEdgeMap();
         numLigandLigandInteractionsMap = createEdgeMap();
-        numAllInteractionsMap = createEdgeMap();
-        multiplicativeLengthNormalizedEdgeWeight = createEdgeMap();
-        additiveLengthNormalizedEdgeWeight = createEdgeMap();
-        lucidMultiplicativeLengthNormalizedEdgeWeight = createEdgeMap();
+        
+        for (String name : ComplexGraphEdgeWeightTypes.EdgeWeightTypeNames) {
+            mapWeightNamesToMapEdgeValues.put(name, createEdgeMap());
+        }
+        
         numDisulfidesMap = createEdgeMap();
         chainNamesInEdge = createEdgeMap();
         
@@ -464,7 +465,7 @@ public class ComplexGraph extends UAdjListGraph {
                     // We don't have an edge yet, but need one, so create an edge
                     ComplexGraph.Edge e1 = createEdge(chainA, chainB);
                     chainNamesInEdge.put(e1, chainPair);
-                    numAllInteractionsMap.put(e1, 1); // rather weird: 1 is added here, therefore the first contact is skipped later. We will have to change this and sum up the others in the end, (which of them depending on the graph type)
+                    mapWeightNamesToMapEdgeValues.get(ComplexGraphEdgeWeightTypes.ABSOLUTE_WEIGHT).put(e1, BigDecimal.ONE); // rather weird: 1 is added here, therefore the first contact is skipped later. We will have to change this and sum up the others in the end, (which of them depending on the graph type)
                     numHelixHelixInteractionsMap.put(e1, 0);
                     numHelixStrandInteractionsMap.put(e1, 0);
                     numHelixCoilInteractionsMap.put(e1, 0);
@@ -615,7 +616,7 @@ public class ComplexGraph extends UAdjListGraph {
                 }
                 else{
                     // We already have an edge, just adjust values
-                    numAllInteractionsMap.put(getEdge(chainA, chainB), numAllInteractionsMap.get(getEdge(chainA, chainB)) + 1);
+                    mapWeightNamesToMapEdgeValues.get(ComplexGraphEdgeWeightTypes.ABSOLUTE_WEIGHT).put(getEdge(chainA, chainB), mapWeightNamesToMapEdgeValues.get(ComplexGraphEdgeWeightTypes.ABSOLUTE_WEIGHT).get(getEdge(chainA, chainB)).add(BigDecimal.ONE));
                     if (resContacts.get(i).getMolA().getSSE()!=null){
                         // first residue of contact belongs to valid PTGL SSE, i.e., is NOT a coil
                         int firstSSE = resContacts.get(i).getMolA().getSSE().getSSETypeInt();
@@ -753,49 +754,23 @@ public class ComplexGraph extends UAdjListGraph {
                 
                 // TODO: Test by Tim: maybe we should delete the edge if it has no contacts:
                 
-                if(numAllInteractionsMap.get(getEdge(chainA, chainB)) == 0) {
+                if(mapWeightNamesToMapEdgeValues.get(ComplexGraphEdgeWeightTypes.ABSOLUTE_WEIGHT).get(getEdge(chainA, chainB)) == BigDecimal.ZERO) {
                     removeEdge(getEdge(chainA, chainB));
                 }
             }
         } // end of loop over all res contacts
-        computeMultiplicativeLengthNormalizedEdgeWeights();  // do this here instead of in loop, so we need to compute it only once
-        computeAdditiveLengthNormalizedEdgeWeights();
+        computeLengthNormalizedEdgeWeights();  // do this here instead of in loop, so we need to compute it only once
+        // TODO lucid
+        
     }
     
     
-    private void computeMultiplicativeLengthNormalizedEdgeWeights() {
-        BigDecimal curMinimumNormEdgeWeight = BigDecimal.ONE;  // initialize as 1 = highest possible normalized edge weight
+    private void computeLengthNormalizedEdgeWeights() {
+        BigDecimal curMinimumMultNormEdgeWeight = BigDecimal.ONE;
         
-        for (Edge e : numAllInteractionsMap.keySet()) {
+        for (Edge e : mapWeightNamesToMapEdgeValues.get(ComplexGraphEdgeWeightTypes.ABSOLUTE_WEIGHT).keySet()) {
             
-            // use String constructor for BigDecimal to achieve precision 
-            //  (see https://www.simplexacode.ch/en/blog/2018/07/using-bigdecimal-as-an-accurate-replacement-for-floating-point-numbers/)
-            BigDecimal tmpContacts = new BigDecimal(numAllInteractionsMap.get(e).toString());
-            BigDecimal tmpNumRes1 = new BigDecimal(mapChainIdToLength.get(chainNamesInEdge.get(e)[0]));  // number of residues from one chain
-            BigDecimal tmpNumRes2 = new BigDecimal(mapChainIdToLength.get(chainNamesInEdge.get(e)[1]));  // number of residues from other chain
-            
-            // divide can produce infinite digits after comma:
-            //   allow precision, i.e. significant digits left and right, of 25
-            BigDecimal tmpNormalizedWeight = tmpContacts.divide(tmpNumRes1.multiply(tmpNumRes2), PRECISION, RoundingMode.HALF_UP);
-            
-            curMinimumNormEdgeWeight = curMinimumNormEdgeWeight.min(tmpNormalizedWeight);  // update min if necessary
-            
-            multiplicativeLengthNormalizedEdgeWeight.put(e, tmpNormalizedWeight);
-        }
-        
-        minimumMultiplicativeLengthNormalizedEdgeWeight = curMinimumNormEdgeWeight;
-        
-        // now that we have the minimum normalized edge weight we can compute the lucid normalized edge weights
-        for (Edge e : numAllInteractionsMap.keySet()) {
-            lucidMultiplicativeLengthNormalizedEdgeWeight.put(e, multiplicativeLengthNormalizedEdgeWeight.get(e).divide(minimumMultiplicativeLengthNormalizedEdgeWeight, PRECISION, RoundingMode.HALF_UP));
-        }
-    }
-    
-    
-    private void computeAdditiveLengthNormalizedEdgeWeights() {
-        for (Edge e : numAllInteractionsMap.keySet()) {
-            
-            int tmpContacts = numAllInteractionsMap.get(e);
+            BigDecimal tmpContacts = mapWeightNamesToMapEdgeValues.get(ComplexGraphEdgeWeightTypes.ABSOLUTE_WEIGHT).get(e);
             int tmpNumRes1 = mapChainIdToLength.get(chainNamesInEdge.get(e)[0]);
             int tmpNumRes2 = mapChainIdToLength.get(chainNamesInEdge.get(e)[1]);
             
@@ -806,10 +781,26 @@ public class ComplexGraph extends UAdjListGraph {
                 System.out.println("  [DEBUG LV 4] " + tmpNumRes2);
             }
             
-            double tmpNormWeight = Double.valueOf(tmpContacts) / (Double.valueOf(tmpNumRes1) + Double.valueOf(tmpNumRes2));
+            BigDecimal tmpAddNormWeight = tmpContacts.divide(BigDecimal.valueOf(tmpNumRes1).add(BigDecimal.valueOf(tmpNumRes2)), PRECISION, RoundingMode.HALF_UP);
+            BigDecimal tmpMultNormWeight = tmpContacts.divide(BigDecimal.valueOf(tmpNumRes1).multiply(BigDecimal.valueOf(tmpNumRes2)), PRECISION, RoundingMode.HALF_UP);
             
-            additiveLengthNormalizedEdgeWeight.put(e, tmpNormWeight);
+            curMinimumMultNormEdgeWeight = curMinimumMultNormEdgeWeight.min(tmpMultNormWeight);  // update min if necessary
+            
+            mapWeightNamesToMapEdgeValues.get(ComplexGraphEdgeWeightTypes.ADDITIVE_NORMALIZATION).put(e, tmpAddNormWeight);
+            mapWeightNamesToMapEdgeValues.get(ComplexGraphEdgeWeightTypes.MULTIPLICATIVE_NORMALIZATION).put(e, tmpMultNormWeight);
         }
+        
+        minimumMultiplicativeLengthNormalizedEdgeWeight = curMinimumMultNormEdgeWeight;
+        
+        // now e.x. minimum multiplicative normalized edge weight -> can compute lucid edge weight
+        computeLucidLengthNormalizedEdgeWeight();
+    }
+    
+    
+    private void computeLucidLengthNormalizedEdgeWeight() {
+        mapWeightNamesToMapEdgeValues.get(ComplexGraphEdgeWeightTypes.ABSOLUTE_WEIGHT).keySet().forEach(e -> {
+            mapWeightNamesToMapEdgeValues.get(ComplexGraphEdgeWeightTypes.LUCID_MULTIPLICATIVE_NORMALIZATION).put(e, mapWeightNamesToMapEdgeValues.get(ComplexGraphEdgeWeightTypes.MULTIPLICATIVE_NORMALIZATION).get(e).divide(minimumMultiplicativeLengthNormalizedEdgeWeight, PRECISION, RoundingMode.HALF_UP));
+        });     
     }
     
 
@@ -919,7 +910,7 @@ public class ComplexGraph extends UAdjListGraph {
         Integer numStrandStrandInteractions;
         Integer numStrandLoopInteractions;
         Integer numLoopLoopInteractions;
-        Integer numAllInteractions;
+        Integer numResResContacts;
         Integer numDisulfides;
 
         for (Map.Entry pair : this.chainNamesInEdge.entrySet()) {
@@ -938,11 +929,11 @@ public class ComplexGraph extends UAdjListGraph {
             numStrandLoopInteractions = this.numStrandCoilInteractionsMap.get(curEdge);
             numLoopLoopInteractions = this.numCoilCoilInteractionsMap.get(curEdge);
             numDisulfides = this.numDisulfidesMap.get(curEdge);
-            numAllInteractions = this.numAllInteractionsMap.get(curEdge);
+            numResResContacts = mapWeightNamesToMapEdgeValues.get(ComplexGraphEdgeWeightTypes.ABSOLUTE_WEIGHT).get(curEdge).toBigInteger().intValue();
 
             Integer[] interactionNums = {numHelixHelixInteractions, numHelixStrandInteractions, numHelixLoopInteractions,
                 numStrandStrandInteractions, numStrandLoopInteractions, numLoopLoopInteractions,
-                numDisulfides, numAllInteractions};
+                numDisulfides, numResResContacts};
 
             // make sure no entry is null or something shitty
             for (int i = 0; i < interactionNums.length; i++) {
@@ -1671,20 +1662,19 @@ public class ComplexGraph extends UAdjListGraph {
 
             @Override
             public boolean hasValue(Edge e) {
-                return numAllInteractionsMap.containsKey(e);
+                return mapWeightNamesToMapEdgeValues.get(ComplexGraphEdgeWeightTypes.ABSOLUTE_WEIGHT).containsKey(e);
             }
 
             @Override
             public String write(Edge e) {
-                return '"' + numAllInteractionsMap.get(e).toString() + '"';
+                return '"' + mapWeightNamesToMapEdgeValues.get(ComplexGraphEdgeWeightTypes.ABSOLUTE_WEIGHT).get(e).toString() + '"';
             }
 
         });
        
-        gw.addEdgeAttrWriter(new GMLWriter.MapAttrWriter<>(TextTools.formatAsCaseStyle(Arrays.asList("num", "all", "res", "res", "contacts"), snakeCase), numAllInteractionsMap));  // same as label but as int = without '"' // only underscore allowed (by Cytoscape)
-        gw.addEdgeAttrWriter(new GMLWriter.MapAttrWriter<>(TextTools.formatAsCaseStyle(Arrays.asList("multiplicative", "length", "normalized", "weight"), snakeCase), multiplicativeLengthNormalizedEdgeWeight));
-        gw.addEdgeAttrWriter(new GMLWriter.MapAttrWriter<>(TextTools.formatAsCaseStyle(Arrays.asList("lucid", "multiplicative", "length", "normalized", "weight"), snakeCase), lucidMultiplicativeLengthNormalizedEdgeWeight));
-        gw.addEdgeAttrWriter(new GMLWriter.MapAttrWriter<>(TextTools.formatAsCaseStyle(Arrays.asList("additive", "length", "normalized", "weight"), snakeCase), additiveLengthNormalizedEdgeWeight));
+        for (String weightType : ComplexGraphEdgeWeightTypes.EdgeWeightTypeNames) {
+            gw.addEdgeAttrWriter(new GMLWriter.MapAttrWriter<>(TextTools.formatAsCaseStyle(Arrays.asList(weightType.split(" ")), snakeCase), mapWeightNamesToMapEdgeValues.get(weightType)));
+        }
         gw.addEdgeAttrWriter(new GMLWriter.MapAttrWriter<>(TextTools.formatAsCaseStyle(Arrays.asList("num", "helix", "helix", "contacts"), snakeCase), numHelixHelixInteractionsMap));
         gw.addEdgeAttrWriter(new GMLWriter.MapAttrWriter<>(TextTools.formatAsCaseStyle(Arrays.asList("num", "helix", "strand", "contacts"), snakeCase), numHelixStrandInteractionsMap));
         gw.addEdgeAttrWriter(new GMLWriter.MapAttrWriter<>(TextTools.formatAsCaseStyle(Arrays.asList("num", "helix", "coil", "contacts"), snakeCase), numHelixCoilInteractionsMap));
@@ -1720,8 +1710,20 @@ public class ComplexGraph extends UAdjListGraph {
         graphAttributes.put(TextTools.formatAsCaseStyle(Arrays.asList("creator"), snakeCase), "\"PTGLgraphComputation\"");
         graphAttributes.put(TextTools.formatAsCaseStyle(Arrays.asList("version"), snakeCase), "\"" + Settings.getVersion() + "\"");
         graphAttributes.put(TextTools.formatAsCaseStyle(Arrays.asList("ignore", "ligands"), snakeCase), (Settings.getBoolean("PTGLgraphComputation_B_CG_ignore_ligands") ? "1" : "0"));  // whether ligands were ignored
+        
+        // documentation of edge weight types
+        String innerPart = "[\n";
+        for (String name : ComplexGraphEdgeWeightTypes.EdgeWeightTypeNames) {
+            innerPart += "\t\t" + TextTools.formatAsCaseStyle(Arrays.asList(name.split(" ")), snakeCase) + " \"" + 
+                    ComplexGraphEdgeWeightTypes.MAP_TYPE_DESCRIPTION.get(name) + "\"\n";
+        }
+        innerPart += "\t]";
+        graphAttributes.put(TextTools.formatAsCaseStyle(Arrays.asList("description", "edge", "weight", "types"), snakeCase), innerPart);
+        
         graphAttributes.put(TextTools.formatAsCaseStyle(Arrays.asList("min", "contacts", "for", "edge"), snakeCase), Settings.getInteger("PTGLgraphComputation_I_CG_contact_threshold").toString());  // contact threshold
-        graphAttributes.put(TextTools.formatAsCaseStyle(Arrays.asList("factor", "lucid", "normalized", "weight"), snakeCase), minimumMultiplicativeLengthNormalizedEdgeWeight.toString());  // factor to reconstruct normalized edge weight
+        graphAttributes.put(TextTools.formatAsCaseStyle(Arrays.asList("factor", 
+                TextTools.formatAsCaseStyle(Arrays.asList(ComplexGraphEdgeWeightTypes.LUCID_MULTIPLICATIVE_NORMALIZATION.split(" ")), snakeCase)), snakeCase), 
+                minimumMultiplicativeLengthNormalizedEdgeWeight.toString());  // factor to reconstruct normalized edge weight
 
         for (String GmlLine : GmlLines) {
             if (lastLine.equals("graph [")) {

@@ -1720,6 +1720,7 @@ public class ComplexGraph extends UAdjListGraph {
         innerPart += "\t]";
         graphAttributes.put(TextTools.formatAsCaseStyle(Arrays.asList("description", "edge", "weight", "types"), snakeCase), innerPart);
         
+        // factor for lucid edge weight
         graphAttributes.put(TextTools.formatAsCaseStyle(Arrays.asList("min", "contacts", "for", "edge"), snakeCase), Settings.getInteger("PTGLgraphComputation_I_CG_contact_threshold").toString());  // contact threshold
         graphAttributes.put(TextTools.formatAsCaseStyle(Arrays.asList("factor", 
                 TextTools.formatAsCaseStyle(Arrays.asList(ComplexGraphEdgeWeightTypes.LUCID_MULTIPLICATIVE_NORMALIZATION.split(" ")), snakeCase)), snakeCase), 

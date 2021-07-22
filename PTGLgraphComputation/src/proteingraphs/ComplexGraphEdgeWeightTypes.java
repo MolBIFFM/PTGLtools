@@ -7,8 +7,7 @@
  */
 package proteingraphs;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.math.BigDecimal;
 import java.util.HashMap;
 
 /**
@@ -18,25 +17,26 @@ import java.util.HashMap;
 public final class ComplexGraphEdgeWeightTypes {
     
     // List here the weights / normalizations and assign short but descriptive spaced names
-    public static final String EdgeWeightTypeNames[] = new String[] {
-        "absolute weight",
-        "additive length normalization",
-        "multiplicative length normalization",
-        "lucid multiplicative length normalization"
-    };
-    
-    // List here the weights / normalizations withr reference to the array EdgeWeightTypeNames if you want an own constant
-    public static final String ABSOLUTE_WEIGHT = EdgeWeightTypeNames[0];
-    public static final String ADDITIVE_NORMALIZATION = EdgeWeightTypeNames[1];
-    public static final String MULTIPLICATIVE_NORMALIZATION = EdgeWeightTypeNames[2];
-    public static final String LUCID_MULTIPLICATIVE_NORMALIZATION = EdgeWeightTypeNames[3];
-    
-    // Assign here a description to each weight / normalization
-    public static final HashMap<String, String> MAP_TYPE_DESCRIPTION = new HashMap<>();
-    static {
-        MAP_TYPE_DESCRIPTION.put(ABSOLUTE_WEIGHT, "number of residue-residue contacts");
-        MAP_TYPE_DESCRIPTION.put(ADDITIVE_NORMALIZATION, ABSOLUTE_WEIGHT + " / (length chain 1 + chain 2)");
-        MAP_TYPE_DESCRIPTION.put(MULTIPLICATIVE_NORMALIZATION, ABSOLUTE_WEIGHT + " / (length chain 1 * chain 2)");
-        MAP_TYPE_DESCRIPTION.put(LUCID_MULTIPLICATIVE_NORMALIZATION, MULTIPLICATIVE_NORMALIZATION + " / smallest multiplicative weight");
+    public static enum EdgeWeightTypes {
+        ABSOLUTE_WEIGHT,
+        ADDITIVE_LENGTH_NORMALIZATION,
+        MULTIPLICATIVE_LENGTH_NORMALIZATION,
+        LUCID_MULTIPLICATIVE_NORMALIZATION;
+        
+        public String name;
+        static {
+            ABSOLUTE_WEIGHT.name = "absolute weight";
+            ADDITIVE_LENGTH_NORMALIZATION.name = "additive length normalization";
+            MULTIPLICATIVE_LENGTH_NORMALIZATION.name = "multiplicative length normalization";
+            LUCID_MULTIPLICATIVE_NORMALIZATION.name = "lucid multiplicative length normalization";
+        }
+        
+        public String description;
+        static {
+            ABSOLUTE_WEIGHT.description = "number of residue-residue contacts";
+            ADDITIVE_LENGTH_NORMALIZATION.description = ABSOLUTE_WEIGHT.name + " / (length chain 1 + chain 2)";
+            MULTIPLICATIVE_LENGTH_NORMALIZATION.description = ABSOLUTE_WEIGHT.name + " / (length chain 1 * chain 2)";
+            LUCID_MULTIPLICATIVE_NORMALIZATION.description = MULTIPLICATIVE_LENGTH_NORMALIZATION.name + " / smallest multiplicative weight";
+        }
     }
 }

@@ -760,8 +760,6 @@ public class ComplexGraph extends UAdjListGraph {
             }
         } // end of loop over all res contacts
         computeLengthNormalizedEdgeWeights();  // do this here instead of in loop, so we need to compute it only once
-        // TODO lucid
-        
     }
     
     

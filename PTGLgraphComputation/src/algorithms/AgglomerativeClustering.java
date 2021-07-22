@@ -16,7 +16,7 @@ import datastructures.ClusteringResult;
 public class AgglomerativeClustering {
     
     public static ClusteringResult chainLengthClustering() {
-        ClusteringResult clustering = new ClusteringResult();
+        ClusteringResult clustering = new ClusteringResult(false);
         
         return clustering;
     }

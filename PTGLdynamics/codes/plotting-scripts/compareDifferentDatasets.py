@@ -6,8 +6,7 @@
 #   patch: fixes, small changes
 #   no version change: fix typos, changes to comments, debug prints, small changes to non-result output, changes within git branch
 # -> only increment with commit / push / merge not while programming
-version = "1.0.0"  # TODO version of this template, change this to 1.0.0 for a new script or 2.0.0 if you upgrade another script to this template's architecture
-
+version = "1.0.0"  
 
 ########### built-in imports ###########
 
@@ -147,13 +146,13 @@ cl_parser.add_argument('--version',
                        action='version',
                        version='%(prog)s ' + version)
 
-cl_parser.add_argument('fileone',
-                       metavar = 'file one',
-                       help = 'Enter the path to csv file 1.')
+cl_parser.add_argument('file_one',
+                       metavar = 'file-one',
+                       help = 'Enter the path to csv file 1 in "changes_each_edge" format.')
 
-cl_parser.add_argument('filetwo',
-                       metavar = 'file two',
-                       help='Enter the path to the second csv file.')
+cl_parser.add_argument('file_two',
+                       metavar = 'file-two',
+                       help='Enter the path to the second csv file in "changes_each_edge" format.')
                        
 cl_parser.add_argument('inputfile',
                        metavar = 'inputfile',
@@ -192,8 +191,8 @@ elif (args.verbose):
 logging.getLogger().setLevel(log_level)
 
 # inputfiles
-file_one = check_input_files(args.fileone)
-file_two = check_input_files(args.filetwo)  
+file_one = check_input_files(args.file_one)
+file_two = check_input_files(args.file_two)  
 inputfile = check_input_files(args.inputfile)  
 
 # output directory
@@ -207,8 +206,8 @@ exclude_calculation_chains = args.exclude_calculation_chains
 chains_one, changes_one =  get_data_from_csv_files(file_one) 
 chains_two, changes_two =  get_data_from_csv_files(file_two) 
 
-log(changes_one, 'i')
-log(changes_two, 'i')
+log("Changes calculated for the first file :" + str(changes_one), 'i')
+log("Changes calculated for the second file :" + str(changes_two), 'i')
 
 changes = changes_one
 
@@ -220,7 +219,7 @@ for key in changes_two:
         new_value = 0 - changes_two[key]
     changes[key] = new_value
     
-log(changes, 'i')
+log("Changes calculated for both files: " + str(changes), 'i')
         
 # Create outputfile
 comp_datasets = open(output_dir + '/' + 'compared_datasets.csv','w')

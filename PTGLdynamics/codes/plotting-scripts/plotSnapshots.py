@@ -160,7 +160,7 @@ if (args.outputfile != ""):
     if(check_file_writable(args.outputfile)):
         output_file = open(args.outputfile, "w")
     else:
-        logging.error("Specified output file '%s' is not writable. Exiting now.", args.outputfile)
+        log("Specified output file is not writable. Exiting now.", 'e')
         sys.exit(1)
 
 # input file
@@ -169,10 +169,10 @@ for elem in args.inputfiles:
     if(os.access(elem, os.R_OK) == True):
         csv.append(elem)
     else:
-        logging.error("Specified file '%s' is not readable. Exiting.", elem)
-        exit()
+        log("Specified input file is not readable. Exiting.", 'e')
+        sys.exit(1)
 if(csv == []):
-    logging.error("No readable files found. Exiting now.", args.inputfiles)
+    log("No readable files found. Exiting now.", 'e')
     sys.exit(1)
 
     

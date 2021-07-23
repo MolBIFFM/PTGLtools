@@ -6,7 +6,7 @@
 #   patch: fixes, small changes
 #   no version change: fix typos, changes to comments, debug prints, small changes to non-result output, changes within git branch
 # -> only increment with commit / push / merge not while programming
-version = "1.0.1"  # TODO version of this template, change this to 1.0.0 for a new script or 2.0.0 if you upgrade another script to this template's architecture
+version = "1.0.1"  
 
 
 ########### built-in imports ###########
@@ -171,13 +171,7 @@ cl_parser.add_argument('-p',
                        metavar = 'path',
                        default = '',
                        help = 'specify a path to your output files. Otherwise the current folder is used.')
-"""
-cl_parser.add_argument('-d',
-                       '--divide-by-chainlength
-                       metavar = 'divide-by-chainlength',
-                       default = '',
-                       help = 'specify a path to a "number_of_residues_in_each_chain" csv file to divide the change of each chain by its chainlength.')
-"""
+
 args = cl_parser.parse_args()
 
 
@@ -329,20 +323,8 @@ for key in changes_nodes:
     change_each_chain.write(key + ',' + str(changes_nodes[key]) + '\n')
 
 change_each_chain.close()
-"""
-# divide change by chainlength from csv file
 
-if(args.divide_by_chainlength != ""):
-    file_chainlength = args.divide_by_chainlength
-    if(os.access(file_chainlength, os.R_OK)):
-        # file einlesen
-        for key in changes_nodes:
-            changes_nodes[key] = changes_nodes[key] # aus dict auslesen
-            
-    else:
-        logging.error("Specified input file '%s' is not readable. Continuing without it.", file_chainlength)
 
-"""
 # Create PyMol script.
 pymol_script = open(output_dir + '/' + 'PyMol_script_frame' + str(args.first_timestep) + '_to_frame' + str(args.last_timestep) + '.py', 'w')
 pymol_script.write('"""' + '\n' + 'This script shows the given molecule in a heatmap visualisation in PyMOL. Chains colored in blue have lower edge weight changes than chains colored in red. Run this script in PyMOL using the command line with the following command:' + '\n' + 'run ' + output_dir + 'PyMol_script_frame' + str(args.first_timestep) + '_to_frame' + str(args.last_timestep) + '.py' + '\n' + '"""' + '\n')

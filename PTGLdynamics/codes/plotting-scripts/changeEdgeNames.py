@@ -87,7 +87,7 @@ logging.basicConfig(format = "[%(levelname)s] %(message)s")
 ########### command line parser ###########
 
 ## create the parser
-cl_parser = argparse.ArgumentParser(description="Changes the chain ID to label ID and creates a csv file. You can change the names in the third column to the names of your choice and run the script again with the csv file given as an argument (-c)",
+cl_parser = argparse.ArgumentParser(description="Changes the chain ID to a label ID given by the gml file and creates a csv file. You can change the names in the third column to the names of your choice and run the script again with the csv file given as an argument (-c)",
                                     fromfile_prefix_chars="@")
 
 ## add arguments
@@ -124,7 +124,7 @@ cl_parser.add_argument('gmlfile',
                        default = '',
                        help = 'specify a path to a gml file created by PTGLgraphComputation, using it for chain_id and label_id.')     
                        
-cl_parser.add_argument('-c',
+cl_parser.add_argument('-C',
                        '--chainnames-csv-file',
                        metavar = 'chainnames-inputfile',
                        default = '',
@@ -219,9 +219,7 @@ auto_chainnames = output_dir + 'chainnames.csv'
 with open(auto_chainnames, 'w') as ac:
     ac.write("gml_id" + "," +  "chain_id" + "," + "given chainname" + '\n')
     for key in id_label_dict:
-        ac.write(key + ',' + id_label_dict[key] + ',' + id_label_dict[key] + '\n')
-    
-ac.close()    
+        ac.write(key + ',' + id_label_dict[key] + ',' + id_label_dict[key] + '\n')   
 
 # use possibly given csv file for naming the chains. 
 if (args.chainnames_csv_file != ''):  
@@ -231,10 +229,11 @@ if (args.chainnames_csv_file != ''):
     for chain in chainnames_lines[1:]:
         if chain != '':
             columns = chain.split(',')
-            id_label_dict[columns[0]] = columns[2]
-         
-
-log(len(csv),'i')
+            if (len(columns) == 3):
+                id_label_dict[columns[0]] = columns[2]
+            else:
+                log("The given csv file does not consist of three columns. Using the label IDs from the gml file instead.", 'e')
+                break 
 
 with open(csv, "r") as f:
     csv_lines = f.read().split("\n")
@@ -291,8 +290,8 @@ elif(args.eval_edge_weights_input):
         source = line[0]
         target = line[1]
 
-        log(source , 'i')
-        log(target , 'i')
+        log("Source " + str(source) , 'i')
+        log("Target " + str(target) , 'i')
 
         try:
             source = id_label_dict[source]

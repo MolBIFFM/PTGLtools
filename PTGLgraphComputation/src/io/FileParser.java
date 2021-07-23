@@ -606,25 +606,22 @@ public class FileParser {
             LegacyParser.initData(pdbFile);
         }
         
-        // if (Setting write csv) then write csv
-        if (Settings.getBoolean("PTGLgraphComputation_B_csv_residues_in_chains")) {
-            File numberResInChains = null;
-            numberResInChains = new File(outputDir +  "number_of_residues_in_each_chain.csv");
+        if (Settings.getBoolean("PTGLgraphComputation_B_csv_number_residues_chains")) {
+            File numberResInChains = new File(outputDir +  "number_of_residues_in_each_chain.csv");
             if (!numberResInChains.exists()) {
-            try {
-                numberResInChains.createNewFile();
-            } catch (IOException ex) {
-                System.err.println("ERROR: Could not create file '" + numberResInChains.getAbsolutePath() + "': " + ex.getMessage() + ".");
+                try {
+                    numberResInChains.createNewFile();
+                } catch (IOException ex) {
+                    DP.getInstance().e("ERROR: Could not create file '" + numberResInChains.getAbsolutePath() + ".");
+                }
             }
-            }
-            String resInChain = "";
+            String resInChain = "Chain_ID" + "," + "chain length" + "\n";
             FileParser.getChains();
             for(Chain c: s_chains){               
                 resInChain += c.getPdbChainID() + "," + c.getChainLength() + "\n";
             }
             IO.writeStringToFile(resInChain, numberResInChains.getAbsolutePath(), true);  
-            System.out.println("Csv file with the number of residues in each chain created.");
-            System.exit(0);
+            DP.getInstance().w("Csv file with the number of residues in each chain created.");
             }
         }
     

@@ -175,8 +175,6 @@ public class Main {
     static ArrayList<Residue> residues = null;
     static ArrayList<RNA> rnas = null;
     static ArrayList<Ligand> ligands = null;
-    
-    // TODO global variable
 
     public static void checkArgsUsage(String[] args, Boolean[] argsUsed) {
         for(int i = 0; i < argsUsed.length; i++) {

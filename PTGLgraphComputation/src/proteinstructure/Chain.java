@@ -37,7 +37,7 @@ public class Chain implements java.io.Serializable {
     private Integer radiusFromCentroid = null;         // distance from center to farthest non-H atom. -1 if no protein-atoms
     private Integer maxSeqNeighborAADist = null;    // largest distance between sequential residue neighbors excluding ligands (center to center)
     private String moleculeType = null;             // type of molecules that make up the chain, i.e. RNA or Residue
-
+    
     // constructor
     public Chain(String ci) { pdbChainID = ci; molecules = new ArrayList<>();}
 
@@ -140,6 +140,11 @@ public class Chain implements java.io.Serializable {
                 allRna.add(r);
             }
         return allRna;
+    }
+    
+    public Integer getChainLength(){
+        Integer chainLength = this.getAllRnaResidues().size() + this.getAllAAResidues().size() + this.getAllLigandResidues().size();
+        return chainLength;
     }
     
     

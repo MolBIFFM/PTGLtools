@@ -6,7 +6,7 @@
 #   patch: fixes, small changes
 #   no version change: fix typos, changes to comments, debug prints, small changes to non-result output, changes within git branch
 # -> only increment with commit / push / merge not while programming
-version = "1.0.0"  # TODO version of this template, change this to 1.0.0 for a new script or 2.0.0 if you upgrade another script to this template's architecture
+version = "1.0.0"  
 
 
 ########### built-in imports ###########
@@ -222,12 +222,12 @@ plt.figure(figsize = (20,10))
 x = list(range(len(edge_weights)-1))
 y = [edge_weights[y+1][1] for y in x]
 
-plt.plot(x,y, label=legend , alpha=0.5)
+plt.plot(x,y, color='darkblue', label=legend , alpha=0.25)
 
 w = list(range(int(interval/2), len(edge_weights) -int(interval/2)-1))
 z =  [decimal.Decimal(mean[z-int(interval/2)]/interval) for z in w] #calculate mean for this point
 
-plt.plot(w,z, label=legend+'-mean')
+plt.plot(w,z, color='darkblue', label=legend+'-mean')
 
 plt.xlabel("timestep")
 plt.ylabel("sum of contacts")

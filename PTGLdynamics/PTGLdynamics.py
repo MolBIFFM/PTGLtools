@@ -25,7 +25,7 @@ import time
 ########### functions ###########
 
 # Add new subscripts here
-programs = ['toLegacyPDB.py', 'toMmCIF.py', 'dsspcmbi', 'postProcessDssp.py', 'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py', 'getAttributeDataFromGml.py', 'evalEdgesWeights.py', 'changeEdgeNames.py', 'sumEdgeWeights.py', 'plotSnapshots.py']
+programs = ['toLegacyPDB.py', 'toMmCIF.py', 'dsspcmbi', 'postProcessDssp.py', 'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py', 'getAttributeDataFromGml.py', 'evalEdgesWeights.py', 'changeEdgeNames.py', 'sumEdgeWeights.py', 'plotSnapshots.py', 'PyMolHeatmapVisualisation.py']
 
 
 def check_file_writable(fp):
@@ -275,7 +275,12 @@ cl_parser.add_argument('--plotSnapshots-args',
                        metavar = 'plotSnapshots-args',
                        default = '',   
                        help = 'a string with the arguments for plotSnapshots you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: -n="<arguments and their inputs>".')
-
+                       
+cl_parser.add_argument('--pyMolHeatmapVisualisation-args',
+                       metavar = 'pyMolHeatmapVisualisation-arguments',
+                       type = str,
+                       default = '',
+                       help = 'a string with the arguments for createPymolScript you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: --createPymolScript-args="<arguments and their inputs>", including the positional arguments.')                       
 
 args = cl_parser.parse_args()
 
@@ -335,6 +340,7 @@ if (args.toMmCIF):
 else:
     program_list.remove('toMmCIF.py')
 
+
 # dssp directory
 dssp_input_dir = check_dir_args(args.dssp_input_dir)
 
@@ -373,12 +379,14 @@ add_sumEdgeWeights_args = check_arguments_args(args.sumEdgeWeights_args)
 # plotSnapshots arguments
 add_plotSnapshots_args = check_arguments_args(args.plotSnapshots_args)
 
+# createPymolScript arguments
+add_pyMolHeatmapVisualisation_args = check_arguments_args(args.pyMolHeatmapVisualisation_args)
     
 # different dssp folders
 if (args.different_dssp_folders):
-    dir_names = {'toLegacyPDB.py':'legacyPDB', 'toMmCIF.py':'mmCIF', 'dsspcmbi':'oldDssp', 'postProcessDssp.py':'newDssp', 'PTGLgraphComputation':'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py': 'gml', 'getAttributeDataFromGml.py': 'csv', 'evalEdgesWeights.py':'csv', 'changeEdgeNames.py':'csv', 'sumEdgeWeights.py':'pdf', 'plotSnapshots.py':'pdf'}
+    dir_names = {'toLegacyPDB.py':'legacyPDB', 'toMmCIF.py':'mmCIF', 'dsspcmbi':'oldDssp', 'postProcessDssp.py':'newDssp', 'PTGLgraphComputation':'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py': 'gml', 'getAttributeDataFromGml.py': 'csv', 'evalEdgesWeights.py':'csv', 'changeEdgeNames.py':'csv', 'sumEdgeWeights.py':'pdf', 'plotSnapshots.py':'pdf', 'PyMolHeatmapVisualisation.py':'PyMOL'}
 else:
-    dir_names = {'toLegacyPDB.py':'legacyPDB', 'toMmCIF.py':'mmCIF', 'dsspcmbi':'dssp', 'postProcessDssp.py':'dssp', 'PTGLgraphComputation':'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py': 'csv', 'getAttributeDataFromGml.py': 'csv', 'evalEdgesWeights.py':'csv', 'changeEdgeNames.py':'csv', 'sumEdgeWeights.py':'pdf', 'plotSnapshots.py':'pdf'}
+    dir_names = {'toLegacyPDB.py':'legacyPDB', 'toMmCIF.py':'mmCIF', 'dsspcmbi':'dssp', 'postProcessDssp.py':'dssp', 'PTGLgraphComputation':'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py': 'csv', 'getAttributeDataFromGml.py': 'csv', 'evalEdgesWeights.py':'csv', 'changeEdgeNames.py':'csv', 'sumEdgeWeights.py':'pdf', 'plotSnapshots.py':'pdf', 'PyMolHeatmapVisualisation.py':'PyMOL'}
 
 ########### vamos ###########
 
@@ -410,6 +418,7 @@ gml_dir = input_dir
 getAttributeDataFromGml_dir = input_dir
 evalEdgesWeights_dir = input_dir
 changeEdgeNames_dir = input_dir
+compareSubsets_dir = input_dir
 
 work_dir = get_working_dir(input_dir)
 list_work_dir = []
@@ -584,6 +593,8 @@ for elem in program_list:
                         os.system(gml_comparison)
                         os.chdir(work_dir)
                     prevGml = entry
+                    
+        compareSubsets_dir = os.path.abspath(out_dir) + '/'
         
         log('gmlCompareEdgeWeightsAndSubsets computations are done.', 'i')
 
@@ -741,6 +752,32 @@ for elem in program_list:
             os.chdir(work_dir)
 
         log('plotSnapshots computations are done.', 'i')
+        
+
+    elif (elem == 'PyMolHeatmapVisualisation.py'):
+        if (add_pyMolHeatmapVisualisation_args == ''):
+            files_dir = get_working_dir(file_dir)
+            list_file_dir = os.listdir(files_dir)
+            list_file_dir = sorted_nicely(list_file_dir) 
+            file = file_dir + list_file_dir[0]
+            
+            work_dir = get_working_dir(compareSubsets_dir)
+            log(work_dir, 'd')
+            
+            createPymolScript = 'python3 ' + plotting_dir + elem + ' ' + work_dir + ' ' + file + ' -p ' + out_dir 
+            log(createPymolScript, 'd')
+            os.chdir(out_dir) 
+            os.system(createPymolScript)
+            os.chdir(work_dir)
+                    
+        elif (add_pyMolHeatmapVisualisation_args != ''):
+            createPymolScript = 'python3 ' + plotting_dir + elem + ' ' + add_pyMolHeatmapVisualisation_args
+            log(createPymolScript, 'd')
+            os.chdir(out_dir) 
+            os.system(createPymolScript)
+            os.chdir(work_dir)
+
+        log('PyMolHeatmapVisualisation computations are done.', 'i')
             
         
            

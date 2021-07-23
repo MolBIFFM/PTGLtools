@@ -6,7 +6,7 @@
 #   patch: fixes, small changes
 #   no version change: fix typos, changes to comments, debug prints, small changes to non-result output, changes within git branch
 # -> only increment with commit / push / merge not while programming
-version = "1.0.0"  # TODO version of this template, change this to 1.0.0 for a new script or 2.0.0 if you upgrade another script to this template's architecture
+version = "1.0.0"  
 
 
 ########### built-in imports ###########
@@ -87,7 +87,7 @@ logging.basicConfig(format = "[%(levelname)s] %(message)s")
 ########### command line parser ###########
 
 ## create the parser
-cl_parser = argparse.ArgumentParser(description="TODO describe what script does",
+cl_parser = argparse.ArgumentParser(description="Changes the chain ID to a label ID given by the gml file and creates a csv file. You can change the names in the third column to the names of your choice and run the script again with the csv file given as an argument (-c)",
                                     fromfile_prefix_chars="@")
 
 ## add arguments
@@ -117,18 +117,18 @@ cl_parser.add_argument('--version',
 cl_parser.add_argument('inputfile',
                        metavar = 'inputfile',
                        default = '',
-                       help = 'get data as csv file input')
+                       help = 'get data as a csv file created by "evalEdgeWeights.py". Specify the exact input format with -e or -a. Default is -a.')
 
 cl_parser.add_argument('gmlfile',
                        metavar = 'gml-inputfile',
                        default = '',
-                       help = 'specify a path to a gml file, using it for chain_id and label_id.')   
+                       help = 'specify a path to a gml file created by PTGLgraphComputation, using it for chain_id and label_id.')     
                        
-cl_parser.add_argument('-c',
+cl_parser.add_argument('-C',
                        '--chainnames-csv-file',
                        metavar = 'chainnames-inputfile',
                        default = '',
-                       help = "get chainnames in csv file. The third column is used for renaming the chains.")                    
+                       help = "get chain names in csv file. The third column is used for renaming the chains.")                    
 
 cl_parser.add_argument('-p',
                        '--output-dir',
@@ -159,6 +159,9 @@ cl_parser.add_argument('-o',
 
 
 args = cl_parser.parse_args()
+
+if (args.eval_edge_weights_input == False) and (args.all_edges_input == False):
+    args.all_edges_input = True
 
 ########### check arguments ###########
 
@@ -194,21 +197,7 @@ output_dir = check_dir_args(args.output_dir)
 
 log("Version " + version, "i")
 
-"""
-no_U_dict = {"0":"Nqo1","1":"Nqo2","2":"Nqo3","3":"Nqo4","4":"Nqo5","5":"Nqo6","6":"Nqo9","7":"Nqo7","8":"Nqo10","9":"Nqo11","10":"Nqo12","11":"Nqo13","12":"Nqo14","13":"Nqo8","14":"Nqo15","15":"TTHA1528","16":"F"}
-
-with_U_dict = {"0":"Nqo7","1":"Nqo6","2":"Nqo1","3":"Nqo2","4":"Nqo3","5":"Nqo4","6":"Nqo5","7":"Nqo9","8":"Nqo10","9":"Nqo11","10":"Nqo12","11":"Nqo13","12":"Nqo14","13":"Nqo8","14":"Nqo15","15":"TTHA1528","16":"F","17":"U"}
-
-order = ["Nqo1","Nqo2","Nqo3","Nqo4","Nqo5","Nqo6","Nqo7","Nqo8","Nqo9","Nqo10","Nqo11","Nqo12","Nqo13","Nqo14","Nqo15","TTHA1528","F","U"]
-"""
-
-# csv file with chainnames automatically generated, get input from gml-files
-
-auto_chainnames = open(output_dir + '/' + 'chainnames.csv','w')
-auto_chainnames.write("gml_id" + "," +  "chain_id" + "," + "given chainname" + '\n')
-
 id_label_dict = {}
-
 
 with open(gml_file, "r") as g:
     node_section = False
@@ -225,11 +214,12 @@ with open(gml_file, "r") as g:
            node_section = False
                 
                 
-for key in id_label_dict:
-    auto_chainnames.write(key + ',' + id_label_dict[key] + ',' + id_label_dict[key] + '\n')
-    
-auto_chainnames.close()    
-
+# csv file with chainnames automatically generated, get input from gml-files
+auto_chainnames = output_dir + '/' + 'chainnames.csv'
+with open(auto_chainnames, 'w') as ac:
+    ac.write("gml_id" + "," +  "chain_id" + "," + "given chainname" + '\n')
+    for key in id_label_dict:
+        ac.write(key + ',' + id_label_dict[key] + ',' + id_label_dict[key] + '\n')   
 
 # use possibly given csv file for naming the chains. 
 if (args.chainnames_csv_file != ''):  
@@ -239,10 +229,11 @@ if (args.chainnames_csv_file != ''):
     for chain in chainnames_lines[1:]:
         if chain != '':
             columns = chain.split(',')
-            id_label_dict[columns[0]] = columns[2]
-         
-
-log(len(csv),'i')
+            if (len(columns) == 3):
+                id_label_dict[columns[0]] = columns[2]
+            else:
+                log("The given csv file does not consist of three columns. Using the label IDs from the gml file instead.", 'e')
+                break 
 
 with open(csv, "r") as f:
     csv_lines = f.read().split("\n")
@@ -267,8 +258,11 @@ if(args.all_edges_input):
         edge_names[j] = edge_names[j].split('  ')
         
         for k in range(len(edge_names[j])):
-            edge_names[j][k] = id_label_dict[edge_names[j][k]]
-            #new_line += edge_names[j][k]
+            try:
+                edge_names[j][k] = id_label_dict[edge_names[j][k]]
+            except KeyError:
+                log("Seems like you did not use the corresponding file format and argument. Exiting.", "e")
+                sys.exit()
         
         new_edge_name = "{"+edge_names[j][0] + " | " + edge_names[j][1] + "}"
 
@@ -296,11 +290,15 @@ elif(args.eval_edge_weights_input):
         source = line[0]
         target = line[1]
 
-        log(source , 'i')
-        log(target , 'i')
+        log("Source " + str(source) , 'i')
+        log("Target " + str(target) , 'i')
 
-        source = id_label_dict[source]
-        target = id_label_dict[target]
+        try:
+            source = id_label_dict[source]
+            target = id_label_dict[target]
+        except KeyError:
+                log("Seems like you did not use the corresponding file format and argument. Exiting.", "e")
+                sys.exit()
 
         # write result back to csv_lines
         new_line = source + ',' + target

@@ -759,12 +759,16 @@ for elem in program_list:
             files_dir = get_working_dir(file_dir)
             list_file_dir = os.listdir(files_dir)
             list_file_dir = sorted_nicely(list_file_dir) 
-            file = file_dir + list_file_dir[0]
+            load_file = ''
+            for file in list_file_dir:
+                if file.endswith('.pdb') or file.endswith('.cif'):
+                    load_file = os.path.abspath(file)
+                    break
             
             work_dir = get_working_dir(compareSubsets_dir)
             log(work_dir, 'd')
             
-            createPymolScript = 'python3 ' + plotting_dir + elem + ' ' + work_dir + ' ' + file + ' -p ' + out_dir 
+            createPymolScript = 'python3 ' + plotting_dir + elem + ' ' + work_dir + ' ' + load_file + ' -p ' + out_dir 
             log(createPymolScript, 'd')
             os.chdir(out_dir) 
             os.system(createPymolScript)

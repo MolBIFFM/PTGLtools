@@ -27,6 +27,10 @@ import time
 # Add new subscripts here
 programs = ['toLegacyPDB.py', 'toMmCIF.py', 'dsspcmbi', 'postProcessDssp.py', 'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py', 'getAttributeDataFromGml.py', 'evalEdgesWeights.py', 'changeEdgeNames.py', 'sumEdgeWeights.py', 'plotSnapshots.py', 'PyMolHeatmapVisualisation.py']
 
+default_path_graCom = os.path.dirname(__file__)
+parts = default_path_graCom.split('/PTGLdynamics')
+default_path_graCom = parts[0] + '/PTGLgraphComputation/dist/PTGLgraphComputation.jar'
+
 
 def check_file_writable(fp):
     """Checks if the given filepath is writable"""
@@ -181,7 +185,13 @@ cl_parser.add_argument('-H',
                        '--headerfile',
                        metavar = 'headerfile',
                        default = '',
-                       help = 'to integrate a header in your files containing 3D structural data specify the path of your header file.')
+                       help = 'to integrate a header in your mmCif files specify the path of your header file.')
+                       
+cl_parser.add_argument('-C',
+                       '--compoundfile',
+                       metavar = 'compoundfile',
+                       default = '',
+                       help = 'to integrate a header in your pdb files containing 3D structural data specify the path of your header file.')                       
 
 cl_parser.add_argument('-a',
                        '--applications',
@@ -203,7 +213,7 @@ cl_parser.add_argument('-u',
                        help='display the results in sub directories in the output directory.')
 
 cl_parser.add_argument('--PTGLgraphComputation-path',
-                       default = (os.path.dirname(__file__) + '/PTGLgraphComputation/dist/PTGLgraphComputation.jar'),
+                       default = default_path_graCom,
                        help = 'Absolute path to a custom PTGLgraphComputation JAR file. Otherwise assuming built version of PTGLtools.')
 
 cl_parser.add_argument('--PTGLgraphComputation-args',
@@ -311,18 +321,30 @@ original_output_dir = check_dir_args(args.output_dir)
 # headerfile directory
 if (args.headerfile != ""):
     if(os.access(args.headerfile, os.R_OK)):
-        header = os.path.abspath(args.headerfile)
-        if (args.toMmCIF):
-            cmd_header = ' --headerfile ' + header
-        else:
-            cmd_header = ' -c ' + header
+        header_mmcif = os.path.abspath(args.headerfile)
+        cmd_header_mmcif = ' --headerfile ' + header_mmcif
     else:
-        logging.error("Specified header file '%s' is not readable. Continuing without header file.", args.headerfile)
+        logging.error("Specified header file '%s' is not readable. Continuing without header file. PTGLgraphComputation will not be working properly though.", args.headerfile)
+        header_mmcif = ''
+        cmd_header_mmcif = ''
+else:
+    header_mmcif = ''
+    cmd_header_mmcif = ''
+    if (args.toMmCIF):
+        logging.error("No header file was specified. PTGLgraphComputation will not be working properly.") 
+    
+# compoundfile directory
+if (args.compoundfile != ""):
+    if(os.access(args.compoundfile, os.R_OK)):
+        header = os.path.abspath(args.compoundfile)
+        cmd_header = ' -c ' + header
+    else:
+        logging.error("Specified header file '%s' is not readable. Continuing without header file.", args.compoundfile)
         header = ''
         cmd_header = ''
 else:
     header = ''
-    cmd_header = ''
+    cmd_header = ''    
 
 # list of applications
 program_list = []
@@ -462,7 +484,7 @@ for elem in program_list:
     elif (elem == 'toMmCIF.py'):
 
         work_dir = get_working_dir(file_dir)
-        exec_string = cmd_start + elem + ' ' + add_toMmCIF_args + ' -i ' + work_dir + ' -p ' + out_dir + cmd_header
+        exec_string = cmd_start + elem + ' ' + add_toMmCIF_args + ' -i ' + work_dir + ' -p ' + out_dir + cmd_header_mmcif
         log('exec_string ' + exec_string, 'd')
         os.chdir(out_dir)
         os.system(exec_string)
@@ -527,7 +549,7 @@ for elem in program_list:
 
                 dssp = dssp_dir + pathlib.Path(pdb).stem + '.dssp'
 
-                PTGLgraphComputation = 'java -jar ' + PTGLgraphComputation_path + ' ' + pdb_id + ' ' + add_PTGLgraphComputation_args + ' -p ' + work_dir + pdb + ' -d ' + dssp + ' -o ' + pdb_id_folder
+                PTGLgraphComputation = 'java -jar ' + PTGLgraphComputation_path + ' ' + pdb_id + ' ' + add_PTGLgraphComputation_args + ' -p ' + work_dir + pdb + ' -d ' + dssp + ' -o ' + pdb_id_folder 
 
                 log(PTGLgraphComputation,'d') 
                 os.chdir(out_dir)
@@ -755,20 +777,67 @@ for elem in program_list:
         
 
     elif (elem == 'PyMolHeatmapVisualisation.py'):
-        if (add_pyMolHeatmapVisualisation_args == ''):
-            files_dir = get_working_dir(file_dir)
-            list_file_dir = os.listdir(files_dir)
-            list_file_dir = sorted_nicely(list_file_dir) 
-            load_file = ''
-            for file in list_file_dir:
-                if file.endswith('.pdb') or file.endswith('.cif'):
-                    load_file = os.path.abspath(file)
+        # create csv file with number of residues in each chain
+        files_dir = get_working_dir(file_dir)
+        list_file_dir = os.listdir(files_dir)
+        list_file_dir = sorted_nicely(list_file_dir)
+        
+        os.chdir(out_dir)
+        input_dir_csv_file = new_directory('files_for_GraCom_computation') + '/' 
+        os.chdir(files_dir)
+        
+        cif_or_pdb_file = ''
+        for file in list_file_dir:
+            if file.endswith('.cif'):
+                shutil.copy(file, input_dir_csv_file + file)
+                cif_or_pdb_file = input_dir_csv_file + os.path.basename(file)
+                break
+                                          
+        if (cif_or_pdb_file == ''):
+            list_input_dir = os.listdir(input_dir)
+            list_input_dir = sorted_nicely(list_file_dir)
+            for file in list_input_dir:
+                if file.endswith('.pdb'):
+                    shutil.copy(file, input_dir_csv_file + file)
+                    cif_or_pdb_file = input_dir_csv_file + os.path.basename(file)
                     break
+        
+        # get corresponding dssp file
+        base = os.path.basename(cif_or_pdb_file)
+        name = os.path.splitext(base)[0]
+        dssp_path = dssp_dir + name + '.dssp'
+        dssp_file = ''
+        if os.path.exists(dssp_path):
+            dssp_file = dssp_path
+            shutil.copy(dssp_file, input_dir_csv_file + name + '.dssp')
+            dssp_file = input_dir_csv_file + name + '.dssp'
+        else:
+            log("There exists no dssp file " + dssp_path + ". Can´t create csv file with number of residues in each chain.", 'e')   
+           
+        if dssp_file != '' and cmd_header_mmcif != '': 
+            cif_file = cif_or_pdb_file       
+            if cif_or_pdb_file.endswith('.pdb'):
+                createMmCifFile = cmd_start + 'toMmCIF.py -i ' + os.path.dirname(cif_or_pdb_file) + ' -p ' + out_dir + cmd_header_mmcif
+                os.chdir(out_dir)
+                os.system(createMmCifFile)
+                cif_file = os.path.abspath(out_dir) + '/' + name + '.cif'
+                os.chdir(files_dir)
             
+            createCsvFile = 'java -jar ' + default_path_graCom + ' none -p ' + cif_file + ' -d ' + dssp_file + ' -o ' + input_dir_csv_file + ' -I -N --silent --dont-write-images --set "PTGLgraphComputation_B_csv_number_residues_chains" "true"' 
+            log("Csv file with the number of residues in each chain created.", 'i')
+            os.chdir(out_dir)
+            os.system(createCsvFile)  
+            os.chdir(files_dir) 
+            
+        else:
+            log("There was no header file given for a mmcif file or no dssp file found. As PTGLgraphComputation will not compute output without, there can not be created the csv file containing the number of residues for each chain.", 'e')
+                
+        # Create PyMOL script
+        if (add_pyMolHeatmapVisualisation_args == ''):            
             work_dir = get_working_dir(compareSubsets_dir)
             log(work_dir, 'd')
             
-            createPymolScript = 'python3 ' + plotting_dir + elem + ' ' + work_dir + ' ' + load_file + ' -p ' + out_dir 
+            createPymolScript = 'python3 ' + plotting_dir + elem + ' ' + work_dir + ' ' + cif_or_pdb_file + ' -p ' + out_dir 
             log(createPymolScript, 'd')
             os.chdir(out_dir) 
             os.system(createPymolScript)

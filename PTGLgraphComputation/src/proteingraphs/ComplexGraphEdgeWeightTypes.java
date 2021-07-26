@@ -8,13 +8,17 @@
 package proteingraphs;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Contains information of the types of edge weights and normalizations of Complex Graphs.
  * @author jnw
  */
 public final class ComplexGraphEdgeWeightTypes {
+    
+    private final static int PRECISION = 35;  // used as precision for the BigDecimal normalized edge weight, i.e., number of digits left and right of decimal point
     
     // List here the weights / normalizations and assign short but descriptive spaced names
     public static enum EdgeWeightTypes {
@@ -38,5 +42,17 @@ public final class ComplexGraphEdgeWeightTypes {
             MULTIPLICATIVE_LENGTH_NORMALIZATION.description = ABSOLUTE_WEIGHT.name + " / (length chain 1 * chain 2)";
             LUCID_MULTIPLICATIVE_NORMALIZATION.description = MULTIPLICATIVE_LENGTH_NORMALIZATION.name + " / smallest multiplicative weight";
         }
+    }
+    
+    public static BigDecimal computeAdditiveLengthNormlization(BigDecimal numResContacts, int lengthChainA, int lengthChainB) {
+        return numResContacts.divide(BigDecimal.valueOf(lengthChainA).add(BigDecimal.valueOf(lengthChainB)), PRECISION, RoundingMode.HALF_UP);
+    }
+    
+    public static BigDecimal computeMultiplicativeLengthNormlization(BigDecimal numResContacts, int lengthChainA, int lengthChainB) {
+        return numResContacts.divide(BigDecimal.valueOf(lengthChainA).multiply(BigDecimal.valueOf(lengthChainB)), PRECISION, RoundingMode.HALF_UP);
+    }
+    
+    public static BigDecimal computeLucidMultiplicativeLengthNormlization(BigDecimal multNorm, BigDecimal smallestMultNorm) {
+        return multNorm.divide(smallestMultNorm);
     }
 }

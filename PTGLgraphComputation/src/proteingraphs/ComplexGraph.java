@@ -110,7 +110,6 @@ public class ComplexGraph extends UAdjListGraph {
     private final String pdbid;
     
     private final static String CLASS_TAG = "CG";
-    private final static int PRECISION = 35;  // used as precision for the BigDecimal normalized edge weight, i.e., number of digits left and right of decimal point
     
     /**
      * Constructor.
@@ -780,8 +779,8 @@ public class ComplexGraph extends UAdjListGraph {
                 System.out.println("  [DEBUG LV 4] " + tmpNumRes2);
             }
             
-            BigDecimal tmpAddNormWeight = tmpContacts.divide(BigDecimal.valueOf(tmpNumRes1).add(BigDecimal.valueOf(tmpNumRes2)), PRECISION, RoundingMode.HALF_UP);
-            BigDecimal tmpMultNormWeight = tmpContacts.divide(BigDecimal.valueOf(tmpNumRes1).multiply(BigDecimal.valueOf(tmpNumRes2)), PRECISION, RoundingMode.HALF_UP);
+            BigDecimal tmpAddNormWeight = ComplexGraphEdgeWeightTypes.computeAdditiveLengthNormlization(tmpContacts, tmpNumRes1, tmpNumRes2);
+            BigDecimal tmpMultNormWeight = ComplexGraphEdgeWeightTypes.computeMultiplicativeLengthNormlization(tmpContacts, tmpNumRes1, tmpNumRes2);
             
             curMinimumMultNormEdgeWeight = curMinimumMultNormEdgeWeight.min(tmpMultNormWeight);  // update min if necessary
             
@@ -798,7 +797,9 @@ public class ComplexGraph extends UAdjListGraph {
     
     private void computeLucidLengthNormalizedEdgeWeight() {
         mapWeightNamesToMapEdgeValues.get(EdgeWeightTypes.ABSOLUTE_WEIGHT).keySet().forEach(e -> {
-            mapWeightNamesToMapEdgeValues.get(EdgeWeightTypes.LUCID_MULTIPLICATIVE_NORMALIZATION).put(e, mapWeightNamesToMapEdgeValues.get(EdgeWeightTypes.MULTIPLICATIVE_LENGTH_NORMALIZATION).get(e).divide(minimumMultiplicativeLengthNormalizedEdgeWeight, PRECISION, RoundingMode.HALF_UP));
+            BigDecimal curNormWeight = mapWeightNamesToMapEdgeValues.get(EdgeWeightTypes.MULTIPLICATIVE_LENGTH_NORMALIZATION).get(e);
+            BigDecimal lucidWeight = ComplexGraphEdgeWeightTypes.computeLucidMultiplicativeLengthNormlization(curNormWeight, minimumMultiplicativeLengthNormalizedEdgeWeight);
+            mapWeightNamesToMapEdgeValues.get(EdgeWeightTypes.LUCID_MULTIPLICATIVE_NORMALIZATION).put(e, lucidWeight);
         });     
     }
     

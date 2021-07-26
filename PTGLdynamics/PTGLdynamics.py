@@ -358,9 +358,11 @@ else:
     program_list = list(programs)
     
 if (args.toMmCIF):
-    program_list.remove('toLegacyPDB.py')
+    if 'toLegacyPDB.py' in program_list:
+        program_list.remove('toLegacyPDB.py')
 else:
-    program_list.remove('toMmCIF.py')
+    if 'toMmCIF.py' in program_list:
+        program_list.remove('toMmCIF.py')
 
 
 # dssp directory
@@ -776,68 +778,58 @@ for elem in program_list:
         log('plotSnapshots computations are done.', 'i')
         
 
-    elif (elem == 'PyMolHeatmapVisualisation.py'):
-        # create csv file with number of residues in each chain
-        files_dir = get_working_dir(file_dir)
-        list_file_dir = os.listdir(files_dir)
-        list_file_dir = sorted_nicely(list_file_dir)
+    elif (elem == 'PyMolHeatmapVisualisation.py'):      
+        if (add_pyMolHeatmapVisualisation_args == ''):
+            # get pseudo pdb / cif and dssp file
+            files_dir = get_working_dir(file_dir)
+            list_file_dir = os.listdir(files_dir)
+            list_file_dir = sorted_nicely(list_file_dir)
         
-        os.chdir(out_dir)
-        input_dir_csv_file = new_directory('files_for_GraCom_computation') + '/' 
-        os.chdir(files_dir)
-        
-        cif_or_pdb_file = ''
-        for file in list_file_dir:
-            if file.endswith('.cif'):
-                shutil.copy(file, input_dir_csv_file + file)
-                cif_or_pdb_file = input_dir_csv_file + os.path.basename(file)
-                break
-                                          
-        if (cif_or_pdb_file == ''):
-            list_input_dir = os.listdir(input_dir)
-            list_input_dir = sorted_nicely(list_file_dir)
-            for file in list_input_dir:
-                if file.endswith('.pdb'):
-                    shutil.copy(file, input_dir_csv_file + file)
-                    cif_or_pdb_file = input_dir_csv_file + os.path.basename(file)
+            cif_or_pdb_file = ''
+            for file in list_file_dir:
+                if file.endswith('.cif'):
+                    cif_or_pdb_file = os.path.abspath(file)
                     break
-        
-        # get corresponding dssp file
-        base = os.path.basename(cif_or_pdb_file)
-        name = os.path.splitext(base)[0]
-        dssp_path = dssp_dir + name + '.dssp'
-        dssp_file = ''
-        if os.path.exists(dssp_path):
-            dssp_file = dssp_path
-            shutil.copy(dssp_file, input_dir_csv_file + name + '.dssp')
-            dssp_file = input_dir_csv_file + name + '.dssp'
-        else:
-            log("There exists no dssp file " + dssp_path + ". Can´t create csv file with number of residues in each chain.", 'e')   
-           
-        if dssp_file != '' and cmd_header_mmcif != '': 
-            cif_file = cif_or_pdb_file       
-            if cif_or_pdb_file.endswith('.pdb'):
-                createMmCifFile = cmd_start + 'toMmCIF.py -i ' + os.path.dirname(cif_or_pdb_file) + ' -p ' + out_dir + cmd_header_mmcif
-                os.chdir(out_dir)
-                os.system(createMmCifFile)
-                cif_file = os.path.abspath(out_dir) + '/' + name + '.cif'
-                os.chdir(files_dir)
-            
-            createCsvFile = 'java -jar ' + default_path_graCom + ' none -p ' + cif_file + ' -d ' + dssp_file + ' -o ' + input_dir_csv_file + ' -I -N --silent --dont-write-images --set "PTGLgraphComputation_B_csv_number_residues_chains" "true"' 
-            log("Csv file with the number of residues in each chain created.", 'i')
-            os.chdir(out_dir)
-            os.system(createCsvFile)  
-            os.chdir(files_dir) 
-            
-        else:
-            log("There was no header file given for a mmcif file or no dssp file found. As PTGLgraphComputation will not compute output without, there can not be created the csv file containing the number of residues for each chain.", 'e')
-                
-        # Create PyMOL script
-        if (add_pyMolHeatmapVisualisation_args == ''):            
+                                          
+            if (cif_or_pdb_file == ''):
+                list_input_dir = os.listdir(input_dir)
+                list_input_dir = sorted_nicely(list_file_dir)
+                for file in list_input_dir:
+                    if file.endswith('.pdb'):
+                        cif_or_pdb_file = os.path.abspath(file)
+                        break
+                    
+            base = os.path.basename(cif_or_pdb_file)
+            name = os.path.splitext(base)[0]
+            dssp_path = dssp_dir + name + '.dssp'
+            dssp_file = ''
+            if os.path.exists(dssp_path):
+                dssp_file = dssp_path
+            else:                
+                dssp_file = ''
+
+            create_csv_string = ''
+            if cif_or_pdb_file.endswith('.cif') and dssp_file != '':
+                create_csv_string = ' --pdb-or-cif-file ' + cif_or_pdb_file + ' --dssp-file ' + dssp_file
+            elif cif_or_pdb_file.endswith('.pdb') and dssp_file != '' and cmd_header_mmcif != '':
+                create_csv_string = ' --pdb-or-cif-file ' + cif_or_pdb_file + ' --dssp-file ' + dssp_file + cmd_header_mmcif
+
+            file = ''
+            if cif_or_pdb_file.endswith('.cif'):
+                file = cif_or_pdb_file
+            else:
+                files_dir = get_working_dir(file_dir)
+                list_files_dir = os.listdir(files_dir)
+                list_files_dir = sorted_nicely(list_files_dir)
+                for file_output in list_files_dir:
+                    if file_output.endswith('.pdb'):
+                        file = os.path.abspath(file_output)
+                        break
+
             work_dir = get_working_dir(compareSubsets_dir)
             log(work_dir, 'd')
             
-            createPymolScript = 'python3 ' + plotting_dir + elem + ' ' + work_dir + ' ' + cif_or_pdb_file + ' -p ' + out_dir 
+            createPymolScript = 'python3 ' + plotting_dir + elem + ' ' + work_dir + ' ' + file + ' -p ' + out_dir + create_csv_string
             log(createPymolScript, 'd')
             os.chdir(out_dir) 
             os.system(createPymolScript)

@@ -19,6 +19,7 @@ import traceback
 import pathlib
 import re
 import fnmatch
+import shutil
 
 
 ########### functions ###########
@@ -42,6 +43,11 @@ def log(message, level=""):
             global output_file
             output_file.write(message + "\n")
 
+def new_directory(name):
+    """Creates a new directory 'name' if it does not exist yet. Returns the absolute path of that directory"""
+    if not os.path.isdir(name):
+        os.makedirs(name)
+    return os.path.abspath(name)
 
 def check_dir_args(argument):
     """Checks directory arguments and returns its value if the directory exists or exits the program otherwise."""
@@ -172,6 +178,27 @@ cl_parser.add_argument('-p',
                        default = '',
                        help = 'specify a path to your output files. Otherwise the current folder is used.')
 
+cl_parser.add_argument('--divide-by-chainlength',
+                       metavar = 'divide-by-chainlength',
+                       default = '',
+                       help = 'specify a path to a "number_of_residues_in_each_chain" csv file to divide the change of each chain by its chain length.')
+
+# Args for the computation of the csv file containing the number of residues in each chain. 
+cl_parser.add_argument('--pdb-or-cif-file',
+                       metavar = 'pdb-or-cif-file',
+                       default = '',
+                       help = 'specify a path to a pseudo pdb or cif file. Enter a corresponding dssp file and if you entered a pseudo pdb file a header file as well to create a csv file with the number of residues in each chain.')
+
+cl_parser.add_argument('--dssp-file',
+                       metavar = 'dssp-file',
+                       default = '',
+                       help = 'specify a path to a dssp file corresponding to your cif or pseudo pdb file.')
+
+cl_parser.add_argument('--headerfile',
+                       metavar = 'headerfile',
+                       default = '',
+                       help = 'specify a path to a headerfile for the computation of a mmcif file if you have entered a file in pseudo pdb format.')
+
 args = cl_parser.parse_args()
 
 
@@ -190,10 +217,48 @@ input_dir = check_dir_args(args.inputdir)
 
 # input file
 inputfile = check_input_files(args.inputfile)
-      
+
 # output directory
 output_dir = check_dir_args(args.outputdirectory)
 
+os.chdir(output_dir)
+input_dir_csv_file = new_directory('files_for_GraCom_computation') + '/'
+os.chdir(input_dir)
+
+# pdb of cif file
+if args.pdb_or_cif_file != '':
+    if(os.access(args.pdb_or_cif_file, os.R_OK)) and (args.pdb_or_cif_file.endswith('.pdb') or args.pdb_or_cif_file.endswith('.cif')):        
+        shutil.copy(args.pdb_or_cif_file, input_dir_csv_file + os.path.basename(args.pdb_or_cif_file))
+        pdb_or_cif_file = input_dir_csv_file + os.path.basename(args.pdb_or_cif_file)
+    else:
+        log("Can´t read the given pdb or cif file or wrong file format. Continuing without computation of a csv file.", 'e')
+        pdb_or_cif_file = ''
+else:
+    pdb_or_cif_file = ''
+    log("No pseudo pdb or mmCIF file given. Can´t create csv file with number of residues in each chain.", 'i')
+
+# dssp file
+if args.dssp_file != '':
+    if(os.access(args.dssp_file, os.R_OK)) and (args.dssp_file.endswith('.dssp')):
+        shutil.copy(args.dssp_file, input_dir_csv_file + os.path.basename(args.dssp_file))
+        dssp_file = input_dir_csv_file + os.path.basename(args.dssp_file)
+    else:
+        log("Can´t read the given dssp file or wrong file format. Continuing without computation of a csv file.", 'e')
+        dssp_file = ''
+else:
+    dssp_file = ''
+    log("No dssp file found or given. Can´t create csv file with number of residues in each chain.", 'i')
+
+# headerfile
+if args.headerfile != '':
+    if(os.access(args.headerfile, os.R_OK)):
+        headerfile = args.headerfile
+    else:
+        log("Can´t read the headerfile. Continuing without computation of a csv file if you entered a pdb file.", 'e')
+        headerfile = ''
+else:
+    headerfile = ''
+    log("No headerfile given. Continuing without computation of a csv file if you entered a pdb file.", 'i')
 
 if (args.first_timestep >= args.last_timestep):
     log("The given first frame number is greater than the number given as the last timestep.",'e')
@@ -323,6 +388,56 @@ for key in changes_nodes:
     change_each_chain.write(key + ',' + str(changes_nodes[key]) + '\n')
 
 change_each_chain.close()
+
+# Create csv file with number of residues in each chain.
+path_PyMolHeatmap = os.path.dirname(__file__)
+path_toMmCif = ((path_PyMolHeatmap.split('plotting-scripts'))[0]) + 'toMmCIF.py'
+path_graCom = ((path_PyMolHeatmap.split('PTGLdynamics'))[0]) + 'PTGLgraphComputation/dist/PTGLgraphComputation.jar'
+
+cif_file = ''
+if pdb_or_cif_file.endswith('.pdb') and dssp_file != '' and headerfile != '':
+    createMmCifFile = 'python3 ' + path_toMmCif + ' -i ' +  input_dir_csv_file + ' -p ' + input_dir_csv_file + ' --headerfile ' + headerfile
+    os.chdir(input_dir_csv_file)
+    os.system(createMmCifFile)
+    os.chdir(work_dir)
+    cif_file = os.path.abspath(input_dir_csv_file) + '/' + (os.path.basename(pdb_or_cif_file).split('.pdb'))[0] + '.cif'
+else:
+    cif_file = pdb_or_cif_file
+
+if cif_file != '' and dssp_file != '':
+    createCsvFile = 'java -jar ' + path_graCom + ' none -p ' + cif_file + ' -d ' + dssp_file + ' -o ' + output_dir + ' -I --set "PTGLgraphComputation_B_csv_number_residues_chains" "true" --set "PTGLgraphComputation_B_debug_only_parse" "true"' 
+    os.chdir(output_dir)
+    os.system(createCsvFile)  
+    os.chdir(work_dir)
+    log("Csv file with the number of residues in each chain created.", 'i')
+    
+    
+
+# Read in file with the number of residues in each chain.
+if(args.divide_by_chainlength != ""):
+    file_chainlength = args.divide_by_chainlength
+    if(os.access(file_chainlength, os.R_OK)):
+        with open(file_chainlength, 'r') as fc:
+            lines_chainlength = fc.read().split("\n")
+
+        for chain in lines_chainlength[1:]:
+            if chain != '':
+                columns = chain.split(',')
+                if (len(columns) == 2):
+                    changes_nodes[columns[0]] = int(changes_nodes.get(columns[0])) / int(columns[1])
+
+        log("Changes divided by chain lengths " + str(changes_nodes), 'i')
+            
+    else:
+        logging.error("Specified input file '%s' is not readable. Continuing without it.", file_chainlength)
+
+change_each_chain_divided_chainlength = open(output_dir + '/' + 'change_each_chain_divided_by_chain_length_frame' + str(args.first_timestep) + '_to_frame' + str(args.last_timestep) + '.csv','w')
+change_each_chain_divided_chainlength.write("chain" + "," +  "change divided by chain length" + '\n')
+
+for key in changes_nodes:
+    change_each_chain_divided_chainlength.write(key + ',' + str(changes_nodes[key]) + '\n')
+
+change_each_chain_divided_chainlength.close()
 
 
 # Create PyMol script.

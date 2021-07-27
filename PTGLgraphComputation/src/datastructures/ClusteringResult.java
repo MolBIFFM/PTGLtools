@@ -15,6 +15,8 @@ import tools.DP;
  * @author jnw
  */
 public class ClusteringResult {
+    private final static String CLASS_TAG = "CG";
+    
     private ArrayList<int[]> merges = new ArrayList<>();
     private final Boolean binary;
     
@@ -25,7 +27,7 @@ public class ClusteringResult {
     public Boolean addMerge(int[] merge) {
         if (binary) {
             if (merge.length > 2) {
-                DP.getInstance().e("Tried adding a merge of more than two vertices to a binary clustering result. Rejecting merge and trying to go on. "
+                DP.getInstance().e(CLASS_TAG, "Tried adding a merge of more than two vertices to a binary clustering result. Rejecting merge and trying to go on. "
                         + "Please report this bug to the developers.");
             }
         }

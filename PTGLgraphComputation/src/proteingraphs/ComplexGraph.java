@@ -8,6 +8,7 @@
  */
 package proteingraphs;
 
+import algorithms.AgglomerativeClustering;
 import graphdrawing.PageLayout;
 import graphdrawing.DrawTools;
 import graphdrawing.DrawResult;
@@ -232,6 +233,22 @@ public class ComplexGraph extends UAdjListGraph {
         
         calculateNumChainInteractions(preprocessedResContacts);
         createEdges(preprocessedResContacts);
+        
+        // TODELETE cluster
+        System.out.println("CLUSTER TEST");
+        int[][] edgeList = {
+            {0, 1, 10},
+            {0, 2, 10},
+            {1, 2, 5},
+            {2, 3, 60}
+        };
+        Map<Integer, Integer> chainLengths = new HashMap<>();
+        chainLengths.put(0, 5);
+        chainLengths.put(1, 5);
+        chainLengths.put(2, 15);
+        chainLengths.put(3, 10);
+        AgglomerativeClustering clustering = new AgglomerativeClustering(edgeList, chainLengths, EdgeWeightTypes.ADDITIVE_LENGTH_NORMALIZATION);
+        clustering.chainLengthClustering();
     }
     
     

@@ -125,14 +125,14 @@ public class AgglomerativeClustering {
                 DP.getInstance().e(CLASS_TAG, "Got an edge without two particpating vertices. Skipping edge and trying to go on. "
                         + "Please report this bug to the developers.");
                 continue;
-            }
+            } 
             BigDecimal normalizedWeight = ComplexGraphEdgeWeightTypes.computeLengthNormalization(edge[2], chainLengths.get(edge[0]), chainLengths.get(edge[1]), 
                     weightType);
 
             edges.add(new Edge(edge[0], edge[1], edge[2], weightType, normalizedWeight));
         }
         
-        this.chainLengths = chainLengths;
+        this.chainLengths = new HashMap<>(chainLengths);  // Shallow copy to not change chain lengths outside of this class
         this.weightType = weightType;
     }
     
@@ -273,6 +273,12 @@ public class AgglomerativeClustering {
         System.out.println("CLUSTER TEST");
         Settings.set("PTGLgraphComputation_I_debug_level", "3");
         
+        // Example 1
+        //   Additive length normalization merges
+        //     2,3
+        //     0,1
+        //     0,2
+        /*
         int[][] edgeList = {
             {0, 1, 10},
             {0, 2, 10},
@@ -285,8 +291,52 @@ public class AgglomerativeClustering {
         chainLengths.put(1, 5);
         chainLengths.put(2, 15);
         chainLengths.put(3, 10);
+        */
         
+        // Example 2
+        //   Additive length normalization merges
+        //     5,8
+        //     1,2
+        //     5,7
+        //     1,3
+        //     5,6
+        //     0,4
+        //     0,5
+        //     0,1
+        int[][] edgeList = {
+            {0, 1, 5},
+            {0, 2, 4},
+            {0, 3, 3},
+            {0, 4, 10},
+            {0, 5, 8},
+            {0, 6, 7},
+            {1, 2, 15},
+            {2, 3, 14},
+            {5, 7, 18},
+            {5, 8, 21},
+            {6, 7, 12}
+        };
+        
+        Map<Integer, Integer> chainLengths = new HashMap<>();
+        chainLengths.put(0, 40);
+        chainLengths.put(1, 8);
+        chainLengths.put(2, 10);
+        chainLengths.put(3, 20);
+        chainLengths.put(4, 5);
+        chainLengths.put(5, 12);
+        chainLengths.put(6, 15);
+        chainLengths.put(7, 11);
+        chainLengths.put(8, 7);
+
         AgglomerativeClustering clustering = new AgglomerativeClustering(edgeList, chainLengths, EdgeWeightType.ADDITIVE_LENGTH_NORMALIZATION);
+        
+        clustering.chainLengthClustering();
+        
+        clustering = new AgglomerativeClustering(edgeList, chainLengths, EdgeWeightType.MULTIPLICATIVE_LENGTH_NORMALIZATION);
+        
+        clustering.chainLengthClustering();
+        
+        clustering = new AgglomerativeClustering(edgeList, chainLengths, EdgeWeightType.ABSOLUTE_WEIGHT);
         
         clustering.chainLengthClustering();
         

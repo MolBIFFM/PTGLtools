@@ -8,6 +8,7 @@
 package datastructures;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import tools.DP;
 
 /**
@@ -17,7 +18,7 @@ import tools.DP;
 public class ClusteringResult {
     private final static String CLASS_TAG = "CG";
     
-    private ArrayList<int[]> merges = new ArrayList<>();
+    private final ArrayList<int[]> merges = new ArrayList<>();
     private final Boolean binary;
     
     public ClusteringResult(Boolean binary) {
@@ -33,5 +34,14 @@ public class ClusteringResult {
         }
         merges.add(merge);
         return true;
+    }
+    
+    @Override
+    public String toString() {
+        String result = ""; 
+        merges.forEach(merge -> {
+            System.out.println(Arrays.toString(merge));
+        });
+        return result;
     }
 }

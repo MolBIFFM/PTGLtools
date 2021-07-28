@@ -21,7 +21,7 @@ public final class ComplexGraphEdgeWeightTypes {
     private final static int PRECISION = 35;  // used as precision for the BigDecimal normalized edge weight, i.e., number of digits left and right of decimal point
     
     // List here the weights / normalizations and assign short but descriptive spaced names
-    public static enum EdgeWeightTypes {
+    public static enum EdgeWeightType {
         ABSOLUTE_WEIGHT,
         ADDITIVE_LENGTH_NORMALIZATION,
         MULTIPLICATIVE_LENGTH_NORMALIZATION,
@@ -54,5 +54,21 @@ public final class ComplexGraphEdgeWeightTypes {
     
     public static BigDecimal computeLucidMultiplicativeLengthNormlization(BigDecimal multNorm, BigDecimal smallestMultNorm) {
         return multNorm.divide(smallestMultNorm);
+    }
+    
+    public static BigDecimal computeLengthNormalization(int numResContacts, int lengthChainA, int lengthChainB, EdgeWeightType weightType) {
+        BigDecimal normalizedWeight;
+        switch (weightType) {
+                case ADDITIVE_LENGTH_NORMALIZATION:
+                    normalizedWeight = computeAdditiveLengthNormlization(BigDecimal.valueOf(numResContacts), lengthChainA, lengthChainB);
+                    break;
+                case MULTIPLICATIVE_LENGTH_NORMALIZATION:
+                    normalizedWeight = computeMultiplicativeLengthNormlization(BigDecimal.valueOf(numResContacts), lengthChainA, lengthChainB);
+                    break;
+                case ABSOLUTE_WEIGHT:
+                default:
+                    normalizedWeight = BigDecimal.valueOf(numResContacts);
+            }
+        return normalizedWeight;
     }
 }

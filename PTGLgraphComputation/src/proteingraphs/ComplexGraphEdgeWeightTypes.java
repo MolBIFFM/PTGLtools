@@ -53,7 +53,7 @@ public final class ComplexGraphEdgeWeightTypes {
     }
     
     public static BigDecimal computeLucidMultiplicativeLengthNormlization(BigDecimal multNorm, BigDecimal smallestMultNorm) {
-        return multNorm.divide(smallestMultNorm);
+        return multNorm.divide(smallestMultNorm, PRECISION, RoundingMode.HALF_UP);
     }
     
     public static BigDecimal computeLengthNormalization(int numResContacts, int lengthChainA, int lengthChainB, EdgeWeightType weightType) {

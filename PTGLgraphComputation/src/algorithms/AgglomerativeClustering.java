@@ -186,7 +186,7 @@ public class AgglomerativeClustering {
         }
         
         // add vertices of edges with highest normalized weight to merges of cluster result
-        clusteringResult.addMerge(edges.get(0).getVertices());
+        clusteringResult.addMerge(IntStream.of(edges.get(0).getVertices()).boxed().toArray(Integer[]::new));
         
         int v1 = edges.get(0).v1;
         int v2 = edges.get(0).v2;

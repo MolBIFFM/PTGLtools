@@ -9,6 +9,7 @@ package datastructures;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import tools.DP;
 
@@ -39,17 +40,7 @@ public class ClusteringResult {
         return true;
     }
     
-    @Override
-    public String toString() {
-        return listOfArrayToString(merges);
-    }
-    
-    /**
-     * Same as toString but replacing vertex IDs by Strings of given map.
-     * @param mapVertexIdToName maps integer vertex IDs to Strings, e.g., name
-     * @return 
-     */
-    public String toString(Map<Integer, String> mapVertexIdToName) {
+    private ArrayList<String[]> renameVertexIdsInMerges(Map<Integer, String> mapVertexIdToName) {
         ArrayList<String[]> renamedMerges = new ArrayList<>();
         for (Integer[] merge : merges) {
             String[] renamedMerge = new String[merge.length];
@@ -62,7 +53,7 @@ public class ClusteringResult {
             }
             renamedMerges.add(renamedMerge);
         }
-        return listOfArrayToString(renamedMerges);
+        return renamedMerges;
     }
     
     /**
@@ -78,5 +69,68 @@ public class ClusteringResult {
             result += "\n";
         }
         return result.strip();  // strip to remove last newline
+    }
+    
+    
+    @Override
+    public String toString() {
+        return listOfArrayToString(merges);
+    }
+    
+    /**
+     * Same as toString but replacing vertex IDs by Strings of given map.
+     * @param mapVertexIdToName maps integer vertex IDs to Strings, e.g., name
+     * @return 
+     */
+    public String toString(Map<Integer, String> mapVertexIdToName) {
+        return listOfArrayToString(renameVertexIdsInMerges(mapVertexIdToName));
+    }
+    
+    
+    /**
+     * Returns the clustering result as Newick string of format 9.
+     * @param <T>
+     * @param merges as ArrayList of arrays of arbitrary type
+     * @return clustering result as Newick string of format 9
+     */
+    private <T> String toNewickString(ArrayList<T[]> merges) {
+        Map<T, String> subStrings = new HashMap<>();
+        T lastRepresentative = null;
+        for (T[] merge : merges) {
+            lastRepresentative = merge[0];  //  first vertex is always representative
+            ArrayList<String> verticeStrings = new ArrayList<>();
+            for (T vertex : merge) {
+                if (subStrings.containsKey(vertex)) {
+                    verticeStrings.add(subStrings.get(vertex));
+                    subStrings.remove(vertex);
+                } else {
+                    verticeStrings.add(vertex.toString());
+                }
+            }
+            subStrings.put(merge[0], "(" + String.join(",", verticeStrings) + ")");
+        }
+        return "(" + subStrings.get(lastRepresentative) + ");";
+    }
+    
+    public String toNewickString(Map<Integer, String> mapVertexIdToName) {
+        return toNewickString(renameVertexIdsInMerges(mapVertexIdToName));
+    }
+    
+    public String toNewickString() {
+        return toNewickString(merges);
+    }
+    
+    /**
+     * Tests clusteringResult implementation.
+     */
+    public static void main() {
+        // test toNewick for non-binary dendrogram
+        //   Result: ((((1,2),3),(4,5,6),7));
+        ClusteringResult clusteringResult = new ClusteringResult(false);
+        clusteringResult.addMerge(new Integer[]{1,2});
+        clusteringResult.addMerge(new Integer[]{1,3});
+        clusteringResult.addMerge(new Integer[]{4,5,6});
+        clusteringResult.addMerge(new Integer[]{1,4,7});
+        System.out.println(clusteringResult.toNewickString());
     }
 }

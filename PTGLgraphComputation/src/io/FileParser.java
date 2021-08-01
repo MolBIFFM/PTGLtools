@@ -621,7 +621,7 @@ public class FileParser {
                 resInChain += c.getPdbChainID() + "," + c.getChainLength() + "\n";
             }
             IO.writeStringToFile(resInChain, numberResInChains.getAbsolutePath(), true);  
-            DP.getInstance().w("Csv file with the number of residues in each chain created.");
+            DP.getInstance().i("Csv file with the number of residues in each chain created.");
             }
         }
     

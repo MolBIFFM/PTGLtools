@@ -25,8 +25,11 @@ import time
 ########### functions ###########
 
 # Add new subscripts here
-programs = ['toLegacyPDB.py', 'toMmCIF.py', 'dsspcmbi', 'postProcessDssp.py', 'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py', 'getAttributeDataFromGml.py', 'evalEdgesWeights.py', 'changeEdgeNames.py', 'sumEdgeWeights.py', 'plotSnapshots.py', 'PyMolHeatmapVisualisation.py']
+programs = ['toLegacyPDB.py', 'toMmCIF.py', 'dsspcmbi', 'postProcessDssp.py', 'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py', 'getAttributeDataFromGml.py', 'evalEdgesWeights.py', 'changeEdgeNames.py', 'sumEdgeWeights.py', 'plotSnapshots.py', 'PyMolHeatmapVisualisation.py', 'getContactPartnersOfResidues.py', 'compareContactPartnersOfResidues.py', 'PyMolHeatmapResidueResidueContacts.py']
 
+default_path_graCom = os.path.dirname(__file__)
+parts = default_path_graCom.split('/PTGLdynamics')
+default_path_graCom = parts[0] + '/PTGLgraphComputation/dist/PTGLgraphComputation.jar'
 
 def check_file_writable(fp):
     """Checks if the given filepath is writable"""
@@ -181,7 +184,13 @@ cl_parser.add_argument('-H',
                        '--headerfile',
                        metavar = 'headerfile',
                        default = '',
-                       help = 'to integrate a header in your files containing 3D structural data specify the path of your header file.')
+                       help = 'to integrate a header in your mmcif files containing 3D structural data specify the path of your header file.')
+                       
+cl_parser.add_argument('-C',
+                       '--compoundfile',
+                       metavar = 'compoundfile',
+                       default = '',
+                       help = 'to integrate a header in your pdb files containing 3D structural data specify the path of your header file.')                         
 
 cl_parser.add_argument('-a',
                        '--applications',
@@ -203,38 +212,38 @@ cl_parser.add_argument('-u',
                        help='display the results in sub directories in the output directory.')
 
 cl_parser.add_argument('--PTGLgraphComputation-path',
-                       default = (os.path.dirname(__file__) + '/PTGLgraphComputation/dist/PTGLgraphComputation.jar'),
+                       default = default_path_graCom,
                        help = 'Absolute path to a custom PTGLgraphComputation JAR file. Otherwise assuming built version of PTGLtools.')
 
 cl_parser.add_argument('--PTGLgraphComputation-args',
                        metavar = 'PTGLgraphComputation-args',
                        type = str,
                        default = '',
-                       help = 'a string with the PTGLgraphComputation arguments you want to use and its values to execute PTGLgraphComputation in different ways using PTGLgraphComputations command line arguments. Insert arguments like this: -a="<arguments and their inputs>" ')
+                       help = 'a string with the PTGLgraphComputation arguments you want to use and its values to execute PTGLgraphComputation in different ways using PTGLgraphComputations command line arguments. Insert arguments like this: --PTGLgraphComputation-args="<arguments and their inputs>" ')
 
 cl_parser.add_argument('--toLegacyPDB-args',
                        metavar = 'toLegacyPDB-arguments',
                        type = str,
                        default = '',
-                       help = 'a string with the arguments for toLegacyPDB you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: -b="<arguments and their inputs>" ')
+                       help = 'a string with the arguments for toLegacyPDB you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: --toLegacyPDB-args="<arguments and their inputs>" ')
 
 cl_parser.add_argument('--dsspcmbi-args',
                        metavar = 'dsspcmbi-arguments',
                        type = str,
                        default = '',
-                       help = 'a string with the arguments for dsspcmbi you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: -e="<arguments and their inputs>" ')
+                       help = 'a string with the arguments for dsspcmbi you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: --dsspcmbi-args="<arguments and their inputs>" ')
 
 cl_parser.add_argument('--postProcessDssp-args',
                        metavar = 'postProcessDssp-arguments',
                        type = str,
                        default = '',
-                       help = 'a string with the arguments for postProcessDssp you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: -f="<arguments and their inputs>" ')
+                       help = 'a string with the arguments for postProcessDssp you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: --postProcessDssp-args="<arguments and their inputs>" ')
 
 cl_parser.add_argument('--gmlCompareEdgeWeightsAndSubsets-args',
                        metavar = 'gmlCompareEdgeWeightsAndSubsets-args',
                        type = str,
                        default = '',
-                       help = 'a string with the arguments for gmlCompareEdgeWeightsAndSubsets you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: -g="<arguments and their inputs>" ')
+                       help = 'a string with the arguments for gmlCompareEdgeWeightsAndSubsets you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: --gmlCompareEdgeWeightsAndSubsets-args="<arguments and their inputs>" ')
 
 cl_parser.add_argument('-j',
                        '--different-dssp-folders',
@@ -244,7 +253,7 @@ cl_parser.add_argument('-j',
 cl_parser.add_argument('-I',
                        '--toMmCIF',
                        action='store_true',
-                       help = 'converts non legacy PDB files to mmCIF format.')
+                       help = 'converts pseudo legacy PDB files to mmCIF format.')
                        
 cl_parser.add_argument('--toMmCIF-args',
                        type = str,
@@ -254,33 +263,50 @@ cl_parser.add_argument('--toMmCIF-args',
 cl_parser.add_argument('--getAttributeDataFromGml-args',
                        metavar = 'getAttributeDataFromGml-args',
                        default = 'numAllResResContacts -c',
-                       help = 'a string with the arguments for getAttributeDataFromGml you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: -t="<arguments and their inputs>". Put the positional attribute argument first, followed by optional arguments. Default attribute argument is numAllResResContacts. ')
+                       help = 'a string with the arguments for getAttributeDataFromGml you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: --getAttributeDataFromGml-args="<arguments and their inputs>". Put the positional attribute argument first, followed by optional arguments. Default attribute argument is numAllResResContacts. ')
                        
 cl_parser.add_argument('--evalEdgesWeights-args',
                        metavar = 'evalEdgesWeights-args',
                        default = '',   
-                       help = 'a string with the arguments for evalEdgesWeights you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: -z="<arguments and their inputs>". For default are two csv files in your output folder created, all_edge_values.csv and edges_weights.csv. If the second file name is altered, changeEdgeNames.py has to be executed manually on that file.')
+                       help = 'a string with the arguments for evalEdgesWeights you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: --evalEdgesWeights-args="<arguments and their inputs>". For default are two csv files in your output folder created, all_edge_values.csv and edges_weights.csv. If the second file name is altered, changeEdgeNames.py has to be executed manually on that file.')
                        
 cl_parser.add_argument('--changeEdgeNames-args',
                        metavar = 'changeEdgeNames-args',
                        default = '',   
-                       help = 'a string with the arguments for changeEdgeNames you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: -y="<arguments and their inputs>". Using the files from the inputfolder as default. Executing the script alone needs at least all positional arguments, only one csv at a time can be executed.')
+                       help = 'a string with the arguments for changeEdgeNames you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: --changeEdgeNames-args="<arguments and their inputs>". Using the files from the inputfolder as default. Executing the script alone needs at least all positional arguments, only one csv at a time can be executed.')
                        
 cl_parser.add_argument('--sumEdgeWeights-args',
                        metavar = 'sumEdgeWeights-args',
                        default = '',   
-                       help = 'a string with the arguments for sumEdgeWeights you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: -x="<arguments and their inputs>".')
+                       help = 'a string with the arguments for sumEdgeWeights you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: --sumEdgeWeights-args="<arguments and their inputs>".')
 
 cl_parser.add_argument('--plotSnapshots-args',
                        metavar = 'plotSnapshots-args',
                        default = '',   
-                       help = 'a string with the arguments for plotSnapshots you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: -n="<arguments and their inputs>".')
+                       help = 'a string with the arguments for plotSnapshots you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: --plotSnapshots-args="<arguments and their inputs>".')
                        
 cl_parser.add_argument('--pyMolHeatmapVisualisation-args',
                        metavar = 'pyMolHeatmapVisualisation-arguments',
                        type = str,
                        default = '',
-                       help = 'a string with the arguments for createPymolScript you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: --createPymolScript-args="<arguments and their inputs>", including the positional arguments.')                       
+                       help = 'a string with the arguments for pyMolHeatmapVisualisation.py you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: --pyMolHeatmapVisualisation-args="<arguments and their inputs>", including the positional arguments.')   
+
+cl_parser.add_argument('--getContactPartnersOfResidues-args',
+                       metavar = 'getContactPartnersOfResidues-args',
+                       default = '',   
+                       help = 'a string with the arguments for getContactPartnersOfResidues.py you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: --getContactPartnersOfResidues-args="<arguments and their inputs>".')
+
+cl_parser.add_argument('--compareContactPartnersOfResidues-args',
+                       metavar = 'compareContactPartnersOfResidues-args',
+                       default = '',   
+                       help = 'a string with the arguments for compareContactPartnersOfResidues.py you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: --compareContactPartnersOfResidues-args="<arguments and their inputs>".')
+                       
+cl_parser.add_argument('--pyMolHeatmapResidueResidueContacts-args',
+                       metavar = 'pyMolHeatmapResidueResidueContacts-arguments',
+                       type = str,
+                       default = '',
+                       help = 'a string with the arguments for PyMolHeatmapResidueResidueContacts.py you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: --PyMolHeatmapResidueResidueContacts-args="<arguments and their inputs>", including the positional arguments.')                      
+                                            
 
 args = cl_parser.parse_args()
 
@@ -311,18 +337,32 @@ original_output_dir = check_dir_args(args.output_dir)
 # headerfile directory
 if (args.headerfile != ""):
     if(os.access(args.headerfile, os.R_OK)):
-        header = os.path.abspath(args.headerfile)
-        if (args.toMmCIF):
-            cmd_header = ' --headerfile ' + header
-        else:
-            cmd_header = ' -c ' + header
+        header_mmcif = os.path.abspath(args.headerfile)
+        cmd_header_mmcif = ' --headerfile ' + header_mmcif
+
     else:
-        logging.error("Specified header file '%s' is not readable. Continuing without header file.", args.headerfile)
+        logging.error("Specified header file '%s' is not readable. Continuing without header file. PTGLgraphComputation will not be working properly though.", args.headerfile)
+        header_mmcif = ''
+        cmd_header_mmcif = ''
+else:
+    header_mmcif = ''
+    cmd_header_mmcif = ''
+    if (args.toMmCIF):
+        logging.error("No header file was specified. PTGLgraphComputation will not be working properly.") 
+        
+# compoundfile directory
+if (args.compoundfile != ""):
+    if(os.access(args.compoundfile, os.R_OK)):
+        header = os.path.abspath(args.compoundfile)
+        cmd_header = ' -c ' + header
+    else:
+        logging.error("Specified header file '%s' is not readable. Continuing without header file.", args.compoundfile)
         header = ''
         cmd_header = ''
 else:
     header = ''
-    cmd_header = ''
+    cmd_header = ''         
+
 
 # list of applications
 program_list = []
@@ -336,9 +376,11 @@ else:
     program_list = list(programs)
     
 if (args.toMmCIF):
-    program_list.remove('toLegacyPDB.py')
+    if 'toLegacyPDB.py' in program_list:
+        program_list.remove('toLegacyPDB.py')
 else:
-    program_list.remove('toMmCIF.py')
+    if 'toMmCIF.py' in program_list:
+        program_list.remove('toMmCIF.py')
 
 
 # dssp directory
@@ -381,12 +423,21 @@ add_plotSnapshots_args = check_arguments_args(args.plotSnapshots_args)
 
 # createPymolScript arguments
 add_pyMolHeatmapVisualisation_args = check_arguments_args(args.pyMolHeatmapVisualisation_args)
+
+# getContactPartnersOfResidues arguments
+add_getContactPartnersOfResidues_args = check_arguments_args(args.getContactPartnersOfResidues_args)
+
+# compareContactPartnersOfResidues arguments
+add_compareContactPartnersOfResidues_args = check_arguments_args(args.compareContactPartnersOfResidues_args)
+
+# PyMolHeatmapResidueResidueContacts arguments
+add_pyMolHeatmapResidueResidueContacts_args = check_arguments_args(args.pyMolHeatmapResidueResidueContacts_args)
     
 # different dssp folders
 if (args.different_dssp_folders):
-    dir_names = {'toLegacyPDB.py':'legacyPDB', 'toMmCIF.py':'mmCIF', 'dsspcmbi':'oldDssp', 'postProcessDssp.py':'newDssp', 'PTGLgraphComputation':'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py': 'gml', 'getAttributeDataFromGml.py': 'csv', 'evalEdgesWeights.py':'csv', 'changeEdgeNames.py':'csv', 'sumEdgeWeights.py':'pdf', 'plotSnapshots.py':'pdf', 'PyMolHeatmapVisualisation.py':'PyMOL'}
+    dir_names = {'toLegacyPDB.py':'legacyPDB', 'toMmCIF.py':'mmCIF', 'dsspcmbi':'oldDssp', 'postProcessDssp.py':'newDssp', 'PTGLgraphComputation':'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py': 'gml', 'getAttributeDataFromGml.py': 'csv', 'evalEdgesWeights.py':'csv', 'changeEdgeNames.py':'csv', 'sumEdgeWeights.py':'pdf', 'plotSnapshots.py':'pdf', 'PyMolHeatmapVisualisation.py':'PyMOL', 'getContactPartnersOfResidues.py':'csv', 'compareContactPartnersOfResidues.py':'csv', 'PyMolHeatmapResidueResidueContacts.py':'PyMOL'}
 else:
-    dir_names = {'toLegacyPDB.py':'legacyPDB', 'toMmCIF.py':'mmCIF', 'dsspcmbi':'dssp', 'postProcessDssp.py':'dssp', 'PTGLgraphComputation':'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py': 'csv', 'getAttributeDataFromGml.py': 'csv', 'evalEdgesWeights.py':'csv', 'changeEdgeNames.py':'csv', 'sumEdgeWeights.py':'pdf', 'plotSnapshots.py':'pdf', 'PyMolHeatmapVisualisation.py':'PyMOL'}
+    dir_names = {'toLegacyPDB.py':'legacyPDB', 'toMmCIF.py':'mmCIF', 'dsspcmbi':'dssp', 'postProcessDssp.py':'dssp', 'PTGLgraphComputation':'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py': 'csv', 'getAttributeDataFromGml.py': 'csv', 'evalEdgesWeights.py':'csv', 'changeEdgeNames.py':'csv', 'sumEdgeWeights.py':'pdf', 'plotSnapshots.py':'pdf', 'PyMolHeatmapVisualisation.py':'PyMOL', 'getContactPartnersOfResidues.py':'csv', 'compareContactPartnersOfResidues.py':'csv', 'PyMolHeatmapResidueResidueContacts.py':'PyMOL'}
 
 ########### vamos ###########
 
@@ -643,7 +694,7 @@ for elem in program_list:
                 try:
                     shutil.copy(file, input_dir_evalEdges + file)
                 except shutil.SameFileError:
-                        log("Source and destination represents the same file.", 'i')
+                    log("Source and destination represents the same file.", 'i')
                         
         if (len(os.listdir(input_dir_evalEdges)) != 0):
              
@@ -777,8 +828,43 @@ for elem in program_list:
             os.system(createPymolScript)
             os.chdir(work_dir)
 
-        log('PyMolHeatmapVisualisation computations are done.', 'i')
-            
+        log('PyMolHeatmapVisualisation computations are done.', 'i')        
+"""        
+    elif (elem == 'getContactPartnersOfResidues.py'):
+        if (add_getContactPartnersOfResidues_args == ''):  
+            os.chdir(out_dir)
+            input_dir_csv_files = new_directory('files_for_GraCom_computation_res_res_contacts') + '/'
+            os.chdir(input_dir)         
+
+            files_dir = get_working_dir(file_dir)
+            list_file_dir = os.listdir(files_dir)
+            list_file_dir = sorted_nicely(list_file_dir)
+            # Check whether .pdb or.cif files exist.
+            file_ending = ''
+            for file in list_file_dir:
+                if file.endswith('.cif'):
+                    print("file", file)
+                    file_ending = '.cif'                   
+                    shutil.copy(file, input_dir_csv_files + file)
+                    
+            if (file_ending == '') and cmd_header_mmcif != '':
+                file_ending = '.pdb'
+                list_input_dir = os.listdir(input_dir)
+                list_input_dir = sorted_nicely(list_file_dir)
+                for file in list_input_dir:
+                    if file.endswith(file_ending):
+                        shutil.copy(file, input_dir_csv_files + file)
+                        
+            else:
+                log("No header file given to create mmcif files out of pdb files. Can not compute further output, exiting.", 'e')
+                exit()
+
+    elif (elem == 'compareContactPartnersOfResidues.py'):
+        pass
+        
+    elif (elem == 'PyMolHeatmapResidueResidueContacts.py'):
+        pass
+"""            
         
            
 

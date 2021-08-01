@@ -2408,6 +2408,30 @@ public class Main {
                 System.out.println("    DEBUG LV 1: A ist " + MolA + ". B ist " + MolB);
             }
         }
+            
+        if(Settings.getBoolean("PTGLgraphComputation_B_csv_contacts")) {
+            String[] parts = pdbFile.split(".+?/(?=[^/]+$)");
+            String[] basename = parts[1].split("\\.");
+            File contacts = new File(outputDir +  "contacts_" + basename[0] + ".csv");
+            if (!contacts.exists()) {
+                try {
+                    contacts.createNewFile();
+                } catch (IOException ex) {
+                    DP.getInstance().e("ERROR: Could not create file '" + contacts.getAbsolutePath() + ".");
+                    }
+                }
+            String allContacts = "PDB#" + "," + "Type"+"," + "AA" +"," + "Chain" + "," + "to PDB#" + "," + "Type"+"," + "AA" +"," + "Chain" +"\n";               
+            for (MolContactInfo mol : cInfo){
+                String mci = mol.toString();
+                String MolA = mol.getMolA().toStringForCsv();
+                String MolB = mol.getMolB().toStringForCsv();
+                if (!Objects.equals(mol.getMolA().getChainID(), mol.getMolB().getChainID())){
+                    allContacts += MolA + "," + MolB + "\n";}
+                } 
+            IO.writeStringToFile(allContacts, contacts.getAbsolutePath(), true);  
+            DP.getInstance().i("Csv file with contacts created.");
+        }
+    
         
         // DEBUG: compare computed contacts with those from a geom_neo file
         if(compareResContacts) {

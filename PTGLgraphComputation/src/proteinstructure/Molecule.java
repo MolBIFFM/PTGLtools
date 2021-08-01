@@ -688,5 +688,9 @@ abstract public class Molecule {
         }
         return null;
     }
+    
+    public String toStringForCsv() {
+        return(pdbNum + "," + type + "," + Name3 + "," + chainID);
+    }
    
 }

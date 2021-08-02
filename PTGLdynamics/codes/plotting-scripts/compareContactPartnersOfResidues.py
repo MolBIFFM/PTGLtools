@@ -16,6 +16,7 @@ import argparse
 import logging
 import traceback
 import pathlib
+import pickle
 
 
 ########### functions ###########
@@ -44,7 +45,7 @@ def log(message, level=""):
 def check_input_files(inputfile):
     """Returns the argument if the file is readable. Otherwise raises an error and exits."""
     if(inputfile != ""):
-        if(os.access(inputfile, os.R_OK)):
+        if(os.access(inputfile, os.R_OK)) and inputfile.endswith('.csv'):
             return inputfile
         else:
             logging.error("Specified input file '%s' is not readable. Exiting now.", inputfile)
@@ -62,25 +63,36 @@ def check_dir_args(argument):
             logging.error("Specified directory '%s' does not exist. Exiting now.", argument)
             sys.exit(1)
     else:
-        return os.getcwd()  
-        
-def read_file_in(file):
-    """Reads a csv file in and returns sets of residue contacts for each residue in the file."""
+        return os.getcwd()
+
+def read_contact_file_in(file):
+    """Reads in a csv file computed by PTGLgraphComputation and returns a dictionary with all contacts. """
+    matches = {}
     with open(file, "r") as f:
         csv_lines = f.read().split("\n")
-    
-    residues_contacts = {}    
     for line in csv_lines[1:]:
         if line != '':
-            columns = line.split(',')            
-            residues = set(columns[2].split('#'))
-            residues_contacts[columns[0]] = residues
-
+            columns = line.split(',')
+            if columns[0] != '' and columns[5] !='':
+                key = (columns[0], columns[3], columns[4])
+                value = matches.get(key)
+                if value == None: 
+                    matches[key] = {(columns[5], columns[8], columns[9])}
+                else:
+                    value.update([(columns[5], columns[8], columns[9])])
+                    matches[key] = value       
+            if columns[5] != '' and columns[8] !='':
+                key = (columns[5], columns[8], columns[9])
+                value = matches.get(key)
+                if value == None:                        
+                    matches[key] = {(columns[0], columns[3], columns[4])}
+                else:
+                    value.update([(columns[0], columns[3], columns[4])])
+                    matches[key] = value
         else:
             break
-         
-    return residues_contacts
-          
+    return matches
+           
 
 ########### configure logger ###########
 
@@ -161,10 +173,19 @@ output_dir = check_dir_args(args.outputdirectory)
 
 log("Version " + version, "i")
 
-residues_contacts_file1 = read_file_in(file1)
+try:
+    residues_contacts_file1 = pickle.load(open("residues_contacts", "rb"))
+                                          
+except:
+    residues_contacts_file1 = read_contact_file_in(file1)
+
 log("Residue contacts in file 1" + str(residues_contacts_file1), 'i')
-residues_contacts_file2 = read_file_in(file2)
+
+residues_contacts_file2 = read_contact_file_in(file2)
+
 log("Residue contacts in file 2" + str(residues_contacts_file2), 'i')
+pickle.dump(residues_contacts_file2, open("residues_contacts", "wb"))
+
 
 symmetric_difference = {}
 
@@ -185,16 +206,17 @@ for key in residues_contacts_file2:
 log("Change in contacts " + str(symmetric_difference), 'i')
 
 name_file1 = os.path.basename(file1).split(".")
-name_file1 = name_file1[0].split("contact_list_for_each_residue_")
+name_file1 = name_file1[0].split('contacts_')[1]
 
 name_file2 = os.path.basename(file2).split(".")
-name_file2 = name_file2[0].split("contact_list_for_each_residue_")
+name_file2 = name_file2[0].split('contacts_')[1]
                
-change_in_contacts = open(output_dir + '/' + 'contact_lists_for_each_residue_compared_' + name_file1[1] + '_' + name_file2[1] + '.csv','w')
-change_in_contacts.write("Residue (PDB_ID | chain)" + "," +  "# Contact changes" + '\n')
+change_in_contacts = open(output_dir + '/' + 'contact_lists_for_each_residue_compared_' + name_file1 + '_' + name_file2 + '.csv','w')
+change_in_contacts.write("Residue (PDB_ID | chain | iCode)" + "," +  "# Contact changes" + '\n')
 
 for key in symmetric_difference:
-    change_in_contacts.write(key + ',' + str(symmetric_difference.get(key)) + '\n')
+    key_replaced = str(key).replace(', ', '|')
+    change_in_contacts.write(key_replaced + ',' + str(symmetric_difference.get(key)) + '\n')
 
 change_in_contacts.close() 
 

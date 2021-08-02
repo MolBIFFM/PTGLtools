@@ -25,7 +25,7 @@ import time
 ########### functions ###########
 
 # Add new subscripts here
-programs = ['toLegacyPDB.py', 'toMmCIF.py', 'dsspcmbi', 'postProcessDssp.py', 'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py', 'getAttributeDataFromGml.py', 'evalEdgesWeights.py', 'changeEdgeNames.py', 'sumEdgeWeights.py', 'plotSnapshots.py', 'PyMolHeatmapVisualisation.py', 'getContactPartnersOfResidues.py', 'compareContactPartnersOfResidues.py', 'PyMolHeatmapResidueResidueContacts.py']
+programs = ['toLegacyPDB.py', 'toMmCIF.py', 'dsspcmbi', 'postProcessDssp.py', 'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py', 'getAttributeDataFromGml.py', 'evalEdgesWeights.py', 'changeEdgeNames.py', 'sumEdgeWeights.py', 'plotSnapshots.py', 'PyMolHeatmapVisualisation.py', 'compareContactPartnersOfResidues.py', 'PyMolHeatmapResidueResidueContacts.py']
 
 default_path_graCom = os.path.dirname(__file__)
 parts = default_path_graCom.split('/PTGLdynamics')
@@ -291,11 +291,6 @@ cl_parser.add_argument('--pyMolHeatmapVisualisation-args',
                        default = '',
                        help = 'a string with the arguments for pyMolHeatmapVisualisation.py you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: --pyMolHeatmapVisualisation-args="<arguments and their inputs>", including the positional arguments.')   
 
-cl_parser.add_argument('--getContactPartnersOfResidues-args',
-                       metavar = 'getContactPartnersOfResidues-args',
-                       default = '',   
-                       help = 'a string with the arguments for getContactPartnersOfResidues.py you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: --getContactPartnersOfResidues-args="<arguments and their inputs>".')
-
 cl_parser.add_argument('--compareContactPartnersOfResidues-args',
                        metavar = 'compareContactPartnersOfResidues-args',
                        default = '',   
@@ -424,9 +419,6 @@ add_plotSnapshots_args = check_arguments_args(args.plotSnapshots_args)
 # createPymolScript arguments
 add_pyMolHeatmapVisualisation_args = check_arguments_args(args.pyMolHeatmapVisualisation_args)
 
-# getContactPartnersOfResidues arguments
-add_getContactPartnersOfResidues_args = check_arguments_args(args.getContactPartnersOfResidues_args)
-
 # compareContactPartnersOfResidues arguments
 add_compareContactPartnersOfResidues_args = check_arguments_args(args.compareContactPartnersOfResidues_args)
 
@@ -435,9 +427,9 @@ add_pyMolHeatmapResidueResidueContacts_args = check_arguments_args(args.pyMolHea
     
 # different dssp folders
 if (args.different_dssp_folders):
-    dir_names = {'toLegacyPDB.py':'legacyPDB', 'toMmCIF.py':'mmCIF', 'dsspcmbi':'oldDssp', 'postProcessDssp.py':'newDssp', 'PTGLgraphComputation':'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py': 'gml', 'getAttributeDataFromGml.py': 'csv', 'evalEdgesWeights.py':'csv', 'changeEdgeNames.py':'csv', 'sumEdgeWeights.py':'pdf', 'plotSnapshots.py':'pdf', 'PyMolHeatmapVisualisation.py':'PyMOL', 'getContactPartnersOfResidues.py':'csv', 'compareContactPartnersOfResidues.py':'csv', 'PyMolHeatmapResidueResidueContacts.py':'PyMOL'}
+    dir_names = {'toLegacyPDB.py':'legacyPDB', 'toMmCIF.py':'mmCIF', 'dsspcmbi':'oldDssp', 'postProcessDssp.py':'newDssp', 'PTGLgraphComputation':'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py': 'gml', 'getAttributeDataFromGml.py': 'csv', 'evalEdgesWeights.py':'csv', 'changeEdgeNames.py':'csv', 'sumEdgeWeights.py':'pdf', 'plotSnapshots.py':'pdf', 'PyMolHeatmapVisualisation.py':'PyMOL', 'compareContactPartnersOfResidues.py':'csv', 'PyMolHeatmapResidueResidueContacts.py':'PyMOL'}
 else:
-    dir_names = {'toLegacyPDB.py':'legacyPDB', 'toMmCIF.py':'mmCIF', 'dsspcmbi':'dssp', 'postProcessDssp.py':'dssp', 'PTGLgraphComputation':'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py': 'csv', 'getAttributeDataFromGml.py': 'csv', 'evalEdgesWeights.py':'csv', 'changeEdgeNames.py':'csv', 'sumEdgeWeights.py':'pdf', 'plotSnapshots.py':'pdf', 'PyMolHeatmapVisualisation.py':'PyMOL', 'getContactPartnersOfResidues.py':'csv', 'compareContactPartnersOfResidues.py':'csv', 'PyMolHeatmapResidueResidueContacts.py':'PyMOL'}
+    dir_names = {'toLegacyPDB.py':'legacyPDB', 'toMmCIF.py':'mmCIF', 'dsspcmbi':'dssp', 'postProcessDssp.py':'dssp', 'PTGLgraphComputation':'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py': 'csv', 'getAttributeDataFromGml.py': 'csv', 'evalEdgesWeights.py':'csv', 'changeEdgeNames.py':'csv', 'sumEdgeWeights.py':'pdf', 'plotSnapshots.py':'pdf', 'PyMolHeatmapVisualisation.py':'PyMOL', 'compareContactPartnersOfResidues.py':'csv', 'PyMolHeatmapResidueResidueContacts.py':'PyMOL'}
 
 ########### vamos ###########
 
@@ -470,6 +462,8 @@ getAttributeDataFromGml_dir = input_dir
 evalEdgesWeights_dir = input_dir
 changeEdgeNames_dir = input_dir
 compareSubsets_dir = input_dir
+contactResRes_dir = original_output_dir
+comparedResRes_dir = input_dir
 
 work_dir = get_working_dir(input_dir)
 list_work_dir = []
@@ -513,7 +507,7 @@ for elem in program_list:
     elif (elem == 'toMmCIF.py'):
 
         work_dir = get_working_dir(file_dir)
-        exec_string = cmd_start + elem + ' ' + add_toMmCIF_args + ' -i ' + work_dir + ' -p ' + out_dir + cmd_header
+        exec_string = cmd_start + elem + ' ' + add_toMmCIF_args + ' -i ' + work_dir + ' -p ' + out_dir + cmd_header_mmcif
         log('exec_string ' + exec_string, 'd')
         os.chdir(out_dir)
         os.system(exec_string)
@@ -829,9 +823,10 @@ for elem in program_list:
             os.chdir(work_dir)
 
         log('PyMolHeatmapVisualisation computations are done.', 'i')        
-"""        
-    elif (elem == 'getContactPartnersOfResidues.py'):
-        if (add_getContactPartnersOfResidues_args == ''):  
+       
+    elif (elem == 'compareContactPartnersOfResidues.py'):
+        if (add_compareContactPartnersOfResidues_args == ''):
+
             os.chdir(out_dir)
             input_dir_csv_files = new_directory('files_for_GraCom_computation_res_res_contacts') + '/'
             os.chdir(input_dir)         
@@ -843,7 +838,6 @@ for elem in program_list:
             file_ending = ''
             for file in list_file_dir:
                 if file.endswith('.cif'):
-                    print("file", file)
                     file_ending = '.cif'                   
                     shutil.copy(file, input_dir_csv_files + file)
                     
@@ -854,17 +848,68 @@ for elem in program_list:
                 for file in list_input_dir:
                     if file.endswith(file_ending):
                         shutil.copy(file, input_dir_csv_files + file)
-                        
+            
             else:
                 log("No header file given to create mmcif files out of pdb files. Can not compute further output, exiting.", 'e')
                 exit()
+            if (file_ending == ''):
+                log("No files found to compute csv files with contact partners of a residue. Exiting.", 'e')
+                exit()
 
-    elif (elem == 'compareContactPartnersOfResidues.py'):
-        pass
-        
+            # Generate mmCIF files if needed for PTGLgraphComputation.
+            if (file_ending == '.pdb'):
+                createMmCifs = cmd_start + 'toMmCIF.py -i ' + input_dir_csv_files + ' -p ' + input_dir_csv_files + cmd_header_mmcif
+                os.chdir(input_dir_csv_files)
+                os.system(createMmCifs)
+
+            work_dir = get_working_dir(input_dir_csv_files)        
+            list_work_dir = os.listdir(work_dir)
+            list_work_dir = sorted_nicely(list_work_dir)
+            
+            if(args.sub_dir_structure):
+                os.chdir(out_dir)
+                contactResRes_dir = new_directory('res_res_contacts') + '/'
+
+            # Create csv files with contacts with PTGLgraphComputation.
+            for cif in list_work_dir:
+                if (cif.endswith(".cif")):
+                    cif_id = pathlib.Path(cif).stem
+
+                    dssp = dssp_dir + pathlib.Path(cif).stem + '.dssp'
+
+                    PTGLgraphComputation = 'java -jar ' + default_path_graCom + ' ' + cif_id + ' -p ' + work_dir + cif + ' -d ' + dssp + ' -o ' + contactResRes_dir + ' -I -G --set "PTGLgraphComputation_B_csv_contacts" "True" --set "PTGLgraphComputation_B_calc_draw_graphs" "False"'
+                    log(PTGLgraphComputation,'d') 
+                    os.chdir(contactResRes_dir)
+                    os.system(PTGLgraphComputation)
+                    os.chdir(work_dir)
+                    
+            contactResRes_dir = os.path.abspath(contactResRes_dir) + '/'
+            log("Residue-residue contacts for each timestep computed and saved in csv file.", 'i')
+
+            # get files of two timesteps
+            work_dir = get_working_dir(contactResRes_dir)
+            list_work_dir = os.listdir(work_dir)
+            list_work_dir = sorted_nicely(list_work_dir)
+            previous_file = ''
+            for file in list_work_dir:
+                if file.startswith('contacts') and file.endswith('.csv'):
+                    if previous_file != '':
+                        compareContacts = 'python3 ' + plotting_dir + elem + ' -file1 ' + os.path.abspath(previous_file) + ' -file2 ' + os.path.abspath(file) + ' -p ' + out_dir
+                        log(compareContacts, 'd')
+                        os.chdir(out_dir)
+                        os.system(compareContacts)
+                        os.chdir(work_dir)
+                    previous_file = file
+            
+            comparedResRes_dir = os.path.abspath(out_dir) + '/'
+            os.remove(comparedResRes_dir + "residues_contacts")
+
+            log('compareContactPartnersOfresidues.py computations done.', 'i')
+                       
+
     elif (elem == 'PyMolHeatmapResidueResidueContacts.py'):
         pass
-"""            
+          
         
            
 

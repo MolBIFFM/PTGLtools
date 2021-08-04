@@ -43,7 +43,7 @@ def log(message, level=""):
             global output_file
             output_file.write(message + "\n")
 
-def new_directory(name):
+def create_directory(name):
     """Creates a new directory 'name' if it does not exist yet. Returns the absolute path of that directory"""
     if not os.path.isdir(name):
         os.makedirs(name)
@@ -179,23 +179,23 @@ cl_parser.add_argument('-p',
                        help = 'specify a path to your output files. Otherwise the current folder is used.')
 
 cl_parser.add_argument('--divide-by-chainlength',
-                       metavar = 'divide-by-chainlength',
+                       metavar = 'path',
                        default = '',
                        help = 'specify a path to a "number_of_residues_in_each_chain" csv file to divide the change of each chain by its chain length.')
 
 # Args for the computation of the csv file containing the number of residues in each chain. 
-cl_parser.add_argument('--pdb-or-cif-file',
-                       metavar = 'pdb-or-cif-file',
+cl_parser.add_argument('--pdb-file',
+                       metavar = 'path',
                        default = '',
                        help = 'specify a path to a pseudo pdb or cif file. Enter a corresponding dssp file and if you entered a pseudo pdb file a header file as well to create a csv file with the number of residues in each chain.')
 
 cl_parser.add_argument('--dssp-file',
-                       metavar = 'dssp-file',
+                       metavar = 'path',
                        default = '',
                        help = 'specify a path to a dssp file corresponding to your cif or pseudo pdb file.')
 
 cl_parser.add_argument('--headerfile',
-                       metavar = 'headerfile',
+                       metavar = 'path',
                        default = '',
                        help = 'specify a path to a headerfile for the computation of a mmcif file if you have entered a file in pseudo pdb format.')
 
@@ -222,19 +222,19 @@ inputfile = check_input_files(args.inputfile)
 output_dir = check_dir_args(args.outputdirectory)
 
 os.chdir(output_dir)
-input_dir_csv_file = new_directory('files_for_GraCom_computation') + '/'
+input_dir_csv_file = create_directory('files_for_GraCom_computation') + '/'
 os.chdir(input_dir)
 
 # pdb of cif file
-if args.pdb_or_cif_file != '':
-    if(os.access(args.pdb_or_cif_file, os.R_OK)) and (args.pdb_or_cif_file.endswith('.pdb') or args.pdb_or_cif_file.endswith('.cif')):        
-        shutil.copy(args.pdb_or_cif_file, input_dir_csv_file + os.path.basename(args.pdb_or_cif_file))
-        pdb_or_cif_file = input_dir_csv_file + os.path.basename(args.pdb_or_cif_file)
+if args.pdb_file != '':
+    if(os.access(args.pdb_file, os.R_OK)) and (args.pdb_file.endswith('.pdb') or args.pdb_file.endswith('.cif')):        
+        shutil.copy(args.pdb_file, input_dir_csv_file + os.path.basename(args.pdb_file))
+        pdb_file = input_dir_csv_file + os.path.basename(args.pdb_file)
     else:
         log("Can´t read the given pdb or cif file or wrong file format. Continuing without computation of a csv file.", 'e')
-        pdb_or_cif_file = ''
+        pdb_file = ''
 else:
-    pdb_or_cif_file = ''
+    pdb_file = ''
     log("No pseudo pdb or mmCIF file given. Can´t create csv file with number of residues in each chain.", 'i')
 
 # dssp file
@@ -395,14 +395,14 @@ path_toMmCif = ((path_PyMolHeatmap.split('plotting-scripts'))[0]) + 'toMmCIF.py'
 path_graCom = ((path_PyMolHeatmap.split('PTGLdynamics'))[0]) + 'PTGLgraphComputation/dist/PTGLgraphComputation.jar'
 
 cif_file = ''
-if pdb_or_cif_file.endswith('.pdb') and dssp_file != '' and headerfile != '':
+if pdb_file.endswith('.pdb') and dssp_file != '' and headerfile != '':
     createMmCifFile = 'python3 ' + path_toMmCif + ' -i ' +  input_dir_csv_file + ' -p ' + input_dir_csv_file + ' --headerfile ' + headerfile
     os.chdir(input_dir_csv_file)
     os.system(createMmCifFile)
     os.chdir(work_dir)
-    cif_file = os.path.abspath(input_dir_csv_file) + '/' + (os.path.basename(pdb_or_cif_file).split('.pdb'))[0] + '.cif'
+    cif_file = os.path.abspath(input_dir_csv_file) + '/' + (os.path.basename(pdb_file).split('.pdb'))[0] + '.cif'
 else:
-    cif_file = pdb_or_cif_file
+    cif_file = pdb_file
 
 if cif_file != '' and dssp_file != '':
     createCsvFile = 'java -jar ' + path_graCom + ' none -p ' + cif_file + ' -d ' + dssp_file + ' -o ' + output_dir + ' -I --set "PTGLgraphComputation_B_csv_number_residues_chains" "true" --set "PTGLgraphComputation_B_debug_only_parse" "true"' 

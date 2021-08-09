@@ -211,7 +211,7 @@ name_file1 = name_file1[0].split('contacts_')[1]
 name_file2 = os.path.basename(file2).split(".")
 name_file2 = name_file2[0].split('contacts_')[1]
                
-change_in_contacts = open(output_dir + '/' + 'contact_lists_for_each_residue_compared_' + name_file1 + '_' + name_file2 + '.csv','w')
+change_in_contacts = open(output_dir + '/' + 'change_contacts_for_each_residue_compared_' + name_file1 + '_' + name_file2 + '.csv','w')
 change_in_contacts.write("Residue (PDB_ID | chain | iCode)" + "," +  "# Contact changes" + '\n')
 
 for key in symmetric_difference:

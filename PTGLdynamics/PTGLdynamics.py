@@ -25,7 +25,7 @@ import time
 ########### functions ###########
 
 # Add new subscripts here
-programs = ['toLegacyPDB.py', 'toMmCIF.py', 'dsspcmbi', 'postProcessDssp.py', 'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py', 'getAttributeDataFromGml.py', 'evalEdgesWeights.py', 'changeEdgeNames.py', 'sumEdgeWeights.py', 'plotSnapshots.py', 'PyMolHeatmapVisualisation.py', 'compareContactPartnersOfResidues.py', 'PyMolHeatmapResidueResidueContacts.py']
+programs = ['toLegacyPDB.py', 'toMmCIF.py', 'dsspcmbi', 'postProcessDssp.py', 'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py', 'getAttributeDataFromGml.py', 'evalEdgesWeights.py', 'changeEdgeNames.py', 'sumEdgeWeights.py', 'plotSnapshots.py', 'compareContactPartnersOfResidues.py', 'calculateChanges.py', 'heatmapVisualisation.py']
 
 default_path_graCom = os.path.dirname(__file__)
 parts = default_path_graCom.split('/PTGLdynamics')
@@ -285,22 +285,22 @@ cl_parser.add_argument('--plotSnapshots-args',
                        default = '',   
                        help = 'a string with the arguments for plotSnapshots you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: --plotSnapshots-args="<arguments and their inputs>".')
                        
-cl_parser.add_argument('--pyMolHeatmapVisualisation-args',
-                       metavar = 'pyMolHeatmapVisualisation-arguments',
+cl_parser.add_argument('--heatmapVisualisation-args',
+                       metavar = 'heatmapVisualisation-arguments',
                        type = str,
                        default = '',
-                       help = 'a string with the arguments for pyMolHeatmapVisualisation.py you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: --pyMolHeatmapVisualisation-args="<arguments and their inputs>", including the positional arguments.')   
+                       help = 'a string with the arguments for heatmapVisualisation.py you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: --heatmapVisualisation-args="<arguments and their inputs>", including the positional arguments.')   
 
 cl_parser.add_argument('--compareContactPartnersOfResidues-args',
                        metavar = 'compareContactPartnersOfResidues-args',
                        default = '',   
                        help = 'a string with the arguments for compareContactPartnersOfResidues.py you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: --compareContactPartnersOfResidues-args="<arguments and their inputs>".')
                        
-cl_parser.add_argument('--pyMolHeatmapResidueResidueContacts-args',
-                       metavar = 'pyMolHeatmapResidueResidueContacts-arguments',
+cl_parser.add_argument('--calculateChanges-args',
+                       metavar = 'calculateChanges-arguments',
                        type = str,
                        default = '',
-                       help = 'a string with the arguments for PyMolHeatmapResidueResidueContacts.py you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: --PyMolHeatmapResidueResidueContacts-args="<arguments and their inputs>", including the positional arguments.')                      
+                       help = 'a string with the arguments for calculateChanges.py you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: --calculateChanges-args="<arguments and their inputs>", including the positional arguments.')                      
                                             
 
 args = cl_parser.parse_args()
@@ -416,20 +416,20 @@ add_sumEdgeWeights_args = check_arguments_args(args.sumEdgeWeights_args)
 # plotSnapshots arguments
 add_plotSnapshots_args = check_arguments_args(args.plotSnapshots_args)
 
-# createPymolScript arguments
-add_pyMolHeatmapVisualisation_args = check_arguments_args(args.pyMolHeatmapVisualisation_args)
+# heatmapVisualisation arguments
+add_heatmapVisualisation_args = check_arguments_args(args.heatmapVisualisation_args)
 
 # compareContactPartnersOfResidues arguments
 add_compareContactPartnersOfResidues_args = check_arguments_args(args.compareContactPartnersOfResidues_args)
 
-# PyMolHeatmapResidueResidueContacts arguments
-add_pyMolHeatmapResidueResidueContacts_args = check_arguments_args(args.pyMolHeatmapResidueResidueContacts_args)
+# calculateChanges arguments
+add_calculateChanges_args = check_arguments_args(args.calculateChanges_args)
     
 # different dssp folders
 if (args.different_dssp_folders):
-    dir_names = {'toLegacyPDB.py':'legacyPDB', 'toMmCIF.py':'mmCIF', 'dsspcmbi':'oldDssp', 'postProcessDssp.py':'newDssp', 'PTGLgraphComputation':'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py': 'gml', 'getAttributeDataFromGml.py': 'csv', 'evalEdgesWeights.py':'csv', 'changeEdgeNames.py':'csv', 'sumEdgeWeights.py':'pdf', 'plotSnapshots.py':'pdf', 'PyMolHeatmapVisualisation.py':'PyMOL', 'compareContactPartnersOfResidues.py':'csv', 'PyMolHeatmapResidueResidueContacts.py':'PyMOL'}
+    dir_names = {'toLegacyPDB.py':'legacyPDB', 'toMmCIF.py':'mmCIF', 'dsspcmbi':'oldDssp', 'postProcessDssp.py':'newDssp', 'PTGLgraphComputation':'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py': 'gml', 'getAttributeDataFromGml.py': 'csv', 'evalEdgesWeights.py':'csv', 'changeEdgeNames.py':'csv', 'sumEdgeWeights.py':'pdf', 'plotSnapshots.py':'pdf', 'heatmapVisualisation.py':'py', 'compareContactPartnersOfResidues.py':'csv', 'calculateChanges.py':'csv'}
 else:
-    dir_names = {'toLegacyPDB.py':'legacyPDB', 'toMmCIF.py':'mmCIF', 'dsspcmbi':'dssp', 'postProcessDssp.py':'dssp', 'PTGLgraphComputation':'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py': 'csv', 'getAttributeDataFromGml.py': 'csv', 'evalEdgesWeights.py':'csv', 'changeEdgeNames.py':'csv', 'sumEdgeWeights.py':'pdf', 'plotSnapshots.py':'pdf', 'PyMolHeatmapVisualisation.py':'PyMOL', 'compareContactPartnersOfResidues.py':'csv', 'PyMolHeatmapResidueResidueContacts.py':'PyMOL'}
+    dir_names = {'toLegacyPDB.py':'legacyPDB', 'toMmCIF.py':'mmCIF', 'dsspcmbi':'dssp', 'postProcessDssp.py':'dssp', 'PTGLgraphComputation':'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py': 'csv', 'getAttributeDataFromGml.py': 'csv', 'evalEdgesWeights.py':'csv', 'changeEdgeNames.py':'csv', 'sumEdgeWeights.py':'pdf', 'plotSnapshots.py':'pdf', 'heatmapVisualisation.py':'py', 'compareContactPartnersOfResidues.py':'csv', 'calculateChanges.py':'csv'}
 
 ########### vamos ###########
 
@@ -797,33 +797,7 @@ for elem in program_list:
             os.chdir(work_dir)
 
         log('plotSnapshots computations are done.', 'i')
-        
 
-    elif (elem == 'PyMolHeatmapVisualisation.py'):
-        if (add_pyMolHeatmapVisualisation_args == ''):
-            files_dir = get_working_dir(file_dir)
-            list_file_dir = os.listdir(files_dir)
-            list_file_dir = sorted_nicely(list_file_dir) 
-            file = file_dir + list_file_dir[0]
-            
-            work_dir = get_working_dir(compareSubsets_dir)
-            log(work_dir, 'd')
-            
-            createPymolScript = 'python3 ' + plotting_dir + elem + ' ' + work_dir + ' ' + file + ' -p ' + out_dir 
-            log(createPymolScript, 'd')
-            os.chdir(out_dir) 
-            os.system(createPymolScript)
-            os.chdir(work_dir)
-                    
-        elif (add_pyMolHeatmapVisualisation_args != ''):
-            createPymolScript = 'python3 ' + plotting_dir + elem + ' ' + add_pyMolHeatmapVisualisation_args
-            log(createPymolScript, 'd')
-            os.chdir(out_dir) 
-            os.system(createPymolScript)
-            os.chdir(work_dir)
-
-        log('PyMolHeatmapVisualisation computations are done.', 'i')        
-       
     elif (elem == 'compareContactPartnersOfResidues.py'):
         if (add_compareContactPartnersOfResidues_args == ''):
 
@@ -850,7 +824,7 @@ for elem in program_list:
                         shutil.copy(file, input_dir_csv_files + file)
             
             else:
-                log("No header file given to create mmcif files out of pdb files. Can not compute further output, exiting.", 'e')
+                log("No header file given to create mmcif files out of pseudo pdb files. Can not compute further output, exiting.", 'e')
                 exit()
             if (file_ending == ''):
                 log("No files found to compute csv files with contact partners of a residue. Exiting.", 'e')
@@ -903,14 +877,66 @@ for elem in program_list:
             
             comparedResRes_dir = os.path.abspath(out_dir) + '/'
             os.remove(comparedResRes_dir + "residues_contacts")
+            
+        elif (add_compareContactPartnersOfResidues_args != ''):
 
             log('compareContactPartnersOfresidues.py computations done.', 'i')
-                       
 
-    elif (elem == 'PyMolHeatmapResidueResidueContacts.py'):
-        pass
-          
+    elif (elem == 'calculateChanges.py'):
+        work_dir_1 = get_working_dir(comparedResRes_dir)
+        work_dir_2 = get_working_dir(compareSubsets_dir)
+        if (add_calculateChanges_args == ''):            
+            changes_res_res = 'python3 ' + plotting_dir + elem + ' ' + work_dir_1 + ' ' + '"(res, res)"' + ' -p ' + out_dir
+            changes_chain_CG = 'python3 ' + plotting_dir + elem + ' ' + work_dir_2 + ' ' + '"(chain, CG)"' + ' -p ' + out_dir
+            changes_chain_res = 'python3 ' + plotting_dir + elem + ' ' + work_dir_1 + ' ' + '"(chain, res)"' + ' -p ' + out_dir
+            log(changes_res_res, 'd')
+            log(changes_chain_CG, 'd')
+            log(changes_chain_res, 'd')
+            os.chdir(out_dir)
+            os.system(changes_res_res)
+            os.system(changes_chain_CG)
+            os.system(changes_chain_res)
+            os.chdir(work_dir_1)
+        elif (add_calculateChanges_args != ''):
+            calculateChanges = 'python3' + plotting_dir + elem + ' ' + add_calculateChanges_args
+            log(calculateChanges, 'd')
+            os.chdir(out_dir)
+            os.system(calculateChanges)
+            os.chdir(work_dir_1)
+            
+    
         
+
+    elif (elem == 'heatmapVisualisation.py'):
+        pass
+    """
+        if (add_pyMolHeatmapVisualisation_args == ''):
+            files_dir = get_working_dir(file_dir)
+            list_file_dir = os.listdir(files_dir)
+            list_file_dir = sorted_nicely(list_file_dir) 
+            file = file_dir + list_file_dir[0]
+            
+            work_dir = get_working_dir(compareSubsets_dir)
+            log(work_dir, 'd')
+            
+            createPymolScript = 'python3 ' + plotting_dir + elem + ' ' + work_dir + ' ' + file + ' -p ' + out_dir 
+            log(createPymolScript, 'd')
+            os.chdir(out_dir) 
+            os.system(createPymolScript)
+            os.chdir(work_dir)
+                    
+        elif (add_pyMolHeatmapVisualisation_args != ''):
+            createPymolScript = 'python3 ' + plotting_dir + elem + ' ' + add_pyMolHeatmapVisualisation_args
+            log(createPymolScript, 'd')
+            os.chdir(out_dir) 
+            os.system(createPymolScript)
+            os.chdir(work_dir)
+
+        log('PyMolHeatmapVisualisation computations are done.', 'i')        
+       
+    
+                       
+    """
            
 
 log("-- %s seconds ---"% (time.time()- _start_time), 'i')

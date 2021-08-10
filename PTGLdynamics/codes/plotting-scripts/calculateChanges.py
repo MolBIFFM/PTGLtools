@@ -202,7 +202,7 @@ for frame in frames:
     if based_on == 'CG':
         pattern = "compared*frame"+ str(frame) + "_complex_chains_albelig_CG*frame" + str((frame + 1)) + "_complex_chains_albelig_CG.csv"
     elif based_on == 'res':
-        pattern = "contact_lists_for_each_residue_compared*frame"+ str(frame) + "*frame" + str((frame + 1)) + ".csv"
+        pattern = "change_contacts_for_each_residue_compared*frame"+ str(frame) + "*frame" + str((frame + 1)) + ".csv"
     matching = fnmatch.filter(list_work_dir, pattern)
     files = files + matching
     files_counter += 1
@@ -307,6 +307,7 @@ if calculation == '(chain, CG)':
   
 # Create output csv file.
 changes_out = open(output_dir + '/' + 'changes_each_' + calculate + '_based_on_' + based_on + '_frame' + str(args.first_timestep) + '_to_frame' + str(args.last_timestep) + '.csv','w')
+
 if calculation == "(chain, res)":
     changes_out.write("chain" + "," +  "change in res-res contacts" + '\n')
 elif calculation == "(res, res)":

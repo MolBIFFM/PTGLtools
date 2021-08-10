@@ -20,6 +20,7 @@ import pathlib
 import shutil
 import re
 import time
+import fnmatch
 
 
 ########### functions ###########
@@ -464,6 +465,8 @@ changeEdgeNames_dir = input_dir
 compareSubsets_dir = input_dir
 contactResRes_dir = original_output_dir
 comparedResRes_dir = input_dir
+input_dir_csv_files = input_dir
+changes_dir = input_dir
 
 work_dir = get_working_dir(input_dir)
 list_work_dir = []
@@ -812,20 +815,27 @@ for elem in program_list:
             file_ending = ''
             for file in list_file_dir:
                 if file.endswith('.cif'):
-                    file_ending = '.cif'                   
-                    shutil.copy(file, input_dir_csv_files + file)
+                    file_ending = '.cif'  
+                    try:                 
+                        shutil.copy(file, input_dir_csv_files + file)
+                    except shutil.SameFileError:
+                        log("Source and destination represents the same file.", 'i')
                     
             if (file_ending == '') and cmd_header_mmcif != '':
                 file_ending = '.pdb'
                 list_input_dir = os.listdir(input_dir)
-                list_input_dir = sorted_nicely(list_file_dir)
+                list_input_dir = sorted_nicely(list_file_dir)	
                 for file in list_input_dir:
                     if file.endswith(file_ending):
-                        shutil.copy(file, input_dir_csv_files + file)
+                        try:
+                            shutil.copy(file, input_dir_csv_files + file)
+                        except shutil.SameFileError:
+                            log("Source and destination represents the same file.", 'i')
             
-            else:
+            elif (file_ending == '') and (cmd_header_mmcif == ''):
                 log("No header file given to create mmcif files out of pseudo pdb files. Can not compute further output, exiting.", 'e')
                 exit()
+                
             if (file_ending == ''):
                 log("No files found to compute csv files with contact partners of a residue. Exiting.", 'e')
                 exit()
@@ -848,9 +858,7 @@ for elem in program_list:
             for cif in list_work_dir:
                 if (cif.endswith(".cif")):
                     cif_id = pathlib.Path(cif).stem
-
                     dssp = dssp_dir + pathlib.Path(cif).stem + '.dssp'
-
                     PTGLgraphComputation = 'java -jar ' + default_path_graCom + ' ' + cif_id + ' -p ' + work_dir + cif + ' -d ' + dssp + ' -o ' + contactResRes_dir + ' -I -G --set "PTGLgraphComputation_B_csv_contacts" "True" --set "PTGLgraphComputation_B_calc_draw_graphs" "False"'
                     log(PTGLgraphComputation,'d') 
                     os.chdir(contactResRes_dir)
@@ -897,6 +905,9 @@ for elem in program_list:
             os.system(changes_chain_CG)
             os.system(changes_chain_res)
             os.chdir(work_dir_1)
+            
+            changes_dir = os.path.abspath(out_dir) + '/'
+            
         elif (add_calculateChanges_args != ''):
             calculateChanges = 'python3' + plotting_dir + elem + ' ' + add_calculateChanges_args
             log(calculateChanges, 'd')
@@ -908,36 +919,58 @@ for elem in program_list:
         
 
     elif (elem == 'heatmapVisualisation.py'):
-        pass
-    """
-        if (add_pyMolHeatmapVisualisation_args == ''):
-            files_dir = get_working_dir(file_dir)
-            list_file_dir = os.listdir(files_dir)
-            list_file_dir = sorted_nicely(list_file_dir) 
-            file = file_dir + list_file_dir[0]
-            
-            work_dir = get_working_dir(compareSubsets_dir)
-            log(work_dir, 'd')
-            
-            createPymolScript = 'python3 ' + plotting_dir + elem + ' ' + work_dir + ' ' + file + ' -p ' + out_dir 
-            log(createPymolScript, 'd')
-            os.chdir(out_dir) 
-            os.system(createPymolScript)
-            os.chdir(work_dir)
+        if (add_heatmapVisualisation_args == ''):
+            # Create csv file with number of residues in each chain        
+            work_dir = get_working_dir(input_dir_csv_files)
+            list_work_dir = os.listdir(work_dir)
+            list_work_dir = sorted_nicely(list_work_dir)
+            cif_file = ''
+            for file in list_work_dir:
+                if file.endswith('.cif'):
+                    cif_file = file
+                    break
+
+            if cif_file != '':
+                cif_id = pathlib.Path(cif_file).stem
+                dssp = dssp_dir + pathlib.Path(cif_file).stem + '.dssp'
+                createCsvFile = 'java -jar ' + default_path_graCom + ' ' + cif_id + ' -p ' + work_dir + cif_file + ' -d ' + dssp + ' -o ' + out_dir + ' -I --set "PTGLgraphComputation_B_csv_number_residues_chains" "true" --set "PTGLgraphComputation_B_debug_only_parse" "true"' 
+
+                log(createCsvFile,'d') 
+                os.chdir(out_dir)
+                os.system(createCsvFile)
+                os.chdir(work_dir)
+                
+                # Run heatmapVisualisation script -> default computation of heatmap visualisation colouring each chain based  
+                # on residue-residue contacts
+                cif_file = os.path.abspath(cif_file)
+                
+                work_dir = get_working_dir(changes_dir)
+                list_work_dir = os.listdir(work_dir)
+                
+                pattern = "changes_each_res_based_on_res_*.csv"
+                matching = fnmatch.filter(list_work_dir, pattern)
+                changes_file = work_dir + matching[0]
+                
+                if os.path.isfile(changes_file):
+                    heatmapVisualisation = 'python3 ' + plotting_dir + elem + ' ' + cif_file + ' ' + changes_file + ' -p ' + out_dir
+                    os.chdir(out_dir)
+                    os.system(heatmapVisualisation)
+                    os.chdir(work_dir)
+                else:
+                    log("No files containing the changes for each chain based on residue-residue contacts found. Can´t compute heatmap visualisation.", 'e')
+                                        
+            else:
+                log("No cif file found. Can´t compute heatmap visualisation.", 'e')
                     
-        elif (add_pyMolHeatmapVisualisation_args != ''):
-            createPymolScript = 'python3 ' + plotting_dir + elem + ' ' + add_pyMolHeatmapVisualisation_args
+        elif (add_heatmapVisualisation_args != ''):
+            createPymolScript = 'python3 ' + plotting_dir + elem + ' ' + add_heatmapVisualisation_args
             log(createPymolScript, 'd')
             os.chdir(out_dir) 
             os.system(createPymolScript)
             os.chdir(work_dir)
 
-        log('PyMolHeatmapVisualisation computations are done.', 'i')        
+        log('heatmapVisualisation computations are done.', 'i')        
        
-    
-                       
-    """
-           
 
 log("-- %s seconds ---"% (time.time()- _start_time), 'i')
 log("All done, exiting ptglDynamics.", 'i')

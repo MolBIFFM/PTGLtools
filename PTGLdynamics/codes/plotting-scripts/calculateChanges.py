@@ -42,6 +42,17 @@ def log(message, level=""):
         else:
             global output_file
             output_file.write(message + "\n")
+            
+def check_input_files(inputfile):
+    """Returns the argument if the file is readable. Otherwise raises an error and exits."""
+    if(inputfile != ""):
+        if(os.access(inputfile, os.R_OK)):
+            return inputfile
+        else:
+            logging.error("Specified input file '%s' is not readable. Exiting now.", inputfile)
+            sys.exit(1)
+    else:
+        return ''             
 
 
 def check_dir_args(argument):
@@ -74,6 +85,18 @@ def sorted_nicely( l ):
     convert = lambda text: int(text) if text.isdigit() else text
     alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
     return sorted(l, key = alphanum_key)
+    
+def divide_by_chainlength(changes, csv_file):
+    with open(csv_file, 'r') as f:
+        lines_chainlength = f.read().split("\n")
+
+    for chain in lines_chainlength[1:]:
+        if chain != '':
+            columns = chain.split(',')
+            if (len(columns) == 2):
+                changes[columns[0]] = int(changes.get(columns[0])) / int(columns[1])  
+                    
+    return changes   
             
             
 ########### configure logger ###########
@@ -148,6 +171,11 @@ cl_parser.add_argument('--exclude-edges',
                        nargs = '+',
                        default = [],
                        help='Specify edges that should not be considered in calculation and coloring. Enter edges as "{edge1  edge2}". Only used in (chain, CG) calculation.')
+                       
+cl_parser.add_argument('--divide-by-chainlength',
+                       metavar = 'path',
+                       default = '',
+                       help = 'specify a path to a "number_of_residues_in_each_chain" csv file to divide the change of each chain by its chain length. Only used in (chain, CG).')                       
 
 cl_parser.add_argument('-p',
                        '--outputdirectory',
@@ -179,8 +207,11 @@ based_on = str(calculation.split(',')[1].replace(')', '').replace(' ', ''))
 # output directory
 output_dir = check_dir_args(args.outputdirectory)
 
+# additional arguments
 exclude_chains = args.exclude_chains
 exclude_edges = args.exclude_edges
+divide_chainlength = check_input_files(args.divide_by_chainlength)
+print(divide_chainlength)
 
 if (args.first_timestep >= args.last_timestep):
     log("The given first frame number is greater than the number given as the last timestep.",'e')
@@ -302,6 +333,11 @@ if calculation == '(chain, CG)':
     
             changes[node_1] = new_value_node_1
             changes[node_2] = new_value_node_2
+            
+    # Divide by chainlength
+    if(divide_chainlength != ''):
+        changes_divided = divide_by_chainlength(changes, divide_chainlength)
+        changes = changes_divided        
 
     log("Changes for each chain: " + str(changes), 'i')
   

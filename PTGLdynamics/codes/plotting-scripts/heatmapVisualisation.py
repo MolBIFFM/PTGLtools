@@ -144,7 +144,7 @@ cl_parser.add_argument('--exclude-residues',
                        type = str,
                        nargs = '+',
                        default = [],
-                       help='Specify residues that should not be considered in coloring. Enter residues in the following format: "(PDB_ID|Chain|iCode)".')                                           
+                       help='Specify residues that should not be considered in coloring. Enter residues in the following format: "(PDB_ID|Chain|iCode)".')                                                                 
 
 cl_parser.add_argument('-p',
                        '--outputdirectory',
@@ -196,8 +196,7 @@ for line in csv_lines[1:]:
         
 # Create PyMol script.
 pymol_script = open(output_dir + '/' + 'PyMol_script_Heatmap_visualisation_of_each_' + header[0] + '.py', 'w')
-pymol_script.write('"""' + '\n' + 'This script shows the given molecule in a heatmap visualisation in PyMOL: A ' + '\n' + header[0] +
-                   ' coloured in blue has fewer changes than a ' + header[0] + 'coloured in red.' + '\n' + 'The calculation is based on the sum of ' + header[1] + '.' + '\n' + 'Run this script in PyMOL using the command line with the following command:' + '\n' + 'run ' + output_dir + '/' +'PyMol_script_Heatmap_visualisation_of_each_' + header[0] + '.py' + '\n' + '"""' + '\n')
+pymol_script.write('"""' + '\n' + 'This script shows the given molecule in a heatmap visualisation in PyMOL: A ' + '\n' + header[0] + ' coloured in blue has fewer changes than a ' + header[0] + 'coloured in red.' + '\n' + 'The calculation is based on the sum of ' + header[1] + '.' + '\n' + 'Run this script in PyMOL using the command line with the following command:' + '\n' + 'run ' + output_dir + '/' +'PyMol_script_Heatmap_visualisation_of_each_' + header[0] + '.py' + '\n' + '"""' + '\n')
 pymol_script.write("cmd.load('" + inputfile + "')" + "\n")
 pymol_script.write("cmd.color('grey', 'all')" + "\n")
 

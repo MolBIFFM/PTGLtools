@@ -467,6 +467,7 @@ contactResRes_dir = original_output_dir
 comparedResRes_dir = input_dir
 input_dir_csv_files = input_dir
 changes_dir = input_dir
+num_res_in_chain_dir = input_dir
 
 work_dir = get_working_dir(input_dir)
 list_work_dir = []
@@ -868,7 +869,7 @@ for elem in program_list:
             contactResRes_dir = os.path.abspath(contactResRes_dir) + '/'
             log("Residue-residue contacts for each timestep computed and saved in csv file.", 'i')
 
-            # get files of two timesteps
+            # get files of two timesteps.
             work_dir = get_working_dir(contactResRes_dir)
             list_work_dir = os.listdir(work_dir)
             list_work_dir = sorted_nicely(list_work_dir)
@@ -893,7 +894,33 @@ for elem in program_list:
     elif (elem == 'calculateChanges.py'):
         work_dir_1 = get_working_dir(comparedResRes_dir)
         work_dir_2 = get_working_dir(compareSubsets_dir)
-        if (add_calculateChanges_args == ''):            
+        if (add_calculateChanges_args == ''): 
+            
+            # create csv file with number of residues in each chain.          
+            work_dir = get_working_dir(input_dir_csv_files)
+            list_work_dir = os.listdir(work_dir)
+            list_work_dir = sorted_nicely(list_work_dir)
+            cif_file = ''
+            for file in list_work_dir:
+                if file.endswith('.cif'):
+                    cif_file = file
+                    break
+
+            if cif_file != '':
+                cif_id = pathlib.Path(cif_file).stem
+                dssp = dssp_dir + pathlib.Path(cif_file).stem + '.dssp'
+                createCsvFile = 'java -jar ' + default_path_graCom + ' ' + cif_id + ' -p ' + work_dir + cif_file + ' -d ' + dssp + ' -o ' + out_dir + ' -I --set "PTGLgraphComputation_B_csv_number_residues_chains" "true" --set "PTGLgraphComputation_B_debug_only_parse" "true"' 
+
+                log(createCsvFile,'d') 
+                os.chdir(out_dir)
+                os.system(createCsvFile)
+                os.chdir(work_dir_1)
+                
+                num_res_in_chain_dir = os.path.abspath(out_dir) + '/'
+            else:
+                log("No cif file found, can´t compute csv file with number of residues in each chain.", 'e')
+                
+            # Calculate changes.         
             changes_res_res = 'python3 ' + plotting_dir + elem + ' ' + work_dir_1 + ' ' + '"(res, res)"' + ' -p ' + out_dir
             changes_chain_CG = 'python3 ' + plotting_dir + elem + ' ' + work_dir_2 + ' ' + '"(chain, CG)"' + ' -p ' + out_dir
             changes_chain_res = 'python3 ' + plotting_dir + elem + ' ' + work_dir_1 + ' ' + '"(chain, res)"' + ' -p ' + out_dir
@@ -914,53 +941,38 @@ for elem in program_list:
             os.chdir(out_dir)
             os.system(calculateChanges)
             os.chdir(work_dir_1)
-            
-    
-        
 
+                
     elif (elem == 'heatmapVisualisation.py'):
         if (add_heatmapVisualisation_args == ''):
-            # Create csv file with number of residues in each chain        
-            work_dir = get_working_dir(input_dir_csv_files)
+            work_dir = get_working_dir(file_dir)
             list_work_dir = os.listdir(work_dir)
             list_work_dir = sorted_nicely(list_work_dir)
-            cif_file = ''
+            pdb_file = ''
             for file in list_work_dir:
-                if file.endswith('.cif'):
-                    cif_file = file
+                if file.endswith('.cif') or file.endswith('.pdb'):
+                    pdb_file = file
                     break
-
-            if cif_file != '':
-                cif_id = pathlib.Path(cif_file).stem
-                dssp = dssp_dir + pathlib.Path(cif_file).stem + '.dssp'
-                createCsvFile = 'java -jar ' + default_path_graCom + ' ' + cif_id + ' -p ' + work_dir + cif_file + ' -d ' + dssp + ' -o ' + out_dir + ' -I --set "PTGLgraphComputation_B_csv_number_residues_chains" "true" --set "PTGLgraphComputation_B_debug_only_parse" "true"' 
-
-                log(createCsvFile,'d') 
+        
+            pdb_file = os.path.abspath(pdb_file)
+            
+            if pdb_file == '':           
+                log("No pdb file found. Can´t compute heatmap visualisation.", 'e')
+                exit()
+                
+            work_dir = get_working_dir(changes_dir)
+            list_work_dir = os.listdir(work_dir)               
+            pattern = "changes_each_res_based_on_res_*.csv"
+            matching = fnmatch.filter(list_work_dir, pattern)
+            changes_file = work_dir + matching[0]
+                
+            if os.path.isfile(changes_file):
+                heatmapVisualisation = 'python3 ' + plotting_dir + elem + ' ' + pdb_file + ' ' + changes_file + ' -p ' + out_dir
                 os.chdir(out_dir)
-                os.system(createCsvFile)
+                os.system(heatmapVisualisation)
                 os.chdir(work_dir)
-                
-                # Run heatmapVisualisation script -> default computation of heatmap visualisation colouring each chain based  
-                # on residue-residue contacts
-                cif_file = os.path.abspath(cif_file)
-                
-                work_dir = get_working_dir(changes_dir)
-                list_work_dir = os.listdir(work_dir)
-                
-                pattern = "changes_each_res_based_on_res_*.csv"
-                matching = fnmatch.filter(list_work_dir, pattern)
-                changes_file = work_dir + matching[0]
-                
-                if os.path.isfile(changes_file):
-                    heatmapVisualisation = 'python3 ' + plotting_dir + elem + ' ' + cif_file + ' ' + changes_file + ' -p ' + out_dir
-                    os.chdir(out_dir)
-                    os.system(heatmapVisualisation)
-                    os.chdir(work_dir)
-                else:
-                    log("No files containing the changes for each chain based on residue-residue contacts found. Can´t compute heatmap visualisation.", 'e')
-                                        
             else:
-                log("No cif file found. Can´t compute heatmap visualisation.", 'e')
+                log("No files containing the changes for each chain based on residue-residue contacts found. Can´t compute heatmap visualisation.", 'e')                                       
                     
         elif (add_heatmapVisualisation_args != ''):
             createPymolScript = 'python3 ' + plotting_dir + elem + ' ' + add_heatmapVisualisation_args

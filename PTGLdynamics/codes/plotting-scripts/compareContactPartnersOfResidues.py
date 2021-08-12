@@ -6,7 +6,7 @@
 #   patch: fixes, small changes
 #   no version change: fix typos, changes to comments, debug prints, small changes to non-result output, changes within git branch
 # -> only increment with commit / push / merge not while programming
-version = "1.0.0"  
+version = "1.1.0"  
 
 ########### built-in imports ###########
 
@@ -73,22 +73,26 @@ def read_contact_file_in(file):
     for line in csv_lines[1:]:
         if line != '':
             columns = line.split(',')
-            if columns[0] != '' and columns[5] !='':
-                key = (columns[0], columns[3], columns[4])
-                value = matches.get(key)
-                if value == None: 
-                    matches[key] = {(columns[5], columns[8], columns[9])}
+            if columns[0] != '' and columns[5] !='' and columns[5] != '' and columns[8] !='' and columns[3] not in excluded_chains and columns[8] not in excluded_chains:
+                key_1 = (columns[0], columns[3], columns[4])
+                key_2 = (columns[5], columns[8], columns[9])
+                if str(key_1) in excluded_residues or str(key_2) in excluded_residues:
+                    pass
                 else:
-                    value.update([(columns[5], columns[8], columns[9])])
-                    matches[key] = value       
-            if columns[5] != '' and columns[8] !='':
-                key = (columns[5], columns[8], columns[9])
-                value = matches.get(key)
-                if value == None:                        
-                    matches[key] = {(columns[0], columns[3], columns[4])}
-                else:
-                    value.update([(columns[0], columns[3], columns[4])])
-                    matches[key] = value
+                    value_1 = matches.get(key_1)
+                    if value_1 == None: 
+                        matches[key_1] = {(columns[5], columns[8], columns[9])}
+                    else:
+                        value_1.update([(columns[5], columns[8], columns[9])])
+                        matches[key_1] = value_1
+                                    
+                    value_2 = matches.get(key_2)
+                    if value_2 == None:                        
+                        matches[key_2] = {(columns[0], columns[3], columns[4])}
+                    else:
+                        value_2.update([(columns[0], columns[3], columns[4])])
+                        matches[key_2] = value_2     
+                
         else:
             break
     return matches
@@ -104,7 +108,7 @@ logging.basicConfig(format = "[%(levelname)s] %(message)s")
 ########### command line parser ###########
 
 ## create the parser
-cl_parser = argparse.ArgumentParser(description="Compares two csv files containing all contact partners of a residue. Returns the number of changes in contact partners in a csv file.",
+cl_parser = argparse.ArgumentParser(description="Compares two csv files containing contacts between residues of different chains. Returns the number of changes in contact partners in a csv file.",
                                     fromfile_prefix_chars="@")
 
 ## add arguments
@@ -146,6 +150,18 @@ cl_parser.add_argument('-p',
                        metavar = 'path',
                        default = '',
                        help = 'specify a path to your output files. Otherwise the current folder is used.')
+                       
+cl_parser.add_argument('--exclude-chains',
+                       type = str,
+                       nargs = '+',
+                       default = [],
+                       help = 'Specify chains that should not be considered in the comparison.')
+                       
+cl_parser.add_argument('--exclude-residues',
+                       type = str,
+                       nargs = '+',
+                       default = [],
+                       help = 'Specify residues that should not be considered in the comparison. Enter residues in the following format: "(PDB_ID, Chain, iCode)".')                                             
 
 args = cl_parser.parse_args()
 
@@ -169,23 +185,23 @@ file2= check_input_files(args.inputfile2)
 # output directory
 output_dir = check_dir_args(args.outputdirectory)
 
+# exclude
+excluded_chains = args.exclude_chains
+excluded_residues = args.exclude_residues
+
 ########### vamos ###########
 
 log("Version " + version, "i")
 
 try:
-    residues_contacts_file1 = pickle.load(open("residues_contacts", "rb"))
-                                          
-except:
+    residues_contacts_file1 = pickle.load(open("residues_contacts", "rb"))                                          
+except FileNotFoundError:
     residues_contacts_file1 = read_contact_file_in(file1)
-
 log("Residue contacts in file 1" + str(residues_contacts_file1), 'i')
 
 residues_contacts_file2 = read_contact_file_in(file2)
-
 log("Residue contacts in file 2" + str(residues_contacts_file2), 'i')
 pickle.dump(residues_contacts_file2, open("residues_contacts", "wb"))
-
 
 symmetric_difference = {}
 
@@ -202,7 +218,7 @@ for key in residues_contacts_file1:
         
 for key in residues_contacts_file2:
     symmetric_difference[key] = len(residues_contacts_file2.get(key))
-        
+       
 log("Change in contacts " + str(symmetric_difference), 'i')
 
 name_file1 = os.path.basename(file1).split(".")

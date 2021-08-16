@@ -2420,14 +2420,15 @@ public class Main {
                     DP.getInstance().e("ERROR: Could not create file '" + contacts.getAbsolutePath() + ".");
                     }
                 }
-            String allContacts = "Res1-PDB#" + "," + "Res1-Type" + "," + "Res1-AA" + "," + "Res1-Chain" + "," + "Res1-ICode" + "," + "Res2-PDB#" + "," + "Res2-Type"+"," + "Res2-AA" +"," + "Res2-Chain" + "," + "Res2-ICode" + "\n";
+            String allContacts = "Res1-PDB#" + "," + "Res1-AA" + "," + "Res1-Chain" + "," + "Res1-ICode" + "," + "Res2-PDB#" + "," + "Res2-AA" +"," + "Res2-Chain" + "," + "Res2-ICode" + "\n";
             for (MolContactInfo mol : cInfo){
                 String mci = mol.toString();
                 String MolA = mol.getMolA().toStringForCsv();
                 String MolB = mol.getMolB().toStringForCsv();
-                if (!Objects.equals(mol.getMolA().getChainID(), mol.getMolB().getChainID())){
-                    allContacts += MolA + "," + MolB + "\n";}
-                } 
+                // if (!Objects.equals(mol.getMolA().getChainID(), mol.getMolB().getChainID()))
+                allContacts += MolA + "," + MolB + "\n";
+            }
+                 
             IO.writeStringToFile(allContacts, contacts.getAbsolutePath(), true);  
             DP.getInstance().i("Csv file with contacts created.");
         }

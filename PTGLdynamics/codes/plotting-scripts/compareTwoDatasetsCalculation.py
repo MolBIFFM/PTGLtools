@@ -1,3 +1,4 @@
+ 
 ########### settings ###########
 
 # This script's version as MAJOR.MINOR.PATCH
@@ -62,50 +63,21 @@ def check_input_files(inputfile):
             logging.error("Specified input file '%s' is not readable. Exiting now.", inputfile)
             sys.exit(1)
     else:
-        return '' 
+        return ''
 
-def get_data_from_csv_files(file):
-    """ Reads in the data from a csv file and returns the included chains and the change in edgeweights for each chain. """
-    chains = []
+def read_in_file(file):
+    """Returns a dictionary with all changes. """
     changes = {}
-    with open(file, "r") as f:
-        lines = f.read().split("\n")
-        del lines[0]
-    
-        for line in lines:
-            if line != '':
-                columns = line.split(',')            
-                nodes = columns[0].split(' ')
-                node_1 = nodes[0]            
-                node_2 = nodes[1]            
-                node_1 = node_1.replace(' ', '')
-                node_1 = node_1.replace('{', '')
-                node_2 = node_2.replace(' ', '')
-                node_2 = node_2.replace('}', '')
-    
-                chains.append(node_1)
-                chains.append(node_2)
-            
-                # Exclude chains from calculation
-                if (node_1 in exclude_calculation_chains) or (node_2 in exclude_calculation_chains):
-                    pass
-                    
-                else:
-                    old_value_node_1 = changes.get(node_1)
-                    old_value_node_2 = changes.get(node_2)
-                    if old_value_node_1 == None:
-                        old_value_node_1 = 0
-                    if old_value_node_2 == None:
-                        old_value_node_2 = 0
-                    new_value_node_1 = old_value_node_1 + int(columns[1])
-                    new_value_node_2 = old_value_node_2 + int(columns[1])
-    
-                    changes[node_1] = new_value_node_1
-                    changes[node_2] = new_value_node_2  
-    f.close()
-    return chains, changes
-    
-    
+    with open(file, 'r') as f:
+        csv_lines = f.read().split("\n")
+    header = csv_lines[0].split(',')
+    header = header[0]
+    for line in csv_lines[1:]:
+        if line != '':
+            columns = line.split(',')
+            changes[columns[0]] = columns[1]
+    return changes, header
+        
         
 ########### configure logger ###########
 
@@ -119,7 +91,7 @@ logging.basicConfig(format = "[%(levelname)s] %(message)s")
 However, in the command line call the hyphen is used: --input-dir <path> """
 
 ## create the parser
-cl_parser = argparse.ArgumentParser(description="Takes the two csv files 'change_each_edge' created by 'createPymolScript' and creates a new Pymol script to display in which dataset more changes occured. If the change of edgeweights for a chain is higher in the first file than in the second file, the chain will be colored red, otherwise blue.",
+cl_parser = argparse.ArgumentParser(description="Takes two csv files computed by calculateChanges with the absolute changes and calculates the difference.",
                                     fromfile_prefix_chars="@")
 
 ## add arguments
@@ -148,16 +120,11 @@ cl_parser.add_argument('--version',
 
 cl_parser.add_argument('file_one',
                        metavar = 'file-one',
-                       help = 'Enter the path to csv file 1 in "changes_each_edge" format.')
+                       help = 'Enter the path to a csv file computed by calculateChanges containing the absolute changes.')
 
 cl_parser.add_argument('file_two',
                        metavar = 'file-two',
-                       help='Enter the path to the second csv file in "changes_each_edge" format.')
-                       
-cl_parser.add_argument('inputfile',
-                       metavar = 'inputfile',
-                       default = '',
-                       help = 'specify a path to a pdb or mmCIF file to load into PyMOL.')                                              
+                       help='Enter the path to a second csv file computed by calculateChanges containing the absolute changes.')                                           
                        
 cl_parser.add_argument('--exclude-coloring',
                        type = str,
@@ -192,8 +159,7 @@ logging.getLogger().setLevel(log_level)
 
 # inputfiles
 file_one = check_input_files(args.file_one)
-file_two = check_input_files(args.file_two)  
-inputfile = check_input_files(args.inputfile)  
+file_two = check_input_files(args.file_two)    
 
 # output directory
 output_dir = check_dir_args(args.output_dir)
@@ -203,8 +169,14 @@ exclude_calculation_chains = args.exclude_calculation_chains
 
 ########### vamos ###########
 
-chains_one, changes_one =  get_data_from_csv_files(file_one) 
-chains_two, changes_two =  get_data_from_csv_files(file_two) 
+changes_one, header_one =  read_in_file(file_one) 
+changes_two, header_two =  read_in_file(file_two)
+print(changes_one, changes_two)
+print(header_one, header_two)
+
+if header_one != header_two:
+    log("Non matching csv files. Enter two csv files in the same format.", "e")
+    exit()
 
 log("Changes calculated for the first file :" + str(changes_one), 'i')
 log("Changes calculated for the second file :" + str(changes_two), 'i')
@@ -214,74 +186,42 @@ changes = changes_one
 for key in changes_two:
     old_value = changes.get(key)
     if old_value != None:
-        new_value = old_value - changes_two[key]
+        new_value = int(old_value) - int(changes_two[key])
     else:
-        new_value = 0 - changes_two[key]
+        new_value = 0 - int(changes_two[key])
     changes[key] = new_value
     
 log("Changes calculated for both files: " + str(changes), 'i')
         
 # Create outputfile
 comp_datasets = open(output_dir + '/' + 'compared_datasets.csv','w')
-comp_datasets.write("chain" + "," +  "change" + '\n')
+comp_datasets.write(header_one + "," +  "change in percent" + '\n')
 
 for key in changes:
     comp_datasets.write(key + ',' + str(changes[key]) + '\n')
 
 comp_datasets.close()
 
-# Create PyMol script.
-pymol_script = open(output_dir + '/' + 'PyMOL_script_compared_datasets.py', 'w')
-pymol_script.write('"""' + '\n' + 'This script shows the variation in edgeweights of chains of two different datasets. Chains are colored in different shades of red, if the first entered file contains higher edgeweight changes than the second one. Blue colores symbolize the other way around. Run this script in PyMOL using the command line with the following command:' + '\n' + 'run ' + output_dir + 'PyMOL_script_compared_datasets.py' + '\n' + '"""' + '\n')
-pymol_script.write("cmd.load('" + inputfile + "')" + "\n")
-
-
-not_in_both_molecules = list(set(chains_one) - set(chains_two)) + list (set(chains_two) - set(chains_one))
-for chain in not_in_both_molecules:
-    if chain in changes:
-        del changes[chain]
-   
-chains = list(set(chains_one + chains_two)) 
-
-
-key_max = max(changes.keys(), key = (lambda k: changes[k]))
-key_min = min(changes.keys(), key = (lambda k: changes[k]))
-value_max = changes[key_max]
-value_min = changes[key_min]
-
+all_changes = set(changes.values())
+value_max = int(max(all_changes))
+value_min = int(min(all_changes))
+change = value_max - value_min
 
 for key in changes:
-    chain = key
-    chains.remove(chain)
     value = changes.get(key)
-    if value == 0:
-        pymol_script.write("cmd.color('white', 'chain " + chain + "')" + "\n") 
-        
-    elif (value > 0):
-        percent = round((value / value_max), 2)
-        R = 255
-        G = int(255 * (1.0  - percent))
-        B = int(255 * (1.0 - percent))
-        pymol_script.write("cmd.set_color('color" + chain + "', [" + str(R) + ","
-                           + str(G) + "," + str(B) + "])" + "\n")
-        pymol_script.write("cmd.color('color" + chain + "', 'chain " + chain + "')" + "\n")
-        
-    elif (value < 0):
-        percent = round((value / value_min), 2)
-        R = int(255 * (1.0 - percent))
-        G = int(255 * (1.0 - percent))
-        B = 255
-        pymol_script.write("cmd.set_color('color" + chain + "', [" + str(R) + ","
-                           + str(G) + "," + str(B) + "])" + "\n")
-        pymol_script.write("cmd.color('color" + chain + "', 'chain " + chain + "')" + "\n")
+    percent = (int(value) - value_min) / change
+    percent = round(percent, 2)
+    changes[key] = percent
     
-# Remaining uncolored chains
-for chain in chains:               
-    pymol_script.write("cmd.color('grey', 'chain " + chain + "')" + "\n") 
-        
+percents = open(output_dir + '/' + 'compared_datasets_changes_in_percent.csv','w')
+percents.write(header_one + "," +  "change in percent" + '\n')
 
-pymol_script.close()
+for key in changes:
+    percents.write(key + ',' + str(changes[key]) + '\n')
+
+percents.close()
 
 log('finished comparing the datasets and creating the PyMOL script', 'i')
+
 
 

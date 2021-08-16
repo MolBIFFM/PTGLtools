@@ -690,7 +690,7 @@ abstract public class Molecule {
     }
     
     public String toStringForCsv() {
-        return(pdbNum + "," + type + "," + Name3 + "," + chainID + "," + iCode);
+        return(pdbNum + "," + Name3 + "," + chainID + "," + iCode);
     }
    
 }

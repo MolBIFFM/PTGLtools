@@ -28,7 +28,7 @@ def log(message, level=""):
     """Prints the message according to level of severity and output settings"""
     if (level == "c"):
         logging.critical(message)
-    if (level == "e"):
+    elif (level == "e"):
         logging.error(message)
     elif (level == "w"):
         logging.warning(message)
@@ -152,13 +152,13 @@ cl_parser.add_argument('-f',
                        '--first-timestep',
                        type = int,
                        default = 1,
-                       help='The first complex graph to be compared')
+                       help='The index of the first complex graph to be compared')
 
 cl_parser.add_argument('-l',
                        '--last-timestep',
                        type = int,
                        default = 5,
-                       help='The last complex graph to be compared')
+                       help='The index of the last complex graph to be compared')
 
 cl_parser.add_argument('--exclude-chains',
                        type = str,
@@ -354,6 +354,33 @@ elif calculation == "(chain, CG)":
 for key in changes:
     changes_out.write(key + ',' + str(changes[key]) + '\n')
 
-changes_out.close()  
+changes_out.close()
+
+all_changes = set(changes.values())
+value_max = int(max(all_changes))
+value_min = int(min(all_changes))
+change = value_max - value_min
+
+for key in changes:
+    value = changes.get(key)
+    percent = (int(value) - value_min) / change
+    percent = round(percent, 2)
+    changes[key] = percent
+    
+percents = open(output_dir + '/' + 'changes_in_percent_each_' + calculate + '_based_on_' + based_on + '_frame' + str(args.first_timestep) + '_to_frame' + str(args.last_timestep) + '.csv','w')
+
+if calculation == "(chain, res)":
+    percents.write("chain" + "," +  "change in res-res contacts in percent" + '\n')
+elif calculation == "(res, res)":
+    percents.write("residue (PDB_ID|chain|iCode)" + "," +  "change in res-res contacts in percent" + '\n')
+elif calculation == "(chain, CG)":
+    percents.write("chain" + "," +  "change in CG´s in percent" + '\n')
+
+for key in changes:
+    percents.write(key + ',' + str(changes[key]) + '\n')
+
+percents.close()
+
+    
 
 log("'calculate_changes.py' computations done.", 'i')

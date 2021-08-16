@@ -127,12 +127,12 @@ cl_parser.add_argument('--version',
 cl_parser.add_argument('inputpdb',
                        metavar = 'path',
                        default = '',
-                       help = 'specify a path to a pdb or mmCIF file to load into PyMOL.')
+                       help = 'specify a path to a pdb file to load into PyMOL.')
 
 cl_parser.add_argument('inputcsv',
                        metavar = 'path',
                        default = '',
-                       help = 'specify a path to a csv file containing the changes for each chain or residue.')
+                       help = 'specify a path to a csv file containing the changes in percent for each chain or residue.')
                        
 cl_parser.add_argument('--exclude-chains',
                        type = str,
@@ -201,11 +201,6 @@ pymol_script.write("cmd.load('" + inputfile + "')" + "\n")
 pymol_script.write("cmd.color('grey', 'all')" + "\n")
 
 
-all_changes = set(changes.values())
-value_max = int(max(all_changes))
-value_min = int(min(all_changes))
-change = value_max - value_min
-
 # Exlude specified chains and residues from coloring.
 if (exclude_chains != []):
     for chain in exclude_chains:   
@@ -219,9 +214,8 @@ if (exclude_residues != []):
 for key in changes:
     if header[0] == "residue":
         parts = key.replace('(', '').replace(')','').replace("'", "").split('|')
-    value = changes.get(key)
-    percent = (int(value) - value_min) / change
-    percent = round(percent, 2)
+    percent = float(changes.get(key))
+    
     if percent == 0.5:
         if header[0] == "chain":
             pymol_script.write("cmd.color('white', 'chain " + key + "')" + "\n")

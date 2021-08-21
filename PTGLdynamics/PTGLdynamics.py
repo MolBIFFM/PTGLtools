@@ -877,7 +877,7 @@ for elem in program_list:
             for file in list_work_dir:
                 if file.startswith('contacts') and file.endswith('.csv'):
                     if previous_file != '':
-                        compareContacts = 'python3 ' + plotting_dir + elem + ' -file1 ' + os.path.abspath(previous_file) + ' -file2 ' + os.path.abspath(file) + ' -p ' + out_dir
+                        compareContacts = 'python3 ' + plotting_dir + elem + ' ' + os.path.abspath(previous_file) + ' ' + os.path.abspath(file) + ' -p ' + out_dir
                         log(compareContacts, 'd')
                         os.chdir(out_dir)
                         os.system(compareContacts)

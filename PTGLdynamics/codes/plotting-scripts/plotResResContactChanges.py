@@ -1,4 +1,3 @@
- 
 ########### settings ###########
 
 # This script's version as MAJOR.MINOR.PATCH
@@ -18,7 +17,12 @@ import logging
 import traceback
 import pathlib
 import re
-import fnmatch
+import time
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
+import platform
+import subprocess
+import numpy as np
 
 ########### functions ###########
 
@@ -66,7 +70,7 @@ def check_input_files(inputfile):
         return ''
 
 def read_in_file(file):
-    """Returns a dictionary with all changes. """
+    """Returns a nested dictionary with each residue´s change and residues ordered according to their chain id. """
     changes = {}
     with open(file, 'r') as f:
         csv_lines = f.read().split("\n")
@@ -75,7 +79,14 @@ def read_in_file(file):
     for line in csv_lines[1:]:
         if line != '':
             columns = line.split(',')
-            changes[columns[0]] = columns[1]
+            keys = columns[0].split('|')
+            chain_id = keys[1]
+            if chain_id in changes:
+                changes[chain_id] [columns[0]] = columns[1]
+                
+            else:
+                changes[chain_id] = {columns[0] : columns[1]}
+
     return changes, header
         
         
@@ -91,7 +102,7 @@ logging.basicConfig(format = "[%(levelname)s] %(message)s")
 However, in the command line call the hyphen is used: --input-dir <path> """
 
 ## create the parser
-cl_parser = argparse.ArgumentParser(description="Takes two csv files computed by calculateChanges with the absolute changes and calculates the difference.",
+cl_parser = argparse.ArgumentParser(description="Plots the changes in residue residue contacts. One or two csv files computed by calculateChanges can be given, for each chain the absolute change for each residue is plotted.",
                                     fromfile_prefix_chars="@")
 
 ## add arguments
@@ -122,27 +133,27 @@ cl_parser.add_argument('file_one',
                        metavar = 'file-one',
                        help = 'Enter the path to a csv file computed by calculateChanges containing the absolute changes.')
 
-cl_parser.add_argument('file_two',
+cl_parser.add_argument('-file-two',
+                       '--file-two',
+                       default = '',
                        metavar = 'file-two',
-                       help='Enter the path to a second csv file computed by calculateChanges containing the absolute changes.')                                           
-                       
-cl_parser.add_argument('--exclude-coloring',
-                       type = str,
-                       nargs = '+',
-                       default = [],
-                       help='Specify chains that should not be considered in coloring, but in calculation.')
-                       
-cl_parser.add_argument('--exclude-calculation-chains',
-                       type = str,
-                       nargs = '+',
-                       default = [],
-                       help='Specify chains that should not be considered in calculation and coloring.')                         
+                       help='Enter the path to a second csv file computed by calculateChanges containing the absolute changes.')                                            
 
 cl_parser.add_argument('-p',
                        '--output-dir',
                        metavar = 'output-directory',
                        default = '',
                        help = 'specify a path to your output directory. Otherwise the current folder is used.')
+                       
+cl_parser.add_argument('-n',
+                       '--name-pdf-plots',
+                       metavar = 'name-pdf-plots',
+                       default = '',
+                       help = 'specify the name of the output pdf where all plots are stored')    
+                       
+cl_parser.add_argument('--show-plots',
+                       action='store_true',
+                       help = 'open the matplot plots.')                                           
 
 args = cl_parser.parse_args()
 
@@ -164,62 +175,90 @@ file_two = check_input_files(args.file_two)
 # output directory
 output_dir = check_dir_args(args.output_dir)
 
-exclude_chains_coloring = args.exclude_coloring
-exclude_calculation_chains = args.exclude_calculation_chains
+# name of pdf output
+if(args.name_pdf_plots != ""):
+    if(args.name_pdf_plots.endswith('.pdf')):
+        name_pdf_plots = args.name_pdf_plots
+    else:
+        name_pdf_plots = args.name_pdf_plots + '.pdf'
+else:
+    name_pdf_plots = "plots_res_res_contact_changes.pdf"
 
 ########### vamos ###########
+_start_time = time.time()
 
-changes_one, header_one =  read_in_file(file_one) 
-changes_two, header_two =  read_in_file(file_two)
+figure_count = 0
+pp = PdfPages(name_pdf_plots)
 
-if header_one != header_two:
-    log("Non matching csv files. Enter two csv files in the same format.", "e")
-    exit()
+changes_1, header_1 = read_in_file(file_one)
+filename_1 = os.path.basename(file_one).split('.')
 
-log("Changes calculated for the first file :" + str(changes_one), 'i')
-log("Changes calculated for the second file :" + str(changes_two), 'i')
-
-changes = changes_one
-
-for key in changes_two:
-    old_value = changes.get(key)
-    if old_value != None:
-        new_value = int(old_value) - int(changes_two[key])
-    else:
-        new_value = 0 - int(changes_two[key])
-    changes[key] = new_value
-    
-log("Changes calculated for both files: " + str(changes), 'i')
+changes_2 = ''
+header_2 = ''
+if file_two != '':
+    changes_2, header_2 = read_in_file(file_two)
+    filename_2 = os.path.basename(file_two).split('.')
+    if header_2 != header_1:
+        log("The files aren´t in the same format. Exiting.", "e")
+        exit()
         
-# Create outputfile
-comp_datasets = open(output_dir + '/' + 'compared_datasets.csv','w')
-comp_datasets.write(header_one + "," +  "change in percent" + '\n')
+        
+for key in changes_1:
+    if len(changes_1.get(key)) < 2:
+        pass
+    else:
+        x = []
+        y = []
+        z = []
 
-for key in changes:
-    comp_datasets.write(key + ',' + str(changes[key]) + '\n')
+        for residue in changes_1[key]:
+            x.append(residue)
+            y.append(int(changes_1[key].get(residue)))
+            if changes_2 != '':
+                if residue in changes_2[key]:
+                    value = int(changes_2[key].get(residue))
+                    del changes_2[key][residue]
+                else:
+                    value = 0
+                z.append(value)
+        if changes_2 != '':
+            if changes_2[key] != '':
+                 for residue in changes_2[key]:
+                    x.append(residue)
+                    y.append(0)
+                    z.append(int(changes_2[key].get(residue)))
+                    
+        counter_parts = 0
+        parts = round(len(x) / 60)
+        x = np.array_split(x, parts)
+        y = np.array_split(y, parts)
+        z = np.array_split(z, parts)
+        while counter_parts < parts:                      
+            plt.figure(figure_count) 
+            figure_count +=1
+            plt.xlabel("residues in chain " + str(key) + " part " + str(counter_parts + 1) + " of " + str(parts))
+            plt.ylabel("sum of changes over all time steps")                   
+            plt.xticks(rotation=90, fontsize=5)
+            plt.plot(x[counter_parts],y[counter_parts],color="royalblue", alpha=0.75, label=str(filename_1[0])) 
+            if file_two != '':
+                plt.plot(x[counter_parts],z[counter_parts],color="red", alpha=0.75, label=str(filename_2[0]))   
+            plt.legend(loc="upper left", fontsize=6)
+            plt.suptitle('Inter chain contacts in chain ' + str(key) + " part " + str(counter_parts + 1) + " of " + str(parts))
+            pp.savefig()
+            counter_parts += 1
+            if (args.show_plots == False):
+                plt.close('all')  
+                                 
+pp.close() 
+if (args.show_plots):
+    log("Finished calculating. Showing plots.",'i')
+    plt.show()
+else:
+    log("Finished calculating. Opening the pdf with the plots.", 'i')
+    if platform.system() == 'Linux':
+        subprocess.call(('xdg-open', name_pdf_plots)) 
 
-comp_datasets.close()
 
-all_changes = set(changes.values())
-value_max = int(max(all_changes))
-value_min = int(min(all_changes))
-change = value_max - value_min
-
-for key in changes:
-    value = changes.get(key)
-    percent = (int(value) - value_min) / change
-    percent = round(percent, 2)
-    changes[key] = percent
-    
-percents = open(output_dir + '/' + 'compared_datasets_changes_in_percent.csv','w')
-percents.write(header_one + "," +  "change in percent" + '\n')
-
-for key in changes:
-    percents.write(key + ',' + str(changes[key]) + '\n')
-
-percents.close()
-
-log('finished comparing the datasets and creating the PyMOL script', 'i')
-
-
+log('Created plots. Exiting plotResResContactChanges.py.', 'i')
+log("-- %s seconds ---"% (time.time()- _start_time), 'i')
 

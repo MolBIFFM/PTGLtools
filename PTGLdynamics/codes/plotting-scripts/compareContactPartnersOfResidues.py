@@ -73,7 +73,7 @@ def read_contact_file_in(file):
     for line in csv_lines[1:]:
         if line != '':
             columns = line.split(',')
-            if columns[0] != '' and columns[4] !='' and columns[6] !='' and columns[2] not in excluded_chains and columns[6] not in excluded_chains:
+            if columns[0] != '' and columns[4] !='' and columns[2] not in excluded_chains and columns[6] not in excluded_chains:
                 key_1 = (columns[0], columns[2], columns[3])
                 key_2 = (columns[4], columns[6], columns[7])
                 if str(key_1) in excluded_residues or str(key_2) in excluded_residues:
@@ -135,13 +135,11 @@ cl_parser.add_argument('--version',
                        action='version',
                        version='%(prog)s ' + version)
 
-cl_parser.add_argument('-file1',
-                       '--inputfile1',
+cl_parser.add_argument('file_one',
                        metavar = 'path',
                        help='the first csv file containing the residue contacts for a residue.')
 
-cl_parser.add_argument('-file2',
-                       '--inputfile2',
+cl_parser.add_argument('file_two',
                        metavar = 'path',
                        help='the second csv file containing the residue contacts for a residue.')
 
@@ -177,10 +175,10 @@ elif (args.verbose):
 logging.getLogger().setLevel(log_level)
 
 # input file 1
-file1 = check_input_files(args.inputfile1)
+file1 = check_input_files(args.file_one)
         
 # input file 2
-file2= check_input_files(args.inputfile2)
+file2= check_input_files(args.file_two)
         
 # output directory
 output_dir = check_dir_args(args.outputdirectory)
@@ -214,7 +212,7 @@ for key in residues_contacts_file1:
         symmetric_difference[key] = difference
         del residues_contacts_file2[key]
     else:
-        symmetric_difference[key] = len(residues_contacts_file1.get(key))
+        symmetric_difference[key] = len(residues_contacts_file1.get(key))        
         
 for key in residues_contacts_file2:
     symmetric_difference[key] = len(residues_contacts_file2.get(key))

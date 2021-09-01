@@ -988,7 +988,7 @@ public class ComplexGraph extends UAdjListGraph {
      */
     public ArrayList<Float> getColorCode(String molIdName, ArrayList<Float> colors, ArrayList<String> Homologues){
         
-        Integer molID = Homologues.indexOf(molIdName) + 1; //since only homologue chains are colored the molID needs to be set according to the number of homologues
+        Integer molID = Homologues.indexOf(molIdName) + 1; //since only homologous chains are colored the molID needs to be set according to the number of homologues
         Integer numberHomologues = Homologues.size();
         
         //Divides the vertices into groups of size x. x can't be larger than 10 because we prefer more groups to larger groups.
@@ -1462,7 +1462,7 @@ public class ComplexGraph extends UAdjListGraph {
             
             // footer
             final Rectangle2D key;
-            String footer = "Homologue chains have the same color. Non-homologue chains are gray.";
+            String footer = "Homologous chains have the same color. Non-homologous chains are gray.";
             
             if (hasRna) {
                 String footerAddon = "\nPeptide chains are represented as rectangles, RNA chains are represented as triangles.";

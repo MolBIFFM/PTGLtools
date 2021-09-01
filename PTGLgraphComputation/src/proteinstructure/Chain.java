@@ -32,7 +32,7 @@ public class Chain implements java.io.Serializable {
     private String macromolName = null;              // the macromol name from the PDB file
     private String modelID = null;
     private Model model = null;                                                                                                                                                                                                                             // the Model of this Chain
-    private ArrayList<String> homologues = null;     // a list of homologue chains (defined by PDB COMPND)
+    private ArrayList<String> homologues = null;     // a list of homologous chains (defined by PDB COMPND)
     private final Integer[] chainCentroid = new Integer[3];  // X-/Y-/Z-coordinates as 10th of Angström of the center of all non-H atoms
     private Integer radiusFromCentroid = null;         // distance from center to farthest non-H atom. -1 if no protein-atoms
     private Integer maxSeqNeighborAADist = null;    // largest distance between sequential residue neighbors excluding ligands (center to center)

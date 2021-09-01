@@ -175,7 +175,6 @@ public class Main {
     static ArrayList<Residue> residues = null;
     static ArrayList<RNA> rnas = null;
     static ArrayList<Ligand> ligands = null;
-    
 
     public static void checkArgsUsage(String[] args, Boolean[] argsUsed) {
         for(int i = 0; i < argsUsed.length; i++) {
@@ -2116,7 +2115,7 @@ public class Main {
             System.out.println("Getting data...");
         }
         
-        FileParser.initData(pdbFile, dsspFile);
+        FileParser.initData(pdbFile, dsspFile, outputDir);
                
         if (Settings.getBoolean("PTGLgraphComputation_B_debug_only_parse")) {
             System.out.println("Exiting now as requested by settings.");
@@ -2186,7 +2185,6 @@ public class Main {
             DP.getInstance().e("Main", "Aborting further processing of PDB '" + pdbid + "': molecule count '" + molecules.size() + "' too low, must be at least '" + minNumberOfResidues + "'. (Set 'plcc_I_abort_if_num_molecules_below' to a negative int value in the config file to prevent this behaviour or use --force.) Exiting now.");
             System.exit(0);
         }
-        
         
         
         String sBondString;

@@ -6,7 +6,7 @@
 #   patch: fixes, small changes
 #   no version change: fix typos, changes to comments, debug prints, small changes to non-result output, changes within git branch
 # -> only increment with commit / push / merge not while programming
-version = "1.0.0"  # TODO version of this template, change this to 1.0.0 for a new script or 2.0.0 if you upgrade another script to this template's architecture
+version = "1.0.0" 
 
 
 ########### built-in imports ###########
@@ -22,6 +22,8 @@ import decimal
 from matplotlib.backends.backend_pdf import PdfPages
 import platform
 import subprocess
+from matplotlib import cm
+from matplotlib.colors import LinearSegmentedColormap
 
 
 ########### functions ###########
@@ -58,17 +60,6 @@ def log(message, level=""):
         else:
             global output_file
             output_file.write(message + "\n")
-
-
-def check_for_U(name):
-    """checks the file name wether it belongs to the dataset with or without U"""
-    if('withU' in name):
-        ending = '-with_U'
-    elif('noU' in name):
-        ending = '-noU'
-    else:
-        ending = ''
-    return ending
 
 ########### configure logger ###########
 
@@ -169,7 +160,7 @@ if (args.outputfile != ""):
     if(check_file_writable(args.outputfile)):
         output_file = open(args.outputfile, "w")
     else:
-        logging.error("Specified output file '%s' is not writable. Exiting now.", args.outputfile)
+        log("Specified output file is not writable. Exiting now.", 'e')
         sys.exit(1)
 
 # input file
@@ -178,10 +169,10 @@ for elem in args.inputfiles:
     if(os.access(elem, os.R_OK) == True):
         csv.append(elem)
     else:
-        logging.error("Specified file '%s' is not readable. Exiting.", elem)
-        exit()
+        log("Specified input file is not readable. Exiting.", 'e')
+        sys.exit(1)
 if(csv == []):
-    logging.error("No readable files found. Exiting now.", args.inputfiles)
+    log("No readable files found. Exiting now.", 'e')
     sys.exit(1)
 
     
@@ -262,29 +253,31 @@ for i in range(len(csv)): # [file]
 
     x = list(range(len(csv_lines)-empty_lines_count-2))
     w = list(range(int(interval/2), len(csv_lines) - empty_lines_count -int(interval/2)-2))
+    
+    # Create colormap
+    amount_of_edges = (len(edges[0]))
+    gist_ncar = cm.get_cmap('gist_ncar', amount_of_edges)
 
-    plt.figure(fig_count)
+    plt.figure(fig_count) 
     fig_count +=1
+       
     for j in range(len(edges[-1])):
         y = [decimal.Decimal(edges[-1][j][y]) for y in x]
-
-        dataset = check_for_U(csv[i])
-        plt.plot(x,y, label=str(edge_keys[-1][j]) + dataset , alpha=0.5)
+        plt.plot(x,y, color=gist_ncar(j), label=str(edge_keys[-1][j]), alpha=0.25)
         
     
     for j in range(len(edges[-1])):
 
         z =  [decimal.Decimal(mean[-1][j][z-int(interval/2)]/interval) for z in w] #calculate mean for this point
 
-        dataset = check_for_U(csv[i])
-        plt.plot(w,z, label=str(edge_keys[-1][j]) + dataset + '-mean' , alpha=0.25)
+        plt.plot(w,z, color=gist_ncar(j), label=str(edge_keys[-1][j]) + '-mean', alpha=0.75)
 
     """
     ############# DOES NOT WORK ##############
     if(args.log_scale):
         plt.yscale('log')
     """
-
+    
     plt.xlabel("timestep")
     plt.ylabel("edge weight")
 
@@ -331,8 +324,7 @@ for i in range(len(all_keys)):
 
             y = [decimal.Decimal(edges[j][k][y]) for y in x]
 
-            dataset = check_for_U(csv[j])
-            plt.plot(x,y, label=str(all_keys[i]) + dataset , alpha=0.25)
+            plt.plot(x,y, color='royalblue', label=str(all_keys[i]) , alpha=0.5)
             #if(args.log_scale):
             #    plt.yscale('log')
             
@@ -346,8 +338,7 @@ for i in range(len(all_keys)):
 
             z = [decimal.Decimal(mean[j][k][z-int(interval/2)]/interval) for z in w] #calculate mean for this point
 
-            dataset = check_for_U(csv[j])
-            plt.plot(w,z, label=str(all_keys[i])+ dataset + '-mean' , alpha=0.25)
+            plt.plot(w,z, color='royalblue', label=str(all_keys[i])+  '-mean',)
 
 
     """

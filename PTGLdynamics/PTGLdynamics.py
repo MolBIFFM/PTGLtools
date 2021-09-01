@@ -25,7 +25,11 @@ import time
 ########### functions ###########
 
 # Add new subscripts here
-programs = ['toLegacyPDB.py', 'toMmCIF.py', 'dsspcmbi', 'postProcessDssp.py', 'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py', 'getAttributeDataFromGml.py', 'evalEdgesWeights.py', 'changeEdgeNames.py', 'sumEdgeWeights.py', 'plotSnapshots.py']
+programs = ['toLegacyPDB.py', 'toMmCIF.py', 'dsspcmbi', 'postProcessDssp.py', 'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py', 'getAttributeDataFromGml.py', 'evalEdgesWeights.py', 'changeEdgeNames.py', 'sumEdgeWeights.py', 'plotSnapshots.py', 'PyMolHeatmapVisualisation.py']
+
+default_path_graCom = os.path.dirname(__file__)
+parts = default_path_graCom.split('/PTGLdynamics')
+default_path_graCom = parts[0] + '/PTGLgraphComputation/dist/PTGLgraphComputation.jar'
 
 
 def check_file_writable(fp):
@@ -181,7 +185,13 @@ cl_parser.add_argument('-H',
                        '--headerfile',
                        metavar = 'headerfile',
                        default = '',
-                       help = 'to integrate a header in your files containing 3D structural data specify the path of your header file.')
+                       help = 'to integrate a header in your mmCif files specify the path of your header file.')
+                       
+cl_parser.add_argument('-C',
+                       '--compoundfile',
+                       metavar = 'compoundfile',
+                       default = '',
+                       help = 'to integrate a header in your pdb files containing 3D structural data specify the path of your header file.')                       
 
 cl_parser.add_argument('-a',
                        '--applications',
@@ -203,7 +213,7 @@ cl_parser.add_argument('-u',
                        help='display the results in sub directories in the output directory.')
 
 cl_parser.add_argument('--PTGLgraphComputation-path',
-                       default = (os.path.dirname(__file__) + '/PTGLgraphComputation/dist/PTGLgraphComputation.jar'),
+                       default = default_path_graCom,
                        help = 'Absolute path to a custom PTGLgraphComputation JAR file. Otherwise assuming built version of PTGLtools.')
 
 cl_parser.add_argument('--PTGLgraphComputation-args',
@@ -275,7 +285,12 @@ cl_parser.add_argument('--plotSnapshots-args',
                        metavar = 'plotSnapshots-args',
                        default = '',   
                        help = 'a string with the arguments for plotSnapshots you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: -n="<arguments and their inputs>".')
-
+                       
+cl_parser.add_argument('--pyMolHeatmapVisualisation-args',
+                       metavar = 'pyMolHeatmapVisualisation-arguments',
+                       type = str,
+                       default = '',
+                       help = 'a string with the arguments for createPymolScript you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: --createPymolScript-args="<arguments and their inputs>", including the positional arguments.')                       
 
 args = cl_parser.parse_args()
 
@@ -306,18 +321,30 @@ original_output_dir = check_dir_args(args.output_dir)
 # headerfile directory
 if (args.headerfile != ""):
     if(os.access(args.headerfile, os.R_OK)):
-        header = os.path.abspath(args.headerfile)
-        if (args.toMmCIF):
-            cmd_header = ' --headerfile ' + header
-        else:
-            cmd_header = ' -c ' + header
+        header_mmcif = os.path.abspath(args.headerfile)
+        cmd_header_mmcif = ' --headerfile ' + header_mmcif
     else:
-        logging.error("Specified header file '%s' is not readable. Continuing without header file.", args.headerfile)
+        logging.error("Specified header file '%s' is not readable. Continuing without header file. PTGLgraphComputation will not be working properly though.", args.headerfile)
+        header_mmcif = ''
+        cmd_header_mmcif = ''
+else:
+    header_mmcif = ''
+    cmd_header_mmcif = ''
+    if (args.toMmCIF):
+        logging.error("No header file was specified. PTGLgraphComputation will not be working properly.") 
+    
+# compoundfile directory
+if (args.compoundfile != ""):
+    if(os.access(args.compoundfile, os.R_OK)):
+        header = os.path.abspath(args.compoundfile)
+        cmd_header = ' -c ' + header
+    else:
+        logging.error("Specified header file '%s' is not readable. Continuing without header file.", args.compoundfile)
         header = ''
         cmd_header = ''
 else:
     header = ''
-    cmd_header = ''
+    cmd_header = ''    
 
 # list of applications
 program_list = []
@@ -331,9 +358,12 @@ else:
     program_list = list(programs)
     
 if (args.toMmCIF):
-    program_list.remove('toLegacyPDB.py')
+    if 'toLegacyPDB.py' in program_list:
+        program_list.remove('toLegacyPDB.py')
 else:
-    program_list.remove('toMmCIF.py')
+    if 'toMmCIF.py' in program_list:
+        program_list.remove('toMmCIF.py')
+
 
 # dssp directory
 dssp_input_dir = check_dir_args(args.dssp_input_dir)
@@ -373,12 +403,14 @@ add_sumEdgeWeights_args = check_arguments_args(args.sumEdgeWeights_args)
 # plotSnapshots arguments
 add_plotSnapshots_args = check_arguments_args(args.plotSnapshots_args)
 
+# createPymolScript arguments
+add_pyMolHeatmapVisualisation_args = check_arguments_args(args.pyMolHeatmapVisualisation_args)
     
 # different dssp folders
 if (args.different_dssp_folders):
-    dir_names = {'toLegacyPDB.py':'legacyPDB', 'toMmCIF.py':'mmCIF', 'dsspcmbi':'oldDssp', 'postProcessDssp.py':'newDssp', 'PTGLgraphComputation':'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py': 'gml', 'getAttributeDataFromGml.py': 'csv', 'evalEdgesWeights.py':'csv', 'changeEdgeNames.py':'csv', 'sumEdgeWeights.py':'pdf', 'plotSnapshots.py':'pdf'}
+    dir_names = {'toLegacyPDB.py':'legacyPDB', 'toMmCIF.py':'mmCIF', 'dsspcmbi':'oldDssp', 'postProcessDssp.py':'newDssp', 'PTGLgraphComputation':'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py': 'gml', 'getAttributeDataFromGml.py': 'csv', 'evalEdgesWeights.py':'csv', 'changeEdgeNames.py':'csv', 'sumEdgeWeights.py':'pdf', 'plotSnapshots.py':'pdf', 'PyMolHeatmapVisualisation.py':'PyMOL'}
 else:
-    dir_names = {'toLegacyPDB.py':'legacyPDB', 'toMmCIF.py':'mmCIF', 'dsspcmbi':'dssp', 'postProcessDssp.py':'dssp', 'PTGLgraphComputation':'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py': 'csv', 'getAttributeDataFromGml.py': 'csv', 'evalEdgesWeights.py':'csv', 'changeEdgeNames.py':'csv', 'sumEdgeWeights.py':'pdf', 'plotSnapshots.py':'pdf'}
+    dir_names = {'toLegacyPDB.py':'legacyPDB', 'toMmCIF.py':'mmCIF', 'dsspcmbi':'dssp', 'postProcessDssp.py':'dssp', 'PTGLgraphComputation':'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py': 'csv', 'getAttributeDataFromGml.py': 'csv', 'evalEdgesWeights.py':'csv', 'changeEdgeNames.py':'csv', 'sumEdgeWeights.py':'pdf', 'plotSnapshots.py':'pdf', 'PyMolHeatmapVisualisation.py':'PyMOL'}
 
 ########### vamos ###########
 
@@ -410,6 +442,7 @@ gml_dir = input_dir
 getAttributeDataFromGml_dir = input_dir
 evalEdgesWeights_dir = input_dir
 changeEdgeNames_dir = input_dir
+compareSubsets_dir = input_dir
 
 work_dir = get_working_dir(input_dir)
 list_work_dir = []
@@ -453,7 +486,7 @@ for elem in program_list:
     elif (elem == 'toMmCIF.py'):
 
         work_dir = get_working_dir(file_dir)
-        exec_string = cmd_start + elem + ' ' + add_toMmCIF_args + ' -i ' + work_dir + ' -p ' + out_dir + cmd_header
+        exec_string = cmd_start + elem + ' ' + add_toMmCIF_args + ' -i ' + work_dir + ' -p ' + out_dir + cmd_header_mmcif
         log('exec_string ' + exec_string, 'd')
         os.chdir(out_dir)
         os.system(exec_string)
@@ -518,7 +551,7 @@ for elem in program_list:
 
                 dssp = dssp_dir + pathlib.Path(pdb).stem + '.dssp'
 
-                PTGLgraphComputation = 'java -jar ' + PTGLgraphComputation_path + ' ' + pdb_id + ' ' + add_PTGLgraphComputation_args + ' -p ' + work_dir + pdb + ' -d ' + dssp + ' -o ' + pdb_id_folder
+                PTGLgraphComputation = 'java -jar ' + PTGLgraphComputation_path + ' ' + pdb_id + ' ' + add_PTGLgraphComputation_args + ' -p ' + work_dir + pdb + ' -d ' + dssp + ' -o ' + pdb_id_folder 
 
                 log(PTGLgraphComputation,'d') 
                 os.chdir(out_dir)
@@ -584,6 +617,8 @@ for elem in program_list:
                         os.system(gml_comparison)
                         os.chdir(work_dir)
                     prevGml = entry
+                    
+        compareSubsets_dir = os.path.abspath(out_dir) + '/'
         
         log('gmlCompareEdgeWeightsAndSubsets computations are done.', 'i')
 
@@ -741,6 +776,73 @@ for elem in program_list:
             os.chdir(work_dir)
 
         log('plotSnapshots computations are done.', 'i')
+        
+
+    elif (elem == 'PyMolHeatmapVisualisation.py'):      
+        if (add_pyMolHeatmapVisualisation_args == ''):
+            # get pseudo pdb / cif and dssp file
+            files_dir = get_working_dir(file_dir)
+            list_file_dir = os.listdir(files_dir)
+            list_file_dir = sorted_nicely(list_file_dir)
+        
+            cif_or_pdb_file = ''
+            for file in list_file_dir:
+                if file.endswith('.cif'):
+                    cif_or_pdb_file = os.path.abspath(file)
+                    break
+                                          
+            if (cif_or_pdb_file == ''):
+                list_input_dir = os.listdir(input_dir)
+                list_input_dir = sorted_nicely(list_file_dir)
+                for file in list_input_dir:
+                    if file.endswith('.pdb'):
+                        cif_or_pdb_file = os.path.abspath(file)
+                        break
+                    
+            base = os.path.basename(cif_or_pdb_file)
+            name = os.path.splitext(base)[0]
+            dssp_path = dssp_dir + name + '.dssp'
+            dssp_file = ''
+            if os.path.exists(dssp_path):
+                dssp_file = dssp_path
+            else:                
+                dssp_file = ''
+
+            create_csv_string = ''
+            if cif_or_pdb_file.endswith('.cif') and dssp_file != '':
+                create_csv_string = ' --pdb-or-cif-file ' + cif_or_pdb_file + ' --dssp-file ' + dssp_file
+            elif cif_or_pdb_file.endswith('.pdb') and dssp_file != '' and cmd_header_mmcif != '':
+                create_csv_string = ' --pdb-or-cif-file ' + cif_or_pdb_file + ' --dssp-file ' + dssp_file + cmd_header_mmcif
+
+            file = ''
+            if cif_or_pdb_file.endswith('.cif'):
+                file = cif_or_pdb_file
+            else:
+                files_dir = get_working_dir(file_dir)
+                list_files_dir = os.listdir(files_dir)
+                list_files_dir = sorted_nicely(list_files_dir)
+                for file_output in list_files_dir:
+                    if file_output.endswith('.pdb'):
+                        file = os.path.abspath(file_output)
+                        break
+
+            work_dir = get_working_dir(compareSubsets_dir)
+            log(work_dir, 'd')
+            
+            createPymolScript = 'python3 ' + plotting_dir + elem + ' ' + work_dir + ' ' + file + ' -p ' + out_dir + create_csv_string
+            log(createPymolScript, 'd')
+            os.chdir(out_dir) 
+            os.system(createPymolScript)
+            os.chdir(work_dir)
+                    
+        elif (add_pyMolHeatmapVisualisation_args != ''):
+            createPymolScript = 'python3 ' + plotting_dir + elem + ' ' + add_pyMolHeatmapVisualisation_args
+            log(createPymolScript, 'd')
+            os.chdir(out_dir) 
+            os.system(createPymolScript)
+            os.chdir(work_dir)
+
+        log('PyMolHeatmapVisualisation computations are done.', 'i')
             
         
            

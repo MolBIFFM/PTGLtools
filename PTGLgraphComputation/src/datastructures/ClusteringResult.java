@@ -109,7 +109,7 @@ public class ClusteringResult {
             }
             subStrings.put(merge[0], "(" + String.join(",", verticeStrings) + ")");
         }
-        return "(" + subStrings.get(lastRepresentative) + ");";
+        return subStrings.get(lastRepresentative) + ";";
     }
     
     public String toNewickString(Map<Integer, String> mapVertexIdToName) {

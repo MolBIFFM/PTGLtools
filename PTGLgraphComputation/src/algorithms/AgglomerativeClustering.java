@@ -110,8 +110,8 @@ public class AgglomerativeClustering {
         }
     }
     
-        /**
-     * 
+    /**
+     * Constructor of an agglomerative clustering. Class cannot be static so that it can hold instances of nested class Edge.
      * @param edgeList Array of [vertex ID 1, vertex ID 2, edge weight]
      * @param chainLengths
      * @param weightType
@@ -143,14 +143,7 @@ public class AgglomerativeClustering {
      */
     public ClusteringResult chainLengthClustering() {
         ClusteringResult clusteringResult = new ClusteringResult(false);
-
-        // TODELETE
-        System.out.println("Edges before sorting");
-        edges.forEach(edge -> {
-            System.out.println(edge.toString());
-        });
-
-        
+    
         while (edges.size() > 0) {
             chainLengthClusteringStep(clusteringResult);
             
@@ -159,14 +152,7 @@ public class AgglomerativeClustering {
                 System.out.println(clusteringResult.toString());
             }
         }
-
-        // TODELETE
-        System.out.println("\nEdges after sorting");
-        edges.forEach(edge -> {
-            System.out.println(edge.toString());
-        });
-        
-        
+   
         return clusteringResult;
     }
     
@@ -202,67 +188,28 @@ public class AgglomerativeClustering {
         // 2.3 update edges
         HashMap<Edge, Edge> edgeMap = new HashMap<>();
         edges.forEach(edge -> {
-            Edge updatedEdge = edge;
+            Edge updatedEdge = edge;  // Set it to edge and update below if necessary
             if (IntStream.of(edge.getVertices()).anyMatch(v -> v == v2 || v == v1)) {
-                // TODELETE
-                System.out.println("Match for: " + edge.toString());
-                
                 // possibly update indices
                 int updatedV1 = (edge.getVertices()[0] == v2 ? v1 : edge.getVertices()[0]);
                 int updatedV2 = (edge.getVertices()[1] == v2 ? v1 : edge.getVertices()[1]);
                 int absoluteWeight = edge.getAbsoluteWeight();
-                
-                // TODELETE
-                System.out.println("chain length v1 :" + chainLengths.get(updatedV1));
-                System.out.println("chain length v2 :" + chainLengths.get(updatedV2));
-                
+
                 BigDecimal updatedNomalizedWeight = ComplexGraphEdgeWeightTypes.computeLengthNormalization(absoluteWeight, chainLengths.get(updatedV1), chainLengths.get(updatedV2), 
                     weightType);
                 updatedEdge = new Edge(updatedV1, updatedV2, absoluteWeight, weightType, updatedNomalizedWeight);
-                
-                // TODELETE
-                System.out.println("Updated edge: " + updatedEdge.toString());
-            } else {
-                // TODELETE
-                System.out.println("No match for: " + edge.toString());
-
-            }
-            
-            
-            
-            // TODELETE
-            System.out.println("edgeMap before:");
-            edgeMap.keySet().forEach(key -> {
-                System.out.println(key.toString() + ": " + edgeMap.get(key).toString());
-            });
-            System.out.println("");
+            } 
             
             // try to add updated edge
             if (edgeMap.containsKey(updatedEdge)) {
                 // duplicate edge -> merge the two edges
-                
-                // TODELETE
-                System.out.println("Found a duplicate edge!");
-                
                 edgeMap.get(updatedEdge).mergeEdgeIntoThis(updatedEdge, chainLengths.get(updatedEdge.v1), chainLengths.get(updatedEdge.v2));
             } else {
                 edgeMap.put(updatedEdge, updatedEdge);
             }
         });
         
-        
-        // TODELETE
-        System.out.println("edgeMap after:");
-        edgeMap.keySet().forEach(key -> {
-            System.out.println(key.toString() + ": " + edgeMap.get(key).toString());
-        });
-            System.out.println("");
-        
-        edges = new ArrayList<>(edgeMap.values());
-        
-        
-        
-        
+        edges = new ArrayList<>(edgeMap.values());    
         curStepNum++;
     }
     
@@ -270,7 +217,7 @@ public class AgglomerativeClustering {
      * Tests agglomerative clustering implementation.
      */
     public static void main() {
-        System.out.println("CLUSTER TEST");
+        System.out.println("CLUSTERING TEST");
         Settings.set("PTGLgraphComputation_I_debug_level", "3");
         
         // Example 1
@@ -330,7 +277,9 @@ public class AgglomerativeClustering {
 
         AgglomerativeClustering clustering = new AgglomerativeClustering(edgeList, chainLengths, EdgeWeightType.ADDITIVE_LENGTH_NORMALIZATION);
         
-        clustering.chainLengthClustering();
+        ClusteringResult cr = clustering.chainLengthClustering();
+        
+        System.out.println(cr.toNewickString());
         
         clustering = new AgglomerativeClustering(edgeList, chainLengths, EdgeWeightType.MULTIPLICATIVE_LENGTH_NORMALIZATION);
         
@@ -340,7 +289,7 @@ public class AgglomerativeClustering {
         
         clustering.chainLengthClustering();
         
-        System.out.println("FINISHED CLUSTER TEST AND EXITING");
+        System.out.println("FINISHED CLUSTERING TEST AND EXITING");
         System.exit(0);
     }
 }

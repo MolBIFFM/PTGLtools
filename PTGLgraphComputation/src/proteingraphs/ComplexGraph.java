@@ -9,6 +9,7 @@
 package proteingraphs;
 
 import algorithms.AgglomerativeClustering;
+import datastructures.ClusteringResult;
 import graphdrawing.PageLayout;
 import graphdrawing.DrawTools;
 import graphdrawing.DrawResult;
@@ -47,10 +48,12 @@ import java.math.MathContext;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import settings.Settings;
 import proteinstructure.Chain;
 import proteinstructure.Molecule;
@@ -233,6 +236,17 @@ public class ComplexGraph extends UAdjListGraph {
         calculateNumChainInteractions(preprocessedResContacts);
         createEdges(preprocessedResContacts);
         
+        // TODELETE
+        Date startAssemblyDate = new Date();
+        System.out.println(startAssemblyDate.toString());
+        
+        assemblyPrediction();
+        
+        // TODELETE
+        Date endAssemblyDate = new Date();
+        System.out.println(endAssemblyDate.toString());
+        long timeDiffTotal = endAssemblyDate.getTime() - startAssemblyDate.getTime();
+        System.out.println("Whole assembly prediction took " + timeDiffTotal + " milliseconds");
     }
     
     
@@ -803,6 +817,23 @@ public class ComplexGraph extends UAdjListGraph {
             BigDecimal lucidWeight = ComplexGraphEdgeWeightTypes.computeLucidMultiplicativeLengthNormlization(curNormWeight, minimumMultiplicativeLengthNormalizedEdgeWeight);
             mapWeightNamesToMapEdgeValues.get(EdgeWeightType.LUCID_MULTIPLICATIVE_NORMALIZATION).put(e, lucidWeight);
         });     
+    }
+    
+    
+    private void assemblyPrediction() {
+        
+        //Date totalComputationEndTime = new Date();
+        //long timeDiffTotal = totalComputationEndTime.getTime() - computationStartTime.getTime();//as given
+        //long runtimeTotal_secs = TimeUnit.MILLISECONDS.toSeconds(timeDiffTotal);
+        
+        for (EdgeWeightType weightType : EdgeWeightType.values()) {
+            System.out.println(weightType.name);
+            AgglomerativeClustering clustering = 
+                    new AgglomerativeClustering(getEdgesAsArray(), vertexMapToVertexIdMap(chainLengthMap), weightType);
+            ClusteringResult clusteringResult = clustering.chainLengthClustering();
+            System.out.println(clusteringResult.toNewickString(vertexMapToVertexIdMap(proteinNodeMap)));
+            System.out.println("");
+        }
     }
     
 
@@ -1768,11 +1799,11 @@ public class ComplexGraph extends UAdjListGraph {
     
 
     /**
-     * 
-     * @param weightType
-     * @return 
+     * Returns an integer array of simple format containing all edges with absolute weights.
+     * @return Array of [index v1, index v2, weight]
      */
-    private int[][] getEdgesAsArray(EdgeWeightType weightType) {
+    private int[][] getEdgesAsArray() {
+        EdgeWeightType weightType = EdgeWeightType.ABSOLUTE_WEIGHT;  // We use integer array, so other weight types make no sense
         int numEdges = mapWeightNamesToMapEdgeValues.get(weightType).size();
         int[][] result = new int[numEdges][3];  // v1, v2, weight
         int curEdgeIndex = 0;
@@ -1785,6 +1816,20 @@ public class ComplexGraph extends UAdjListGraph {
             curEdgeIndex ++;
         }
         return result;
+    }
+    
+    
+    /**
+     * 
+     * @param vertexMap
+     * @return 
+     */
+    private <T> Map<Integer, T> vertexMapToVertexIdMap(Map<Vertex, T> vertexMap) {
+        Map<Integer, T> vertexIdMap = new HashMap<>();
+        vertexMap.keySet().forEach(vertex -> {
+            vertexIdMap.put(Integer.parseInt(vertex.toString()), vertexMap.get(vertex));
+        });
+        return vertexIdMap;
     }
     
     

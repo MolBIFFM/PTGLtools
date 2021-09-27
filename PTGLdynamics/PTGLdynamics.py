@@ -26,7 +26,7 @@ import fnmatch
 ########### functions ###########
 
 # Add new subscripts here
-programs = ['toLegacyPDB.py', 'toMmCIF.py', 'dsspcmbi', 'postProcessDssp.py', 'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py', 'getAttributeDataFromGml.py', 'evalEdgesWeights.py', 'changeEdgeNames.py', 'sumEdgeWeights.py', 'plotSnapshots.py', 'compareContactPartnersOfResidues.py', 'calculateChanges.py', 'heatmapVisualisation.py']
+programs = ['toLegacyPDB.py', 'toMmCIF.py', 'dsspcmbi', 'postProcessDssp.py', 'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py', 'getAttributeDataFromGml.py', 'evalEdgesWeights.py', 'changeEdgeNames.py', 'sumEdgeWeights.py', 'plotSnapshots.py', 'compareContactPartnersOfResidues.py', 'calculateChanges.py', 'heatmapVisualisation.py', 'plotResResContactChanges.py']
 
 default_path_graCom = os.path.dirname(__file__)
 parts = default_path_graCom.split('/PTGLdynamics')
@@ -301,7 +301,15 @@ cl_parser.add_argument('--calculateChanges-args',
                        metavar = 'calculateChanges-arguments',
                        type = str,
                        default = '',
-                       help = 'a string with the arguments for calculateChanges.py you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: --calculateChanges-args="<arguments and their inputs>", including the positional arguments.')                      
+                       help = 'a string with the arguments for calculateChanges.py you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: --calculateChanges-args="<arguments and their inputs>", including the positional arguments.')
+
+cl_parser.add_argument('--plotResResContactChanges-args',
+                       metavar = 'plotResResContactChanges-arguments',
+                       type = str,
+                       default = '',
+                       help = 'a string with the arguments for plotResResContactChanges.py you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: --plotResResContactChanges-args="<arguments and their inputs>", including the positional arguments.')                      
+                                            
+
                                             
 
 args = cl_parser.parse_args()
@@ -425,12 +433,15 @@ add_compareContactPartnersOfResidues_args = check_arguments_args(args.compareCon
 
 # calculateChanges arguments
 add_calculateChanges_args = check_arguments_args(args.calculateChanges_args)
+
+# plotResResContactChanges arguments
+add_plotResResContactChanges_args = check_arguments_args(args.plotResResContactChanges_args)
     
 # different dssp folders
 if (args.different_dssp_folders):
-    dir_names = {'toLegacyPDB.py':'legacyPDB', 'toMmCIF.py':'mmCIF', 'dsspcmbi':'oldDssp', 'postProcessDssp.py':'newDssp', 'PTGLgraphComputation':'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py': 'gml', 'getAttributeDataFromGml.py': 'csv', 'evalEdgesWeights.py':'csv', 'changeEdgeNames.py':'csv', 'sumEdgeWeights.py':'pdf', 'plotSnapshots.py':'pdf', 'heatmapVisualisation.py':'py', 'compareContactPartnersOfResidues.py':'csv', 'calculateChanges.py':'csv'}
+    dir_names = {'toLegacyPDB.py':'legacyPDB', 'toMmCIF.py':'mmCIF', 'dsspcmbi':'oldDssp', 'postProcessDssp.py':'newDssp', 'PTGLgraphComputation':'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py': 'gml', 'getAttributeDataFromGml.py': 'csv', 'evalEdgesWeights.py':'csv', 'changeEdgeNames.py':'csv', 'sumEdgeWeights.py':'pdf', 'plotSnapshots.py':'pdf', 'heatmapVisualisation.py':'py', 'compareContactPartnersOfResidues.py':'csv', 'calculateChanges.py':'csv', 'plotResResContactChanges.py':'pdf' }
 else:
-    dir_names = {'toLegacyPDB.py':'legacyPDB', 'toMmCIF.py':'mmCIF', 'dsspcmbi':'dssp', 'postProcessDssp.py':'dssp', 'PTGLgraphComputation':'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py': 'csv', 'getAttributeDataFromGml.py': 'csv', 'evalEdgesWeights.py':'csv', 'changeEdgeNames.py':'csv', 'sumEdgeWeights.py':'pdf', 'plotSnapshots.py':'pdf', 'heatmapVisualisation.py':'py', 'compareContactPartnersOfResidues.py':'csv', 'calculateChanges.py':'csv'}
+    dir_names = {'toLegacyPDB.py':'legacyPDB', 'toMmCIF.py':'mmCIF', 'dsspcmbi':'dssp', 'postProcessDssp.py':'dssp', 'PTGLgraphComputation':'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py': 'csv', 'getAttributeDataFromGml.py': 'csv', 'evalEdgesWeights.py':'csv', 'changeEdgeNames.py':'csv', 'sumEdgeWeights.py':'pdf', 'plotSnapshots.py':'pdf', 'heatmapVisualisation.py':'py', 'compareContactPartnersOfResidues.py':'csv', 'calculateChanges.py':'csv', 'plotResResContactChanges.py':'pdf'}
 
 ########### vamos ###########
 
@@ -855,12 +866,12 @@ for elem in program_list:
                 os.chdir(out_dir)
                 contactResRes_dir = new_directory('res_res_contacts') + '/'
 
-            # Create csv files with contacts with PTGLgraphComputation.
+            # Create csv files with inter- and intrachain contacts with PTGLgraphComputation.
             for cif in list_work_dir:
                 if (cif.endswith(".cif")):
                     cif_id = pathlib.Path(cif).stem
                     dssp = dssp_dir + pathlib.Path(cif).stem + '.dssp'
-                    PTGLgraphComputation = 'java -jar ' + default_path_graCom + ' ' + cif_id + ' -p ' + work_dir + cif + ' -d ' + dssp + ' -o ' + contactResRes_dir + ' -I -G --set "PTGLgraphComputation_B_csv_contacts" "True" --set "PTGLgraphComputation_B_calc_draw_graphs" "False"'
+                    PTGLgraphComputation = 'java -jar ' + default_path_graCom + ' ' + cif_id + ' -p ' + work_dir + cif + ' -d ' + dssp + ' -o ' + contactResRes_dir + ' -I -G --set "PTGLgraphComputation_B_csv_contacts_intra_inter" "True" --set "PTGLgraphComputation_B_calc_draw_graphs" "False"'
                     log(PTGLgraphComputation,'d') 
                     os.chdir(contactResRes_dir)
                     os.system(PTGLgraphComputation)
@@ -944,6 +955,7 @@ for elem in program_list:
 
                 
     elif (elem == 'heatmapVisualisation.py'):
+        # Creates the heatmap visualisation on residue level based on inter- and intrachain residue-residue contacts.
         if (add_heatmapVisualisation_args == ''):
             work_dir = get_working_dir(file_dir)
             list_work_dir = os.listdir(work_dir)
@@ -962,9 +974,10 @@ for elem in program_list:
                 
             work_dir = get_working_dir(changes_dir)
             list_work_dir = os.listdir(work_dir)               
-            pattern = "changes_each_res_based_on_res_*.csv"
+            pattern = "changes_in_percent_each_res_based_on_res_*.csv"
             matching = fnmatch.filter(list_work_dir, pattern)
             changes_file = work_dir + matching[0]
+            print("changes file ", changes_file)
                 
             if os.path.isfile(changes_file):
                 heatmapVisualisation = 'python3 ' + plotting_dir + elem + ' ' + pdb_file + ' ' + changes_file + ' -p ' + out_dir
@@ -981,7 +994,32 @@ for elem in program_list:
             os.system(createPymolScript)
             os.chdir(work_dir)
 
-        log('heatmapVisualisation computations are done.', 'i')        
+        log('heatmapVisualisation computations are done.', 'i')
+
+    elif (elem == 'plotResResContactChanges.py'):
+        if (add_plotResResContactChanges_args == ''):
+            work_dir = get_working_dir(changes_dir)
+            list_work_dir = os.listdir(work_dir)
+            pattern = "changes_each_res_based_on_res_*.csv"
+            matching = fnmatch.filter(list_work_dir, pattern)
+            changes_file = work_dir + matching[0]
+                 
+            if os.path.isfile(changes_file):
+                plots = 'python3 ' + plotting_dir + elem + ' ' + changes_file + ' -p ' + out_dir
+                os.chdir(out_dir)
+                os.system(plots)
+                os.chdir(work_dir)
+            else:
+                log("No files containing the changes for each chain based on residue-residue contacts found. Can´t create plots.", 'e')                                       
+                    
+        elif (add_plotResResContactChanges_args != ''):
+            plots = 'python3 ' + plotting_dir + elem + ' ' + add_plotResResContactChanges_args
+            log(plots, 'd')
+            os.chdir(out_dir) 
+            os.system(plots)
+            os.chdir(work_dir)
+
+        log('plotResResContactChanges computations are done.', 'i') 
        
 
 log("-- %s seconds ---"% (time.time()- _start_time), 'i')

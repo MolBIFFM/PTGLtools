@@ -24,6 +24,7 @@ import platform
 import subprocess
 import numpy as np
 
+
 ########### functions ###########
 
 def log(message, level=""):
@@ -81,6 +82,7 @@ def read_in_file(file):
             columns = line.split(',')
             keys = columns[0].split('|')
             chain_id = keys[1]
+
             if chain_id in changes:
                 changes[chain_id] [columns[0]] = columns[1]
                 
@@ -88,6 +90,15 @@ def read_in_file(file):
                 changes[chain_id] = {columns[0] : columns[1]}
 
     return changes, header
+
+def split(elem):
+    """Returns the residues ID from the 3-tuple."""
+    key = elem[0]
+    keys = key.split('|')
+    residue = keys[0]
+    residue = residue[2:-1]
+    residue = int(residue)
+    return residue
         
         
 ########### configure logger ###########
@@ -201,8 +212,10 @@ if file_two != '':
     if header_2 != header_1:
         log("The files aren´t in the same format. Exiting.", "e")
         exit()
-        
-        
+
+for key in changes_1:
+    changes_1[key] = dict(sorted(changes_1[key].items(), key=split))
+           
 for key in changes_1:
     if len(changes_1.get(key)) < 2:
         pass
@@ -239,10 +252,10 @@ for key in changes_1:
             plt.xlabel("residues in chain " + str(key) + " part " + str(counter_parts + 1) + " of " + str(parts))
             plt.ylabel("sum of changes over all time steps")                   
             plt.xticks(rotation=90, fontsize=5)
-            plt.plot(x[counter_parts],y[counter_parts],color="royalblue", alpha=0.75, label=str(filename_1[0])) 
+            plt.plot(x[counter_parts],y[counter_parts], '.', color="royalblue", alpha=0.75, label=str(filename_1[0])) 
             if file_two != '':
-                plt.plot(x[counter_parts],z[counter_parts],color="red", alpha=0.75, label=str(filename_2[0]))   
-            plt.legend(loc="upper left", fontsize=6)
+                plt.plot(x[counter_parts],z[counter_parts],'.', color="red", alpha=0.75, label=str(filename_2[0]))   
+            plt.legend(loc="upper left", fontsize=6, framealpha=0.25)
             plt.suptitle('Inter chain contacts in chain ' + str(key) + " part " + str(counter_parts + 1) + " of " + str(parts))
             pp.savefig()
             counter_parts += 1

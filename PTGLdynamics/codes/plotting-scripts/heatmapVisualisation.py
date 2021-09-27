@@ -97,7 +97,7 @@ logging.basicConfig(format = "[%(levelname)s] %(message)s")
 ########### command line parser ###########
 
 ## create the parser
-cl_parser = argparse.ArgumentParser(description="Compare the complex graphs of consecutive timesteps and sum up the edge weights to create a csv file and a PyMOL script with a heatmap visualisation to display changes in chains edge weights.",
+cl_parser = argparse.ArgumentParser(description="Takes the csv file with the residue-residue changes in percent from calculateChanges and colours the chains or residues of the molecule in PyMOL, creating a heatmap visualisation.",
                                     fromfile_prefix_chars="@")
 
 ## add arguments
@@ -241,7 +241,7 @@ for key in changes:
             pymol_script.write("cmd.set_color('color" + str(parts[1]) + str(parts[0]) + str(parts[2]) + "', [" + str(R) + "," + str(G) + "," + str(B) + "])" + "\n")
             pymol_script.write("cmd.color('color" + str(parts[1]) + str(parts[0]) + str(parts[2]) + "', 'chain " + str(parts[1]) + " and resi " + str(parts[0]) + str(parts[2]) + "')" + "\n")
       
-
+pymol_script.write("cmd.set_view((0.446788907,    0.341555417,   -0.826871991, 0.891671062,   -0.094802283,    0.442642629, 0.072797880,   -0.935068429,   -0.346911997, 0.000000000,    0.000000000, -631.948852539,4.154993057,  -49.774185181,  -45.062347412,461.819915771,  802.077880859,  -20.000000000 ))")
 pymol_script.close()
 
 # Run the script in PyMOL.

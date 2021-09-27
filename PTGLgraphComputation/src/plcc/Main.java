@@ -2409,7 +2409,7 @@ public class Main {
             }
         }
             
-        if(Settings.getBoolean("PTGLgraphComputation_B_csv_contacts")) {
+        if(Settings.getBoolean("PTGLgraphComputation_B_csv_contacts_intra_inter")||Settings.getBoolean("PTGLgraphComputation_B_csv_contacts_inter")) {
             String[] parts = pdbFile.split(".+?/(?=[^/]+$)");
             String[] basename = parts[1].split("\\.");
             File contacts = new File(outputDir +  "contacts_" + basename[0] + ".csv");
@@ -2425,8 +2425,11 @@ public class Main {
                 String mci = mol.toString();
                 String MolA = mol.getMolA().toStringForCsv();
                 String MolB = mol.getMolB().toStringForCsv();
-                // if (!Objects.equals(mol.getMolA().getChainID(), mol.getMolB().getChainID()))
-                allContacts += MolA + "," + MolB + "\n";
+                if (Settings.getBoolean("PTGLgraphComputation_B_csv_contacts_inter")) {
+                    if (!Objects.equals(mol.getMolA().getChainID(), mol.getMolB().getChainID())){
+                        allContacts += MolA + "," + MolB + "\n";}}
+                else {
+                allContacts += MolA + "," + MolB + "\n";}
             }
                  
             IO.writeStringToFile(allContacts, contacts.getAbsolutePath(), true);  

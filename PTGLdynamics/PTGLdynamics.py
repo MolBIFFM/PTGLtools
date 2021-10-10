@@ -812,8 +812,9 @@ for elem in program_list:
             os.chdir(work_dir)
 
         log('plotSnapshots computations are done.', 'i')
-
+    
     elif (elem == 'compareContactPartnersOfResidues.py'):
+        _start_time_2 = time.time()
         if (add_compareContactPartnersOfResidues_args == ''):
 
             os.chdir(out_dir)
@@ -1023,6 +1024,8 @@ for elem in program_list:
        
 
 log("-- %s seconds ---"% (time.time()- _start_time), 'i')
+print("The pipeline needed ", (time.time() - _start_time), " seconds.")
+print("ResResMatching needed ", (time.time() - _start_time_2), " seconds.")
 log("All done, exiting ptglDynamics.", 'i')
 
 # tidy up

@@ -196,6 +196,7 @@ else:
     name_pdf_plots = "plots_res_res_contact_changes.pdf"
 
 ########### vamos ###########
+no_U_dict = {"1":"Nqo1","2":"Nqo2","3":"Nqo3","4":"Nqo4","5":"Nqo5","6":"Nqo6","9":"Nqo9","7":"Nqo15","J":"Nqo10","K":"Nqo11","L":"Nqo12","M":"Nqo13","N":"Nqo14","H":"Nqo8","W":"Nqo16","A":"Nqo7"}
 _start_time = time.time()
 
 figure_count = 0
@@ -225,7 +226,10 @@ for key in changes_1:
         z = []
 
         for residue in changes_1[key]:
-            x.append(residue)
+            residue_parts = residue.split('|')
+            residue_id = residue_parts[0].replace('(', '')
+            residue_id = residue_id.replace("'", "")
+            x.append(residue_id)
             y.append(int(changes_1[key].get(residue)))
             if changes_2 != '':
                 if residue in changes_2[key]:
@@ -240,23 +244,24 @@ for key in changes_1:
                     x.append(residue)
                     y.append(0)
                     z.append(int(changes_2[key].get(residue)))
-                    
+        key_2 = key.replace("'", "")
+        key_nq = no_U_dict[key_2]            
         counter_parts = 0
-        parts = round(len(x) / 60)
+        parts = round(len(x) / 100)
         x = np.array_split(x, parts)
         y = np.array_split(y, parts)
         z = np.array_split(z, parts)
         while counter_parts < parts:                      
             plt.figure(figure_count) 
             figure_count +=1
-            plt.xlabel("residues in chain " + str(key) + " part " + str(counter_parts + 1) + " of " + str(parts))
+            plt.xlabel("residues in " + str(key_nq) + " part " + str(counter_parts + 1) + " of " + str(parts), fontsize=4)
             plt.ylabel("sum of changes over all time steps")                   
-            plt.xticks(rotation=90, fontsize=5)
-            plt.plot(x[counter_parts],y[counter_parts], '.', color="royalblue", alpha=0.75, label=str(filename_1[0])) 
+            plt.xticks(rotation=90, fontsize=3)
+            plt.plot(x[counter_parts],y[counter_parts], '.', color="royalblue", alpha=0.75, label="NoQ") 
             if file_two != '':
-                plt.plot(x[counter_parts],z[counter_parts],'.', color="red", alpha=0.75, label=str(filename_2[0]))   
+                plt.plot(x[counter_parts],z[counter_parts],'.', color="red", alpha=0.75, label="Qox")   
             plt.legend(loc="upper left", fontsize=6, framealpha=0.25)
-            plt.suptitle('Inter chain contacts in chain ' + str(key) + " part " + str(counter_parts + 1) + " of " + str(parts))
+            plt.suptitle('Inter- and intrachain contacts in ' + str(key_nq) + " part " + str(counter_parts + 1) + " of " + str(parts))
             pp.savefig()
             counter_parts += 1
             if (args.show_plots == False):

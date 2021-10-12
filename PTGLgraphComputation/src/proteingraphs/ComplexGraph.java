@@ -236,17 +236,7 @@ public class ComplexGraph extends UAdjListGraph {
         calculateNumChainInteractions(preprocessedResContacts);
         createEdges(preprocessedResContacts);
         
-        // TODELETE
-        Date startAssemblyDate = new Date();
-        System.out.println(startAssemblyDate.toString());
-        
         assemblyPrediction();
-        
-        // TODELETE
-        Date endAssemblyDate = new Date();
-        System.out.println(endAssemblyDate.toString());
-        long timeDiffTotal = endAssemblyDate.getTime() - startAssemblyDate.getTime();
-        System.out.println("Whole assembly prediction took " + timeDiffTotal + " milliseconds");
     }
     
     
@@ -821,18 +811,16 @@ public class ComplexGraph extends UAdjListGraph {
     
     
     private void assemblyPrediction() {
-        
-        //Date totalComputationEndTime = new Date();
-        //long timeDiffTotal = totalComputationEndTime.getTime() - computationStartTime.getTime();//as given
-        //long runtimeTotal_secs = TimeUnit.MILLISECONDS.toSeconds(timeDiffTotal);
-        
+        Boolean silent = Settings.getBoolean("PTGLgraphComputation_B_silent");
+        if (!silent) {
+            System.out.println("  Computing assembly prediction based on different edge weight types...");
+        }
         for (EdgeWeightType weightType : EdgeWeightType.values()) {
-            System.out.println(weightType.name);
+            System.out.println("   " + weightType.name);
             AgglomerativeClustering clustering = 
                     new AgglomerativeClustering(getEdgesAsArray(), vertexMapToVertexIdMap(chainLengthMap), weightType);
             ClusteringResult clusteringResult = clustering.chainLengthClustering();
-            System.out.println(clusteringResult.toNewickString(vertexMapToVertexIdMap(proteinNodeMap)));
-            System.out.println("");
+            System.out.println("    " + clusteringResult.toNewickString(vertexMapToVertexIdMap(proteinNodeMap)));
         }
     }
     

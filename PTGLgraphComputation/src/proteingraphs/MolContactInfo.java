@@ -193,7 +193,8 @@ public class MolContactInfo {
     }
 
     @Override public String toString() {
-        return("[MCI] TypeA " + getResTypeStringA() + ", TypeB " + getResTypeStringB() + ", DsspNumA "+ getDsspNumA() + ", DsspNumB " + getDsspNumB());
+        return("[MCI] TypeA " + getResTypeStringA() + ", TypeB " + getResTypeStringB() + ", DsspNumA "+ getDsspNumA() + ", DsspNumB " + getDsspNumB() + 
+                ", chainIdA " + molA.getChainID() + ", chainIdB " + molB.getChainID());
     }
     
     

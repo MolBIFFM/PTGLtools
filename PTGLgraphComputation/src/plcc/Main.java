@@ -1537,10 +1537,15 @@ public class Main {
                     }
                     
                     if (s.equals("--random-binary-tree")) {
+                        if (args.length <= i + 1) {
+                            syntaxError();
+                        }
+                        
                         RandomTreeGenerator rtg = new RandomTreeGenerator();
-                        System.out.println(rtg.randomRootedBinaryTree());
+                        System.out.println(rtg.randomRootedBinaryTree(Integer.parseInt(args[i + 1])));
                         System.out.println("Exiting as consequence of '--random-binary-tree'.");
-                        System.exit(0);
+                        argsUsed[i] = argsUsed[i + 1] = true;  // technically plays no role since program is terminated anyways, but let's code safe
+                        Main.doExit(0);
                     }
                     
                 } //end for loop
@@ -11283,6 +11288,7 @@ public class Main {
         System.out.println("   --matrix-structure-search-db <nt> <ln> <gt>: search a structure <ln> in linear notation in the whole database; <nt> = type of linnot; <gt> = graphtype of linnot");
         System.out.println("   --settingsfile <f>      : load settings from file <f>.");
         System.out.println("   --set <k> <v>           : set setting <k> to value <v>.");
+        System.out.println("   --random-binary-tree <n>: Create random rooted binary tree with <n> vertices.");
         System.out.println("");
         System.out.println("The following options only make sense for database maintenance:");
         System.out.println("--set-pdb-representative-chains-pre <file> <k> : Set non-redundant chain status for all chains in DB from XML file <file>. <k> determines what to do with existing flags, valid options are 'keep' or 'remove'. Get the file from PDB REST API. Run this pre-update, BEFORE new data will be added.");

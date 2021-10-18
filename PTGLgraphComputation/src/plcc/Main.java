@@ -11,6 +11,7 @@ package plcc;
 
 // imports
 import algorithms.ConnectedComponents;
+import algorithms.RandomTreeGenerator;
 import proteingraphs.PTGLNotations;
 import resultcontainers.ProteinResults;
 import resultcontainers.PTGLNotationFoldResult;
@@ -1535,8 +1536,13 @@ public class Main {
                         argsUsed[i] = argsUsed[i + 1] = argsUsed[i + 2] = true;
                     }
                     
+                    if (s.equals("--random-binary-tree")) {
+                        RandomTreeGenerator rtg = new RandomTreeGenerator();
+                        System.out.println(rtg.randomRootedBinaryTree());
+                        System.out.println("Exiting as consequence of '--random-binary-tree'.");
+                        System.exit(0);
+                    }
                     
-
                 } //end for loop
                 checkArgsUsage(args, argsUsed); // warn if there were extra command line args we do not know
             }

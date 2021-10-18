@@ -1542,7 +1542,7 @@ public class Main {
                         }
                         
                         RandomTreeGenerator rtg = new RandomTreeGenerator();
-                        System.out.println(rtg.randomRootedBinaryTree(Integer.parseInt(args[i + 1])));
+                        System.out.println(rtg.generateRandomRootedBinaryTree(Integer.parseInt(args[i + 1])));
                         System.out.println("Exiting as consequence of '--random-binary-tree'.");
                         argsUsed[i] = argsUsed[i + 1] = true;  // technically plays no role since program is terminated anyways, but let's code safe
                         Main.doExit(0);

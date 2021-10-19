@@ -1537,15 +1537,16 @@ public class Main {
                     }
                     
                     if (s.equals("--random-binary-tree")) {
-                        if (args.length <= i + 1) {
+                        if (args.length <= i + 2) {
                             syntaxError();
                         }
                         
-                        RandomTreeGenerator rtg = new RandomTreeGenerator();
-                        System.out.println(rtg.generateRandomRootedBinaryTree(Integer.parseInt(args[i + 1])));
-                        System.out.println("Exiting as consequence of '--random-binary-tree'.");
-                        argsUsed[i] = argsUsed[i + 1] = true;  // technically plays no role since program is terminated anyways, but let's code safe
-                        Main.doExit(0);
+                        Settings.set("PTGLgraphComputation_B_generate_random_binary_tree", "true");
+                        if (! Settings.set("PTGLgraphComputation_B_tree_rooted", args[i + 1])
+                                || ! Settings.set("PTGLgraphComputation_I_tree_number_leafs", args[i + 2])) {
+                            syntaxError();
+                        }
+                        argsUsed[i] = argsUsed[i + 1] = argsUsed[i + 2] = true;  // technically plays no role since program is terminated anyways, but let's code safe
                     }
                     
                 } //end for loop
@@ -1578,24 +1579,7 @@ public class Main {
                 System.out.println("  No-warn active, no warnings will be printed.");
             }
         }
-        
-        if(Settings.getBoolean("PTGLgraphComputation_B_use_mmCIF_parser")) {
-            if (pdbFile.endsWith(".pdb")) {
-                pdbFile = pdbFile.replace(".pdb", ".cif");
-            }
-            if (! silent) {
-                    System.out.println("Using mmCIF parser and therefore looking for .cif file.");
-                    System.out.println("Filename now is: " + pdbFile);
-            }
-        } else {
-            // using old parser: everything that does not work with it here
-            if (Settings.getBoolean("PTGLgraphComputation_B_include_rna")) {
-                DP.getInstance().w("Legacy PDB file parser and inclusion of RNA switched on, but the old parser does not suppoert this setting." +
-                        " Use a mmCIF file and command line option '-I' to include RNA. Switching off RNA inclusion now to go on.");
-                Settings.set("PTGLgraphComputation_B_include_rna", "false");
-            }
-        }
-        
+
         outputDir = Settings.get("PTGLgraphComputation_S_output_dir");
         
         if(Settings.getBoolean("PTGLgraphComputation_B_clustermode")) {
@@ -1620,17 +1604,44 @@ public class Main {
             DP.getInstance().w("Using vector mode instead of double distance for SSE orientation, but plcc_I_spatrel_vector_num_res_centroids cannot be negative."
                     + " Setting it to 1 and proceeding.");
         }
-
-
-        // ****************************************************    test for required files    **********************************************************
-
+        
         if(Settings.getBoolean("PTGLgraphComputation_B_contact_debug_dysfunct")) {
             print_debug_malfunction_warning();            
         }
         
         if(Settings.getInteger("PTGLgraphComputation_I_debug_level") > 0) {
             if(! silent) {
-                System.out.println("  Debug level set to " + Settings.getInteger("PTGLgraphComputation_I_debug_level") + ".");
+                System.out.println("Debug level set to " + Settings.getInteger("PTGLgraphComputation_I_debug_level") + ".");
+            }
+        }
+
+
+        // ****************************************************    test for required files / perform single tasks    **********************************************************
+        
+        if (Settings.getBoolean("PTGLgraphComputation_B_generate_random_binary_tree")) {
+            System.out.println("Generating random tree...");
+            
+            RandomTreeGenerator rtg = new RandomTreeGenerator();
+            System.out.println(rtg.generateRandomRootedBinaryTree(Settings.getInteger("PTGLgraphComputation_I_tree_number_leafs")));
+            
+            System.out.println("Exiting as consequence of random tree generation.");
+            Main.doExit(0);
+        }
+        
+        if(Settings.getBoolean("PTGLgraphComputation_B_use_mmCIF_parser")) {
+            if (pdbFile.endsWith(".pdb")) {
+                pdbFile = pdbFile.replace(".pdb", ".cif");
+            }
+            if (! silent) {
+                    System.out.println("Using mmCIF parser and therefore looking for .cif file.");
+                    System.out.println("Filename now is: " + pdbFile);
+            }
+        } else {
+            // using old parser: everything that does not work with it here
+            if (Settings.getBoolean("PTGLgraphComputation_B_include_rna")) {
+                DP.getInstance().w("Legacy PDB file parser and inclusion of RNA switched on, but the old parser does not suppoert this setting." +
+                        " Use a mmCIF file and command line option '-I' to include RNA. Switching off RNA inclusion now to go on.");
+                Settings.set("PTGLgraphComputation_B_include_rna", "false");
             }
         }
         
@@ -11288,7 +11299,7 @@ public class Main {
         System.out.println("   --matrix-structure-search-db <nt> <ln> <gt>: search a structure <ln> in linear notation in the whole database; <nt> = type of linnot; <gt> = graphtype of linnot");
         System.out.println("   --settingsfile <f>      : load settings from file <f>.");
         System.out.println("   --set <k> <v>           : set setting <k> to value <v>.");
-        System.out.println("   --random-binary-tree <n>: Create random rooted binary tree with <n> vertices.");
+        System.out.println("   --random-binary-tree <r><n> : Create random rooted binary tree with <n> vertices. Rooted for <r> is 'true' and unrooted for <r> is 'false'.");
         System.out.println("");
         System.out.println("The following options only make sense for database maintenance:");
         System.out.println("--set-pdb-representative-chains-pre <file> <k> : Set non-redundant chain status for all chains in DB from XML file <file>. <k> determines what to do with existing flags, valid options are 'keep' or 'remove'. Get the file from PDB REST API. Run this pre-update, BEFORE new data will be added.");

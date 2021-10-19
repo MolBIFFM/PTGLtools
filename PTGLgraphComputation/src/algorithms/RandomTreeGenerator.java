@@ -88,9 +88,6 @@ public class RandomTreeGenerator {
         Tree tree = new Tree(true, numberVertices * 2 - 1);  // initial capacity is 2n-1 since unrooted binary trees with n > 3 have that many edges
         
         for (int step = 2; step < numberVertices + 1; step++) {
-            // 2) choose a random edge
-            
-            // TODELETE
             if (Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 2) {
                 System.out.println("[DEBUG LV 2] Step: " + step);
                 System.out.println("[DEBUG LV 2] List of edges: ");
@@ -99,6 +96,7 @@ public class RandomTreeGenerator {
                 }
             }
             
+            // 2) choose a random edge
             int randomEdgeID = (int) ((Math.random() * (tree.edges.size() - 1 )));
             addNewVertexToBinaryTree(tree, randomEdgeID);
         }

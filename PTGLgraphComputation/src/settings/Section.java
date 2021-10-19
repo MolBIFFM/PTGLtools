@@ -373,6 +373,12 @@ class Section {
                 settings.add(new Setting("PTGLgraphComputation_B_write_chains_file", 'B', "false", "Whether to write a chains file containing all chain names of the currently handled PDB file. Can be used by GraphletAnalyzer later to construct graph file names for all chains."));
                 break;
                 
+            case "Random tree generation":
+                settings.add(new Setting("PTGLgraphComputation_B_generate_random_binary_tree", 'B', "false", "Whether to generate a random binary tree."));
+                settings.add(new Setting("PTGLgraphComputation_B_tree_rooted", 'B', "true", "Whether the generated tree should be rooted or not."));
+                settings.add(new Setting("PTGLgraphComputation_I_tree_number_leafs", 'I', "4", "How many leafs the tree should contain."));
+                break;
+                
             case "Debug":
                 settings.add(new Setting("PTGLgraphComputation_I_debug_level", 'I', "0", "Debug level. Higher value means more output."));
                 settings.add(new Setting("PTGLgraphComputation_B_debug_compareSSEContacts", 'B', "false", "Whether to compare the computed SSE level contacts to those in the geom_neo output file that is supplied."));

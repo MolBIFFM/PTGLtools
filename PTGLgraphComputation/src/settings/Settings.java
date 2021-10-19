@@ -100,7 +100,8 @@ public class Settings {
         sections.add(new Section("DB: representative chains", "Advanced"));
         sections.add(new Section("Image settings", "Advanced"));
         sections.add(new Section("Output settings", "Advanced"));
-        sections.add(new Section("DB: similarity search", "Advanced"));        
+        sections.add(new Section("DB: similarity search", "Advanced"));
+        sections.add(new Section("Random tree generation", "Advanced"));
         
         // DEVELOPER SECTIONS
         sections.add(new Section("Debug", "Developer"));

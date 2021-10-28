@@ -377,6 +377,7 @@ class Section {
                 settings.add(new Setting("PTGLgraphComputation_B_generate_random_binary_tree", 'B', "false", "Whether to generate a random binary tree."));
                 settings.add(new Setting("PTGLgraphComputation_B_tree_rooted", 'B', "true", "Whether the generated tree should be rooted or not."));
                 settings.add(new Setting("PTGLgraphComputation_I_tree_number_leafs", 'I', "4", "How many leafs the tree should contain."));
+                settings.add(new Setting("PTGLgraphComputation_S_leaf_labels", 'S', "", "Comma-seperated labels for the leaves. Must exacly match the number of PTGLgraphComputation_I_tree_number_leafs. Will use IDs from 0..n if empty."));
                 break;
                 
             case "Debug":

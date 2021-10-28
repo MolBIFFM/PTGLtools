@@ -1622,7 +1622,7 @@ public class Main {
             System.out.println("Generating random tree...");
             
             RandomTreeGenerator rtg = new RandomTreeGenerator();
-            System.out.println(rtg.generateRandomRootedBinaryTree(Settings.getInteger("PTGLgraphComputation_I_tree_number_leafs")));
+            System.out.println(rtg.generateRandomBinaryTree(Settings.getBoolean("PTGLgraphComputation_B_tree_rooted"), Settings.getInteger("PTGLgraphComputation_I_tree_number_leafs")));
             
             System.out.println("Exiting as consequence of random tree generation.");
             Main.doExit(0);

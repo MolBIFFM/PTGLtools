@@ -111,15 +111,31 @@ public class RandomTreeGenerator {
                 }
             }
         
-        return treeToNewick(tree, rooted);
+        // 3) root at random position
+        String resultTree = null;
+        if (rooted) {
+            resultTree = treeToNewick(tree, (int) ((Math.random() * (tree.edges.size() - 1))));
+        } else {
+            resultTree = "Edges of tree (Newick representation not implemented for unrooted trees):";
+            for (TreeEdge edge : tree.edges) {
+                resultTree += "\n  " + edge.toString();
+            }
+        }
+        
+        return resultTree;
     }
     
     
-    private void addNewVertexToBinaryTree(Tree tree, int edgeNumber) {
+    /**
+     * Adds a new vertex and leaf at the specified edge. The new vertices will have incremented IDs and  the leaf an incremented leaf ID.
+     * @param tree
+     * @param edgeIndex index of the edge where the new vertices should be added
+     */
+    private void addNewVertexToBinaryTree(Tree tree, int edgeIndex) {
         ArrayList<TreeEdge> edges = tree.edges;
 
-        if (edgeNumber < 0 || edgeNumber >= edges.size()) {
-            DP.getInstance().w(CLASS_TAG, "Cannot add vertex at an edge position '" + edgeNumber  + "' for edge list of size '" + edges.size() + "'. "
+        if (edgeIndex < 0 || edgeIndex >= edges.size()) {
+            DP.getInstance().w(CLASS_TAG, "Cannot add vertex at an edge position '" + edgeIndex  + "' for edge list of size '" + edges.size() + "'. "
                         + "Ignoring this step, but this might render the random tree useless. Please report this bug to the developers.");
             return;
         }
@@ -127,64 +143,77 @@ public class RandomTreeGenerator {
         // (v1,v2) -> (v1,newInnerVertex), (v2,newInnerVertex), (newLeaf,newInnerVertex)
         TreeVertex newInnerVertex = new TreeVertex(tree.maxID + 1);
         TreeVertex newLeaf = new TreeVertex(tree.maxID + 2, true, tree.maxLeafID + 1);
-        TreeEdge newEdge1 = new TreeEdge(edges.get(edgeNumber).v2, newInnerVertex);  // (v2,newInnerVertex)
+        TreeEdge newEdge1 = new TreeEdge(edges.get(edgeIndex).v2, newInnerVertex);  // (v2,newInnerVertex)
         TreeEdge newEdge2 = new TreeEdge(newLeaf, newInnerVertex);  // (newLeaf,newInnerVertex)
         
         edges.add(newEdge1);
         edges.add(newEdge2);
-        edges.get(edgeNumber).v2 = newInnerVertex;  // (v1,v2) -> (v1,newInnerVertex)
+        edges.get(edgeIndex).v2 = newInnerVertex;  // (v1,v2) -> (v1,newInnerVertex)
         
         tree.maxID += 2;
         tree.maxLeafID += 1;
     }
     
     
-    private String treeToNewick(Tree tree, Boolean rootTree) {
+    /**
+     * Roots the tree at the specified position and returns the newick string of the tree.
+     * @param tree
+     * @param edgeIndex specifies the edge designated as root
+     * @return 
+     */
+    private String treeToNewick(Tree tree, int edgeIndex) {
         // approach 2: build up a edge list as map and traverse from root
         HashMap<TreeVertex, TreeVertex[]> adjacencyMap = new HashMap<>();
-        
-        if (rootTree) {
-            int rndEdgeID = (int) ((Math.random() * (tree.edges.size() - 1 )));
-            TreeEdge edgeAsRoot = tree.edges.get(rndEdgeID);
-            
+
+        TreeEdge edgeAsRoot = tree.edges.get(edgeIndex);
+
+        // TODELETE
+        System.out.println("Root at: " + edgeAsRoot.toString());
+
+        for (TreeEdge edge : tree.edges) {
+            if (edge.equals(edgeAsRoot)) { continue; }  // skip root edge
+
             // TODELETE
-            System.out.println("Root at: " + edgeAsRoot.toString());
-            
-            for (TreeEdge edge : tree.edges) {
-                if (edge.equals(edgeAsRoot)) { continue; }  // skip root edge
-                
-                // TODELETE
-                System.out.println("Adding to map: " + edge.toString());
-                
-                addEdgeToAdjMap(adjacencyMap, edge);               
-            }
-            
-            // TODELETE
-            System.out.println("final map");
-            for (TreeVertex v : adjacencyMap.keySet()) {
-                System.out.println(v.ID + ": ");
-                for (TreeVertex child : adjacencyMap.get(v)) {
-                    if (child != null) {
-                        System.out.print(child.toString() + " | ");
-                    } else {
-                        System.out.print("null" + " | ");
-                    }
-                }
-                System.out.println("");
-            }
-            
-            return "(" + neighborsToSubNewick(edgeAsRoot.v1, adjacencyMap, edgeAsRoot.v1) + "," + neighborsToSubNewick(edgeAsRoot.v2, adjacencyMap, edgeAsRoot.v2) + ");";
-        } else {
-            DP.getInstance().e(CLASS_TAG, "Returning of Newick string for random unrooted tree not implemented, yet. Returning empty string.");
-            return "";
+            System.out.println("Adding to map: " + edge.toString());
+
+            addEdgeToAdjMap(adjacencyMap, edge);               
         }
+
+        // TODELETE
+        System.out.println("final map");
+        for (TreeVertex v : adjacencyMap.keySet()) {
+            System.out.println(v.ID + ": ");
+            for (TreeVertex child : adjacencyMap.get(v)) {
+                if (child != null) {
+                    System.out.print(child.toString() + " | ");
+                } else {
+                    System.out.print("null" + " | ");
+                }
+            }
+            System.out.println("");
+        }
+
+        return "(" + neighborsToSubNewick(edgeAsRoot.v1, adjacencyMap, edgeAsRoot.v1) + "," + neighborsToSubNewick(edgeAsRoot.v2, adjacencyMap, edgeAsRoot.v2) + ");";
     }
     
+    
+    /**
+     * Adds an edge to an adjacency map. For each of the vertices, it adds the other vertex as neigbor.
+     * @param map
+     * @param edge 
+     */
     private void addEdgeToAdjMap(HashMap<TreeVertex, TreeVertex[]> map, TreeEdge edge) {
         addDirectedEdgeToAdjMap(map, edge.v1, edge.v2);
         addDirectedEdgeToAdjMap(map, edge.v2, edge.v1);
     }
     
+    
+    /**
+     * Adds endVertex as neighbor of startVertex to the adjacency map. Fills the neighbor array from index 0 to 2.
+     * @param map
+     * @param startVertex
+     * @param endVertex 
+     */
     private void addDirectedEdgeToAdjMap(HashMap<TreeVertex, TreeVertex[]> map, TreeVertex startVertex, TreeVertex endVertex) {
         // TODELETE
         System.out.println("startVertex: " + startVertex.ID);
@@ -215,6 +244,14 @@ public class RandomTreeGenerator {
             }
     }
     
+    
+    /**
+     * Recursively creates the Newick string from vertex v.
+     * @param v the vertex for which to create the recursive Newick string.
+     * @param adjMap adjacency map of the tree
+     * @param parent of vertex v
+     * @return 
+     */
     private String neighborsToSubNewick(TreeVertex v, HashMap<TreeVertex, TreeVertex[]> adjMap, TreeVertex parent) {
         TreeVertex[] neighbors = adjMap.get(v);
         if (v.leaf) {
@@ -227,6 +264,12 @@ public class RandomTreeGenerator {
     }
     
     
+    /**
+     * Returns an array of the neighbors without the specified parent.
+     * @param neighbors
+     * @param parent
+     * @return 
+     */
     private TreeVertex[] removeParentFromNeighbors(TreeVertex[] neighbors, TreeVertex parent) {
         TreeVertex[] neighborsWithoutParent = new TreeVertex[neighbors.length - 1];
         int arrayCounter = 0;
@@ -237,10 +280,5 @@ public class RandomTreeGenerator {
             }
         }
         return neighborsWithoutParent;
-    }
-
-    
-    private String edgeToNewick(TreeEdge edge) {
-        return "(" + edge.v1.ID + "," + edge.v2.ID + ")";
     }
 }

@@ -157,7 +157,7 @@ cl_parser.add_argument('-f',
 cl_parser.add_argument('-l',
                        '--last-timestep',
                        type = int,
-                       default = 5,
+                       default = 2000,
                        help='The index of the last complex graph to be compared')
 
 cl_parser.add_argument('--exclude-chains',

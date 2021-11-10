@@ -308,10 +308,7 @@ cl_parser.add_argument('--plotResResContactChanges-args',
                        type = str,
                        default = '',
                        help = 'a string with the arguments for plotResResContactChanges.py you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: --plotResResContactChanges-args="<arguments and their inputs>", including the positional arguments.')                      
-                                            
-
-                                            
-
+                                                                                
 args = cl_parser.parse_args()
 
 ########### check arguments ###########
@@ -814,7 +811,6 @@ for elem in program_list:
         log('plotSnapshots computations are done.', 'i')
     
     elif (elem == 'compareContactPartnersOfResidues.py'):
-        _start_time_2 = time.time()
         if (add_compareContactPartnersOfResidues_args == ''):
 
             os.chdir(out_dir)
@@ -1024,8 +1020,6 @@ for elem in program_list:
        
 
 log("-- %s seconds ---"% (time.time()- _start_time), 'i')
-print("The pipeline needed ", (time.time() - _start_time), " seconds.")
-print("ResResMatching needed ", (time.time() - _start_time_2), " seconds.")
 log("All done, exiting ptglDynamics.", 'i')
 
 # tidy up

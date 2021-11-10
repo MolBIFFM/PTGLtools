@@ -75,6 +75,7 @@ public class MolContactInfo {
     public static final Integer CCOCAH = 41;    // 41 = # of interchain CA-H...O=C contacts, mainchain-sidechain, acceptor-donor (non-canonical)
     public static final Integer BCAHCO = 42;    // 42 = # of interchain CA-H...O=C contacts, mainchain-mainchain, donor-acceptor (non-canonical)
     public static final Integer BCOCAH = 43;    // 43 = # of interchain CA-H...O=C contacts, mainchain-mainchain, acceptor-donor (non-canonical)
+    public static final Integer TC = 44;        // 44 = # of transitive (chain-ligand-chain) contacts (protein - protein only)
     
     
     
@@ -380,6 +381,10 @@ public class MolContactInfo {
     public Integer getBCOCAHContactAtomNumA() { return(contactAtomIndexInMoleculeA[BCOCAH] + 1); }
     public Integer getBCOCAHContactAtomNumB() { return(contactAtomIndexInMoleculeB[BCOCAH] + 1); }
     
+    public Integer getTCContactDist() { return(minContactDistances[TC]); }
+    public Integer getTCContactAtomNumA() { return(contactAtomIndexInMoleculeA[TC] + 1); }
+    public Integer getTCContactAtomNumB() { return(contactAtomIndexInMoleculeB[TC] + 1); }
+    
     
 // the getters for statistics follow
     public Integer getNumContactsTotal() { return(numPairContacts[TT]); }
@@ -425,6 +430,7 @@ public class MolContactInfo {
     public Integer getNumContactsCCOCAH() { return(numPairContacts[CCOCAH]); }
     public Integer getNumContactsBCACOH() { return(numPairContacts[BCAHCO]); }
     public Integer getNumContactsBCOCAH() { return(numPairContacts[BCOCAH]); }
+    public Integer getNumContactsTC() { return(numPairContacts[TC]); }
     
     public ArrayList<String> getAtomAtomContactTypes() { return atomAtomContactType; }
     public ArrayList<Atom[]> getAtomAtomContacts() { return atomAtomContacts; }

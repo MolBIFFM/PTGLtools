@@ -5097,7 +5097,7 @@ public class Main {
         MolContactInfo rci;
         ArrayList<MolContactInfo> contactInfo = new ArrayList<>();
         Molecule mol1, mol2;
-        HashMap<Atom,Atom> ligandToProteinAtomContacts = new HashMap<Atom,Atom>();
+        HashMap<Atom,ArrayList<Atom>> ligandToProteinAtomContacts = new HashMap<Atom,ArrayList<Atom>>();
         HashMap<Molecule[],MolContactInfo> resMciMapping = new HashMap<Molecule[],MolContactInfo>();
         
         // variables for statistics
@@ -5204,8 +5204,11 @@ public class Main {
                         // We only need to check on atom level if the center spheres overlap
                         if (mol1.contactPossibleWithMolecule(mol2)) {                                        
                             numResContactsPossible++;
-
-                            rci = calculateAtomContactsBetweenResidues(mol1, mol2);
+                            Object[] atomContactReturn = new Object[2];
+                            atomContactReturn = calculateAtomContactsBetweenLigandResidues(mol1, mol2,ligandToProteinAtomContacts);
+                            rci = atomContactReturn[0];
+                            ligandToProteinAtomContacts = atomContactReturn[1];
+                            
                             if( rci != null) {
                                 // There were atoms contacts!
                                 contactInfo.add(rci);
@@ -5899,10 +5902,23 @@ public class Main {
      * @param y one of the atoms of the residues of the residue pair
      * @return A map of atoms of residue b mapped to residue atoms of a.
      */
-    public static HashMap atomContactsStatistics(Atom x, Atom y, MolContactInfo currentMci){
+    public static MolContactInfo atomContactsStatistics(Atom x, Atom y, MolContactInfo currentMci, Integer i, Integer j, Integer[] contactAtomNumInResidueA, Integer[] contactAtomNumInResidueB, Integer aIntID, Integer bIntID){
         // The van der Waals radii spheres overlap, contact found.
         currentMci.numPairContacts[MolContactInfo.TT]++;   // update total number of contacts for this residue pair
 
+        // We assume that the first 5 atoms (index 0..4) in a residue that is an AA are backbone atoms,
+        //  while all other (6..END) are assumed to be side chainName atoms.
+        //  The backbone atoms should have atom names ' N  ', ' CA ', ' C  ' and ' O  ' but we don't check
+        //  this atm because geom_neo doesn't do that and we want to stay compatible.
+        //  Of course, all of this only makes sense for resides that are AAs, not for ligands. We care for that.
+        //  jnw_2019: changed to 3 b/c there are only 4 bb atoms from 0..3: N, CA, C, O
+        Integer numOfLastBackboneAtomInResidue = 3;
+        Integer atomIndexOfBackboneN = 0;       // backbone nitrogen atom index
+        Integer atomIndexOfBackboneO = 3;       // backbone oxygen atom index
+        
+        Integer statAtomIDi, statAtomIDj;
+        
+        
         // DEBUG
         //System.out.println("DEBUG: Atom contact in distance " + dist + " between atom " + x + " and " + y + ".");
 
@@ -5946,8 +5962,8 @@ public class Main {
                 currentMci.numPairContacts[MolContactInfo.BB]++;
 
                 // update data if this is the first contact of this type or if it is better (smaller distance) than the old contact
-                if((currentMci.minContactDistances[MolContactInfo.BB] < 0) || currentMci.getMolPairDist() < currentMci.minContactDistances[MolContactInfo.BB]) {
-                    currentMci.minContactDistances[MolContactInfo.BB] = currentMci.getMolPairDist();
+                if((currentMci.minContactDistances[MolContactInfo.BB] < 0) || currentMci.dist < currentMci.minContactDistances[MolContactInfo.BB]) {
+                    currentMci.minContactDistances[MolContactInfo.BB] = currentMci.dist;
                     contactAtomNumInResidueA[MolContactInfo.BB] = i;
                     contactAtomNumInResidueB[MolContactInfo.BB] = j;
                 }
@@ -5958,8 +5974,8 @@ public class Main {
                 currentMci.numPairContacts[MolContactInfo.CB]++;
 
                 // update data if this is the first contact of this type or if it is better (smaller distance) than the old contact
-                if((currentMci.minContactDistances[MolContactInfo.CB] < 0) || currentMci.getMolPairDist() < currentMci.minContactDistances[MolContactInfo.CB]) {
-                    currentMci.minContactDistances[MolContactInfo.CB] = currentMci.getMolPairDist();
+                if((currentMci.minContactDistances[MolContactInfo.CB] < 0) || currentMci.dist < currentMci.minContactDistances[MolContactInfo.CB]) {
+                    currentMci.minContactDistances[MolContactInfo.CB] = currentMci.dist;
                     contactAtomNumInResidueA[MolContactInfo.CB] = i;
                     contactAtomNumInResidueB[MolContactInfo.CB] = j;
                 }
@@ -5970,8 +5986,8 @@ public class Main {
                 currentMci.numPairContacts[MolContactInfo.BC]++;
 
                 // update data if this is the first contact of this type or if it is better (smaller distance) than the old contact
-                if((currentMci.minContactDistances[MolContactInfo.BC] < 0) || currentMci.getMolPairDist() < currentMci.minContactDistances[MolContactInfo.BC]) {
-                    currentMci.minContactDistances[MolContactInfo.BC] = currentMci.getMolPairDist();
+                if((currentMci.minContactDistances[MolContactInfo.BC] < 0) || currentMci.dist < currentMci.minContactDistances[MolContactInfo.BC]) {
+                    currentMci.minContactDistances[MolContactInfo.BC] = currentMci.dist;
                     contactAtomNumInResidueA[MolContactInfo.BC] = i;
                     contactAtomNumInResidueB[MolContactInfo.BC] = j;
                 }
@@ -5981,8 +5997,8 @@ public class Main {
                 currentMci.numPairContacts[MolContactInfo.CC]++;          // 'C' instead of 'S' for side chainName pays off
 
                 // update data if this is the first contact of this type or if it is better (smaller distance) than the old contact
-                if((currentMci.minContactDistances[MolContactInfo.CC] < 0) || currentMci.getMolPairDist() < currentMci.minContactDistances[MolContactInfo.CC]) {
-                    currentMci.minContactDistances[MolContactInfo.CC] = currentMci.getMolPairDist();
+                if((currentMci.minContactDistances[MolContactInfo.CC] < 0) || currentMci.dist < currentMci.minContactDistances[MolContactInfo.CC]) {
+                    currentMci.minContactDistances[MolContactInfo.CC] = currentMci.dist;
                     contactAtomNumInResidueA[MolContactInfo.CC] = i;
                     contactAtomNumInResidueB[MolContactInfo.CC] = j;
                 }
@@ -5998,14 +6014,14 @@ public class Main {
                 // H bridge from backbone atom 'N' of residue a to backbone atom 'O' of residue b.
                 currentMci.numPairContacts[MolContactInfo.HB]++;
                 // There can only be one of these so if we found it, simply update the distance.
-                currentMci.minContactDistances[MolContactInfo.HB] = currentMci.getMolPairDist();
+                currentMci.minContactDistances[MolContactInfo.HB] = currentMci.dist;
             }
 
             if(i.equals(atomIndexOfBackboneO) && j.equals(atomIndexOfBackboneN)) {
                 // H bridge from backbone atom 'O' of residue a to backbone atom 'N' of residue b.
                 currentMci.numPairContacts[MolContactInfo.BH]++;
                 // There can only be one of these so if we found it, simply update the distance.
-                currentMci.minContactDistances[MolContactInfo.BH] = currentMci.getMolPairDist();
+                currentMci.minContactDistances[MolContactInfo.BH] = currentMci.dist;
             }
 
         }
@@ -6020,8 +6036,8 @@ public class Main {
                 currentMci.numPairContacts[MolContactInfo.BL]++;
 
                 // update data if this is the first contact of this type or if it is better (smaller distance) than the old contact
-                if((currentMci.minContactDistances[MolContactInfo.BL] < 0) || currentMci.getMolPairDist() < currentMci.minContactDistances[MolContactInfo.BL]) {
-                    currentMci.minContactDistances[MolContactInfo.BL] = currentMci.getMolPairDist();
+                if((currentMci.minContactDistances[MolContactInfo.BL] < 0) || currentMci.dist < currentMci.minContactDistances[MolContactInfo.BL]) {
+                    currentMci.minContactDistances[MolContactInfo.BL] = currentMci.dist;
                     contactAtomNumInResidueA[MolContactInfo.BL] = i;
                     contactAtomNumInResidueB[MolContactInfo.BL] = j;
                 }
@@ -6032,8 +6048,8 @@ public class Main {
                 currentMci.numPairContacts[MolContactInfo.CL]++;
 
                 // update data if this is the first contact of this type or if it is better (smaller distance) than the old contact
-                if((currentMci.minContactDistances[MolContactInfo.CL] < 0) || currentMci.getMolPairDist() < currentMci.minContactDistances[MolContactInfo.CL]) {
-                    currentMci.minContactDistances[MolContactInfo.CL] = currentMci.getMolPairDist();
+                if((currentMci.minContactDistances[MolContactInfo.CL] < 0) || currentMci.dist < currentMci.minContactDistances[MolContactInfo.CL]) {
+                    currentMci.minContactDistances[MolContactInfo.CL] = currentMci.dist;
                     contactAtomNumInResidueA[MolContactInfo.CL] = i;
                     contactAtomNumInResidueB[MolContactInfo.CL] = j;
                 }
@@ -6050,8 +6066,8 @@ public class Main {
                 currentMci.numPairContacts[MolContactInfo.LB]++;
 
                 // update data if this is the first contact of this type or if it is better (smaller distance) than the old contact
-                if((currentMci.minContactDistances[MolContactInfo.LB] < 0) || currentMci.getMolPairDist() < currentMci.minContactDistances[MolContactInfo.LB]) {
-                    currentMci.minContactDistances[MolContactInfo.LB] = currentMci.getMolPairDist();
+                if((currentMci.minContactDistances[MolContactInfo.LB] < 0) || currentMci.dist < currentMci.minContactDistances[MolContactInfo.LB]) {
+                    currentMci.minContactDistances[MolContactInfo.LB] = currentMci.dist;
                     contactAtomNumInResidueA[MolContactInfo.LB] = i;
                     contactAtomNumInResidueB[MolContactInfo.LB] = j;
                 }
@@ -6062,8 +6078,8 @@ public class Main {
                 currentMci.numPairContacts[MolContactInfo.LC]++;
 
                 // update data if this is the first contact of this type or if it is better (smaller distance) than the old contact
-                if((currentMci.minContactDistances[MolContactInfo.LC] < 0) || currentMci.getMolPairDist() < currentMci.minContactDistances[MolContactInfo.LC]) {
-                    currentMci.minContactDistances[MolContactInfo.LC] = currentMci.getMolPairDist();
+                if((currentMci.minContactDistances[MolContactInfo.LC] < 0) || currentMci.dist < currentMci.minContactDistances[MolContactInfo.LC]) {
+                    currentMci.minContactDistances[MolContactInfo.LC] = currentMci.dist;
                     contactAtomNumInResidueA[MolContactInfo.LC] = i;
                     contactAtomNumInResidueB[MolContactInfo.LC] = j;
                 }
@@ -6078,8 +6094,8 @@ public class Main {
             currentMci.numPairContacts[MolContactInfo.LL]++;
 
             // update data if this is the first contact of this type or if it is better (smaller distance) than the old contact
-            if((currentMci.minContactDistances[MolContactInfo.LL] < 0) || currentMci.getMolPairDist() < currentMci.minContactDistances[MolContactInfo.LL]) {
-                currentMci.minContactDistances[MolContactInfo.LL] = currentMci.getMolPairDist();
+            if((currentMci.minContactDistances[MolContactInfo.LL] < 0) || currentMci.dist < currentMci.minContactDistances[MolContactInfo.LL]) {
+                currentMci.minContactDistances[MolContactInfo.LL] = currentMci.dist;
                 contactAtomNumInResidueA[MolContactInfo.LL] = i;
                 contactAtomNumInResidueB[MolContactInfo.LL] = j;
             }
@@ -6094,8 +6110,8 @@ public class Main {
             currentMci.numPairContacts[MolContactInfo.RX]++;
 
             // update data if this is the first contact of this type or if it is better (smaller distance) than the old contact
-            if((currentMci.minContactDistances[MolContactInfo.RX] < 0) || currentMci.getMolPairDist() < currentMci.minContactDistances[MolContactInfo.RX]) {
-                currentMci.minContactDistances[MolContactInfo.RX] = currentMci.getMolPairDist();
+            if((currentMci.minContactDistances[MolContactInfo.RX] < 0) || currentMci.dist < currentMci.minContactDistances[MolContactInfo.RX]) {
+                currentMci.minContactDistances[MolContactInfo.RX] = currentMci.dist;
                 contactAtomNumInResidueA[MolContactInfo.RX] = i;
                 contactAtomNumInResidueB[MolContactInfo.RX] = j;
             }
@@ -6108,8 +6124,8 @@ public class Main {
             currentMci.numPairContacts[MolContactInfo.XR]++;
 
             // update data if this is the first contact of this type or if it is better (smaller distance) than the old contact
-            if((currentMci.minContactDistances[MolContactInfo.XR] < 0) || currentMci.getMolPairDist() < currentMci.minContactDistances[MolContactInfo.XR]) {
-                currentMci.minContactDistances[MolContactInfo.XR] = currentMci.getMolPairDist();
+            if((currentMci.minContactDistances[MolContactInfo.XR] < 0) || currentMci.dist < currentMci.minContactDistances[MolContactInfo.XR]) {
+                currentMci.minContactDistances[MolContactInfo.XR] = currentMci.dist;
                 contactAtomNumInResidueA[MolContactInfo.XR] = i;
                 contactAtomNumInResidueB[MolContactInfo.XR] = j;
             }
@@ -6122,8 +6138,8 @@ public class Main {
             currentMci.numPairContacts[MolContactInfo.RR]++;
 
             // update data if this is the first contact of this type or if it is better (smaller distance) than the old contact
-            if((currentMci.minContactDistances[MolContactInfo.RR] < 0) || currentMci.getMolPairDist() < currentMci.minContactDistances[MolContactInfo.RR]) {
-                currentMci.minContactDistances[MolContactInfo.RR] = currentMci.getMolPairDist();
+            if((currentMci.minContactDistances[MolContactInfo.RR] < 0) || currentMci.dist < currentMci.minContactDistances[MolContactInfo.RR]) {
+                currentMci.minContactDistances[MolContactInfo.RR] = currentMci.dist;
                 contactAtomNumInResidueA[MolContactInfo.RR] = i;
                 contactAtomNumInResidueB[MolContactInfo.RR] = j;
             }
@@ -6133,6 +6149,7 @@ public class Main {
             // This branch should never be hit because atoms of type OTHER are ignored while creating the list of Atom objects
             System.out.println("WARNING: One of the atoms " + x.getPdbAtomNum() + " and " + y.getPdbAtomNum() + " is of type UNKNOWN. Bug?");
         }
+        return currentMci;
     }
     
     /**
@@ -6147,10 +6164,12 @@ public class Main {
         ArrayList<Atom> atoms_a = a.getAtoms();
         ArrayList<Atom> atoms_b = b.getAtoms();
         
+        
         Atom x, y;
         Integer dist = null;
         Integer CAdist = a.distTo(b);
         MolContactInfo result = null;
+        Boolean resContactCheck = false;
 
 
         Integer[] numPairContacts = new Integer[Main.NUM_MOLECULE_PAIR_CONTACT_TYPES];
@@ -6203,21 +6222,15 @@ public class Main {
             //   2) If a contact was detected, our_index is converted to the geom_neo index. :)
         }
 
-        // We assume that the first 5 atoms (index 0..4) in a residue that is an AA are backbone atoms,
-        //  while all other (6..END) are assumed to be side chainName atoms.
-        //  The backbone atoms should have atom names ' N  ', ' CA ', ' C  ' and ' O  ' but we don't check
-        //  this atm because geom_neo doesn't do that and we want to stay compatible.
-        //  Of course, all of this only makes sense for resides that are AAs, not for ligands. We care for that.
-        //  jnw_2019: changed to 3 b/c there are only 4 bb atoms from 0..3: N, CA, C, O
-        Integer numOfLastBackboneAtomInResidue = 3;
-        Integer atomIndexOfBackboneN = 0;       // backbone nitrogen atom index
-        Integer atomIndexOfBackboneO = 3;       // backbone oxygen atom index
+        
 
         Integer aIntID = a.getInternalAAID();     // Internal AA ID (ALA=1, ARG=2, ...)
         Integer bIntID = b.getInternalAAID();
-        Integer statAtomIDi, statAtomIDj;
         
-
+        
+        
+        // Create new MCI to use in atomContacts Statistics if contact exists
+        result = new MolContactInfo(numPairContacts, minContactDistances, contactAtomNumInResidueA, contactAtomNumInResidueB, a, b, CAdist, numTotalLigContactsPair, numTotalRnaContactsPair);
 
         // Iterate through all atoms of the two residues and check contacts for all pairs
         outerloop:
@@ -6254,259 +6267,19 @@ public class Main {
 
                 dist = x.distToAtom(y);
                 
-                if(x.atomContactTo(y)) {             // If a contact is detected, Atom.atomContactTo() returns true
-                   
-                    
-                    // The van der Waals radii spheres overlap, contact found.
-                    numPairContacts[MolContactInfo.TT]++;   // update total number of contacts for this residue pair
-                    
-                    // DEBUG
-                    //System.out.println("DEBUG: Atom contact in distance " + dist + " between atom " + x + " and " + y + ".");
-
-
-                    // Update contact statistics.
-                    statAtomIDi = i + 1;    // The field '0' is used for all contacs and we need to follow geom_neo conventions so we start the index at 1 instead of 0.
-                    statAtomIDj = j + 1;
-                    if(x.isLigandAtom()) { statAtomIDi = 1; }       // Different ligands can have different numbers of atoms and separating them just makes no sense. We assign all contacts to the first atom.
-                    if(y.isLigandAtom()) { statAtomIDj = 1; }
-                    
-                    try {
-
-                        contact[0][0][0][0]++;                 // update global total number of contacts
-                        contact[aIntID][bIntID][0][0]++;       // contacts AA type a <-> AA type b
-                        contact[bIntID][aIntID][0][0]++;       // contacts AA type b <-> AA type a
-
-
-                        //System.out.println("DEBUG: a=" + aIntID + ",b=" + bIntID + ",i=" + statAtomIDi + ",j=" + statAtomIDj + ". Residues=" + a.getFancyName() + "," + b.getFancyName() + ".");
-                        contact[aIntID][bIntID][statAtomIDi][statAtomIDj]++;       // contacts of atoms of AAs
-                        contact[bIntID][aIntID][statAtomIDj][statAtomIDi]++;
-
-                        contact[aIntID][bIntID][statAtomIDi][0]++;                 // total number of contacts for atom x of this AA
-                        contact[bIntID][aIntID][0][statAtomIDi]++;
-
-                        contact[aIntID][bIntID][statAtomIDj][0]++;                 // total number of contacts for atom x of this AA
-                        contact[bIntID][aIntID][0][statAtomIDj]++;
-                    } catch(java.lang.ArrayIndexOutOfBoundsException e) {
-                        //DP.getInstance().w("calculateAtomContactsBetweenResidues():Contact statistics array out of bounds. Residues with excessive number of atoms detected: " + e.getMessage() + ".");
-                        DP.getInstance().w("calculateAtomContactsBetweenResidues(): Atom count for residues too high (" + e.getMessage() + "), ignoring contacts for these atoms (aIntID=" + aIntID + ", bIntID=" + bIntID + ", statAtomIDi=" + statAtomIDi + ", statAtomIDj=" + statAtomIDj + ").");
-                        continue;
-                    }
-                    
-                    // Determine the contact type.                    
-                    if(x.isProteinAtom() && y.isProteinAtom()) {
-                        // *************************** protein - protein contact *************************
-
-
-                        // Check the exact contact type
-                        if(i <= numOfLastBackboneAtomInResidue && j <= numOfLastBackboneAtomInResidue) {
-                            // to be precise, this is a backbone - backbone contact
-                            numPairContacts[MolContactInfo.BB]++;
-
-                            // update data if this is the first contact of this type or if it is better (smaller distance) than the old contact
-                            if((minContactDistances[MolContactInfo.BB] < 0) || dist < minContactDistances[MolContactInfo.BB]) {
-                                minContactDistances[MolContactInfo.BB] = dist;
-                                contactAtomNumInResidueA[MolContactInfo.BB] = i;
-                                contactAtomNumInResidueB[MolContactInfo.BB] = j;
-                            }
-
-                        }
-                        else if(i > numOfLastBackboneAtomInResidue && j <= numOfLastBackboneAtomInResidue) {
-                            // to be precise, this is a chainName - backbone contact
-                            numPairContacts[MolContactInfo.CB]++;
-
-                            // update data if this is the first contact of this type or if it is better (smaller distance) than the old contact
-                            if((minContactDistances[MolContactInfo.CB] < 0) || dist < minContactDistances[MolContactInfo.CB]) {
-                                minContactDistances[MolContactInfo.CB] = dist;
-                                contactAtomNumInResidueA[MolContactInfo.CB] = i;
-                                contactAtomNumInResidueB[MolContactInfo.CB] = j;
-                            }
-
-                        }
-                        else if(i <= numOfLastBackboneAtomInResidue && j > numOfLastBackboneAtomInResidue) {
-                            // to be precise, this is a backbone - chainName contact
-                            numPairContacts[MolContactInfo.BC]++;
-
-                            // update data if this is the first contact of this type or if it is better (smaller distance) than the old contact
-                            if((minContactDistances[MolContactInfo.BC] < 0) || dist < minContactDistances[MolContactInfo.BC]) {
-                                minContactDistances[MolContactInfo.BC] = dist;
-                                contactAtomNumInResidueA[MolContactInfo.BC] = i;
-                                contactAtomNumInResidueB[MolContactInfo.BC] = j;
-                            }
-                        }
-                        else if(i > numOfLastBackboneAtomInResidue && j > numOfLastBackboneAtomInResidue) {
-                            // to be precise, this is a chainName - chainName contact
-                            numPairContacts[MolContactInfo.CC]++;          // 'C' instead of 'S' for side chainName pays off
-
-                            // update data if this is the first contact of this type or if it is better (smaller distance) than the old contact
-                            if((minContactDistances[MolContactInfo.CC] < 0) || dist < minContactDistances[MolContactInfo.CC]) {
-                                minContactDistances[MolContactInfo.CC] = dist;
-                                contactAtomNumInResidueA[MolContactInfo.CC] = i;
-                                contactAtomNumInResidueB[MolContactInfo.CC] = j;
-                            }
-                        }
-                        else {
-                            System.err.println("ERROR: Congrats, you found a bug in the atom contact type determination code (res " + a.getPdbNum() + " atom " + i + " / res " + b.getPdbNum() + " atom " + j + ").");
-                            System.err.println("ERROR: Atom types are: i (PDB atom #" + x.getPdbAtomNum() + ") => " + x.getAtomType() + ", j (PDB atom #" + y.getPdbAtomNum() + ") => " + y.getAtomType() + ".");
-                            Main.doExit(1);
-                        }
-
-                        // Check for H bridges separately
-                        if(i.equals(atomIndexOfBackboneN) && j.equals(atomIndexOfBackboneO)) {
-                            // H bridge from backbone atom 'N' of residue a to backbone atom 'O' of residue b.
-                            numPairContacts[MolContactInfo.HB]++;
-                            // There can only be one of these so if we found it, simply update the distance.
-                            minContactDistances[MolContactInfo.HB] = dist;
-                        }
-
-                        if(i.equals(atomIndexOfBackboneO) && j.equals(atomIndexOfBackboneN)) {
-                            // H bridge from backbone atom 'O' of residue a to backbone atom 'N' of residue b.
-                            numPairContacts[MolContactInfo.BH]++;
-                            // There can only be one of these so if we found it, simply update the distance.
-                            minContactDistances[MolContactInfo.BH] = dist;
-                        }
-
-                    }
-                    
-                    else if(x.isProteinAtom() && y.isLigandAtom()) {
-                        // *************************** protein - ligand contact *************************
-                        numTotalLigContactsPair++;
-
-                        // Check the exact contact type
-                        if(i <= numOfLastBackboneAtomInResidue) {
-                            // to be precise, this is a backbone - ligand contact
-                            numPairContacts[MolContactInfo.BL]++;
-
-                            // update data if this is the first contact of this type or if it is better (smaller distance) than the old contact
-                            if((minContactDistances[MolContactInfo.BL] < 0) || dist < minContactDistances[MolContactInfo.BL]) {
-                                minContactDistances[MolContactInfo.BL] = dist;
-                                contactAtomNumInResidueA[MolContactInfo.BL] = i;
-                                contactAtomNumInResidueB[MolContactInfo.BL] = j;
-                            }
-
-                        }
-                        else {
-                            // to be precise, this is a side chainName - ligand contact
-                            numPairContacts[MolContactInfo.CL]++;
-
-                            // update data if this is the first contact of this type or if it is better (smaller distance) than the old contact
-                            if((minContactDistances[MolContactInfo.CL] < 0) || dist < minContactDistances[MolContactInfo.CL]) {
-                                minContactDistances[MolContactInfo.CL] = dist;
-                                contactAtomNumInResidueA[MolContactInfo.CL] = i;
-                                contactAtomNumInResidueB[MolContactInfo.CL] = j;
-                            }
-                        }
-
-                    }
-                    else if(x.isLigandAtom() && y.isProteinAtom()) {
-                        // *************************** ligand - protein contact *************************
-                        numTotalLigContactsPair++;
-
-                        // Check the exact contact type
-                        if(j <= numOfLastBackboneAtomInResidue) {
-                            // to be precise, this is a ligand - backbone contact
-                            numPairContacts[MolContactInfo.LB]++;
-
-                            // update data if this is the first contact of this type or if it is better (smaller distance) than the old contact
-                            if((minContactDistances[MolContactInfo.LB] < 0) || dist < minContactDistances[MolContactInfo.LB]) {
-                                minContactDistances[MolContactInfo.LB] = dist;
-                                contactAtomNumInResidueA[MolContactInfo.LB] = i;
-                                contactAtomNumInResidueB[MolContactInfo.LB] = j;
-                            }
-
-                        }
-                        else {
-                            // to be precise, this is a ligand - side chainName contact
-                            numPairContacts[MolContactInfo.LC]++;
-
-                            // update data if this is the first contact of this type or if it is better (smaller distance) than the old contact
-                            if((minContactDistances[MolContactInfo.LC] < 0) || dist < minContactDistances[MolContactInfo.LC]) {
-                                minContactDistances[MolContactInfo.LC] = dist;
-                                contactAtomNumInResidueA[MolContactInfo.LC] = i;
-                                contactAtomNumInResidueB[MolContactInfo.LC] = j;
-                            }
-                        }
-                            
-                    }
-                    else if(x.isLigandAtom() && y.isLigandAtom()) {
-                        // *************************** ligand - ligand contact *************************
-                        numTotalLigContactsPair++;
-
-                        // no choices here, ligands have no sub type
-                        numPairContacts[MolContactInfo.LL]++;
-                        
-                        // update data if this is the first contact of this type or if it is better (smaller distance) than the old contact
-                        if((minContactDistances[MolContactInfo.LL] < 0) || dist < minContactDistances[MolContactInfo.LL]) {
-                            minContactDistances[MolContactInfo.LL] = dist;
-                            contactAtomNumInResidueA[MolContactInfo.LL] = i;
-                            contactAtomNumInResidueB[MolContactInfo.LL] = j;
-                        }
-                                              
-
-                    }
-                    else if((x.isRnaAtom() && y.isProteinAtom()) || (x.isRnaAtom() && y.isLigandAtom())) {
-                        // *************************** RNA - X contact *************************
-                        numTotalRnaContactsPair++;
-                        
-                        // this is an RNA - X contact (X can be protein or ligand)
-                        numPairContacts[MolContactInfo.RX]++;
-                        
-                        // update data if this is the first contact of this type or if it is better (smaller distance) than the old contact
-                        if((minContactDistances[MolContactInfo.RX] < 0) || dist < minContactDistances[MolContactInfo.RX]) {
-                            minContactDistances[MolContactInfo.RX] = dist;
-                            contactAtomNumInResidueA[MolContactInfo.RX] = i;
-                            contactAtomNumInResidueB[MolContactInfo.RX] = j;
-                        }
-                    }
-                    else if((x.isProteinAtom() && y.isRnaAtom()) || (x.isLigandAtom() && y.isRnaAtom())) {
-                        // *************************** X - RNA contact *************************
-                        numTotalRnaContactsPair++;
-                           
-                        // this is an X - RNA contact (X can be protein or ligand)
-                        numPairContacts[MolContactInfo.XR]++;
-                        
-                        // update data if this is the first contact of this type or if it is better (smaller distance) than the old contact
-                        if((minContactDistances[MolContactInfo.XR] < 0) || dist < minContactDistances[MolContactInfo.XR]) {
-                            minContactDistances[MolContactInfo.XR] = dist;
-                            contactAtomNumInResidueA[MolContactInfo.XR] = i;
-                            contactAtomNumInResidueB[MolContactInfo.XR] = j;
-                        }
-                    }
-                    else if(x.isRnaAtom() && y.isRnaAtom()) {
-                        // *************************** RNA - RNA contact *************************
-                        numTotalRnaContactsPair++;
-                           
-                        // this is an RNA - RNA contact
-                        numPairContacts[MolContactInfo.RR]++;
-                        
-                        // update data if this is the first contact of this type or if it is better (smaller distance) than the old contact
-                        if((minContactDistances[MolContactInfo.RR] < 0) || dist < minContactDistances[MolContactInfo.RR]) {
-                            minContactDistances[MolContactInfo.RR] = dist;
-                            contactAtomNumInResidueA[MolContactInfo.RR] = i;
-                            contactAtomNumInResidueB[MolContactInfo.RR] = j;
-                        }
-                    }
-                    else {
-                        // *************************** unknown contact, wtf? *************************
-                        // This branch should never be hit because atoms of type OTHER are ignored while creating the list of Atom objects
-                        System.out.println("WARNING: One of the atoms " + x.getPdbAtomNum() + " and " + y.getPdbAtomNum() + " is of type UNKNOWN. Bug?");
-                    }                                                            
-                }                
-                else {
-                    // No atom contact for these 2 atoms, but there could be contacts between others
+                if(x.atomContactTo(y)) {
+                    //change MCI
+                    result = atomContactsStatistics(x,y,result,i,j,contactAtomNumInResidueA,contactAtomNumInResidueB,aIntID,bIntID); //!!!change to add to map instead
                 }
             }
         }
-
-
-        // Iteration through all atoms of the two residues is done
-        if(numPairContacts[MolContactInfo.TT] > 0) {
-            result = new MolContactInfo(numPairContacts, minContactDistances, contactAtomNumInResidueA, contactAtomNumInResidueB, a, b, CAdist, numTotalLigContactsPair, numTotalRnaContactsPair);
-        }
-        else {
+        
+        if (result.numPairContacts[0] == 0){
             result = null;
         }
         
-        return(result);         // This is null if no contact was detected
+
+        return(result);
         
     }
     
@@ -6578,19 +6351,11 @@ public class Main {
             //   2) If a contact was detected, our_index is converted to the geom_neo index. :)
         }
 
-        // We assume that the first 5 atoms (index 0..4) in a residue that is an AA are backbone atoms,
-        //  while all other (6..END) are assumed to be side chainName atoms.
-        //  The backbone atoms should have atom names ' N  ', ' CA ', ' C  ' and ' O  ' but we don't check
-        //  this atm because geom_neo doesn't do that and we want to stay compatible.
-        //  Of course, all of this only makes sense for resides that are AAs, not for ligands. We care for that.
-        //  jnw_2019: changed to 3 b/c there are only 4 bb atoms from 0..3: N, CA, C, O
-        Integer numOfLastBackboneAtomInResidue = 3;
-        Integer atomIndexOfBackboneN = 0;       // backbone nitrogen atom index
-        Integer atomIndexOfBackboneO = 3;       // backbone oxygen atom index
+        
 
         Integer aIntID = a.getInternalAAID();     // Internal AA ID (ALA=1, ARG=2, ...)
         Integer bIntID = b.getInternalAAID();
-        Integer statAtomIDi, statAtomIDj;
+        
         
         
         // Create new MCI to use in atomContacts Statistics if contact exists
@@ -6638,7 +6403,7 @@ public class Main {
                     ligandToProteinAtomContacts.put(x, atomMapList);
                     
                     //change MCI
-                    result = atomContactsStatistics(x,y,result); //!!!change to add to map instead
+                    result = atomContactsStatistics(x,y,result,i,j,contactAtomNumInResidueA,contactAtomNumInResidueB,aIntID,bIntID); //!!!change to add to map instead
                 }
             }
         }
@@ -6648,7 +6413,7 @@ public class Main {
         }
         
         // Return current_map with LigAtom -> ResidueAtoms and return MCI
-        Object[] returnArray = new Object[]{result, currentMap};
+        Object[] returnArray = new Object[]{result, ligandToProteinAtomContacts};
         return(returnArray);
     }
     

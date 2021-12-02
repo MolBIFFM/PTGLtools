@@ -28,7 +28,7 @@ public class MolContactInfo {
     //  the function that creates these arrays.
     //  Just to be sure a copy of these lines can be found below. The length of all of these is 12.
     
-    private Integer[] numPairContacts;
+    public Integer[] numPairContacts;
     // The positions in the numPairContacts array hold the number of contacts of each type for a pair of molecule:
     // Some cheap vars to make things easier to understand (a poor replacement for #define):
     public static final Integer TT = 0;         //  0 = total number of contacts            (all molecule type combinations)
@@ -75,7 +75,7 @@ public class MolContactInfo {
     public static final Integer CCOCAH = 41;    // 41 = # of interchain CA-H...O=C contacts, mainchain-sidechain, acceptor-donor (non-canonical)
     public static final Integer BCAHCO = 42;    // 42 = # of interchain CA-H...O=C contacts, mainchain-mainchain, donor-acceptor (non-canonical)
     public static final Integer BCOCAH = 43;    // 43 = # of interchain CA-H...O=C contacts, mainchain-mainchain, acceptor-donor (non-canonical)
-    public static final Integer TC = 44;        // 44 = # of transitive (chain-ligand-chain) contacts (protein - protein only)
+    public static final Integer TCL = 44;        // 44 = # of transitive (chain-ligand-chain) contacts by ligands (protein - protein only)
     
     
     
@@ -85,27 +85,27 @@ public class MolContactInfo {
     //  loop in Main.calculateAllContacts()). Saving this separately seems strange but we have to
     //  do it because geom_neo does it and we want our output to be compatible with it.
 
-    private Integer numTotalLigContactsPair;
-    private Integer numTotalRnaContactsPair;
+    public Integer numTotalLigContactsPair;
+    public Integer numTotalRnaContactsPair;
 
-    private Integer[] minContactDistances;
+    public Integer[] minContactDistances;
     // Holds the minimal distances of contacts of the appropriate type (see numPairContacts, index 0 is unused)
 
-    private Integer[] contactAtomIndexInMoleculeA;
+    public Integer[] contactAtomIndexInMoleculeA;
     // Holds the number Atom x has in its molecule a for the contact with minimal distance of that type.
     // See minContactDistances and numPairContacts; index 0 is unused; index 5 + 6 are also unused (atom is obvious)
 
-    private Integer[] contactAtomIndexInMoleculeB;
+    public Integer[] contactAtomIndexInMoleculeB;
     // Holds the number Atom y has in its molecule b for the contact with minimal distance of that type.
     // See minContactDistances and numPairContacts; index 0 is unused; index 5 + 6 are also unused because the atom is
     //  fixed for these (HB1: backbone N, HB2: backbone O)
 
-    private Molecule molA, molB;
-    private Integer dist;
+    public Molecule molA, molB;
+    public Integer dist;
     
-    private ArrayList<String> atomAtomContactType;
+    public ArrayList<String> atomAtomContactType;
  //   private Atom[] atomAtomContact;
-    private ArrayList<Atom[]> atomAtomContacts;
+    public ArrayList<Atom[]> atomAtomContacts;
 
     /**
      * Constructor for a molecule pair contact between the molecules (a, b).
@@ -381,9 +381,9 @@ public class MolContactInfo {
     public Integer getBCOCAHContactAtomNumA() { return(contactAtomIndexInMoleculeA[BCOCAH] + 1); }
     public Integer getBCOCAHContactAtomNumB() { return(contactAtomIndexInMoleculeB[BCOCAH] + 1); }
     
-    public Integer getTCContactDist() { return(minContactDistances[TC]); }
-    public Integer getTCContactAtomNumA() { return(contactAtomIndexInMoleculeA[TC] + 1); }
-    public Integer getTCContactAtomNumB() { return(contactAtomIndexInMoleculeB[TC] + 1); }
+    public Integer getTCLContactDist() { return(minContactDistances[TCL]); }
+    public Integer getTCLContactAtomNumA() { return(contactAtomIndexInMoleculeA[TCL] + 1); }
+    public Integer getTCLContactAtomNumB() { return(contactAtomIndexInMoleculeB[TCL] + 1); }
     
     
 // the getters for statistics follow
@@ -430,7 +430,7 @@ public class MolContactInfo {
     public Integer getNumContactsCCOCAH() { return(numPairContacts[CCOCAH]); }
     public Integer getNumContactsBCACOH() { return(numPairContacts[BCAHCO]); }
     public Integer getNumContactsBCOCAH() { return(numPairContacts[BCOCAH]); }
-    public Integer getNumContactsTC() { return(numPairContacts[TC]); }
+    public Integer getNumContactsTCL() { return(numPairContacts[TCL]); }
     
     public ArrayList<String> getAtomAtomContactTypes() { return atomAtomContactType; }
     public ArrayList<Atom[]> getAtomAtomContacts() { return atomAtomContacts; }

@@ -5204,10 +5204,10 @@ public class Main {
                         // We only need to check on atom level if the center spheres overlap
                         if (mol1.contactPossibleWithMolecule(mol2)) {                                        
                             numResContactsPossible++;
-                            Object[] atomContactReturn = new Object[2];
+                            HashMap<HashMap<Atom,ArrayList<Atom>>,MolContactInfo> atomContactReturn = new HashMap<HashMap<Atom,ArrayList<Atom>>,MolContactInfo>();
                             atomContactReturn = calculateAtomContactsBetweenLigandResidues(mol1, mol2,ligandToProteinAtomContacts);
-                            rci = atomContactReturn[0];
-                            ligandToProteinAtomContacts = atomContactReturn[1];
+                            rci = atomContactReturn.values().iterator().next();
+                            ligandToProteinAtomContacts = atomContactReturn.keySet().iterator().next();
                             
                             if( rci != null) {
                                 // There were atoms contacts!
@@ -5249,6 +5249,7 @@ public class Main {
                             if( rci != null) {
                                 // There were atoms contacts!
                                 contactInfo.add(rci);
+                            }
                                 
                                 //add MCI to Map for transitive contact analysis
                                 Molecule[] currentResPair = new Molecule[2];
@@ -5388,7 +5389,13 @@ public class Main {
                                 if (mol1.contactPossibleWithMolecule(mol2)) {                                        
                                     numResContactsPossible++;
 
-                                    rci = calculateAtomContactsBetweenResidues(mol1, mol2);
+                                    numResContactsPossible++;
+                                    HashMap<HashMap<Atom,ArrayList<Atom>>,MolContactInfo> atomContactReturn = new HashMap<HashMap<Atom,ArrayList<Atom>>,MolContactInfo>();
+                                    atomContactReturn = calculateAtomContactsBetweenLigandResidues(mol1, mol2,ligandToProteinAtomContacts);
+                                    rci = atomContactReturn.values().iterator().next();
+                                    ligandToProteinAtomContacts = atomContactReturn.keySet().iterator().next();
+                            
+                                    
                                     if( rci != null) {
                                         // There were atoms contacts!
                                         // there cannot be a lig in this contact -> always add without checking for plcc_B_write_lig_geolig
@@ -5472,7 +5479,12 @@ public class Main {
                                 if (mol1.contactPossibleWithMolecule(mol2)) {                                        
                                     numResContactsPossible++;
 
-                                    rci = calculateAtomContactsBetweenResidues(mol1, mol2);
+                                    numResContactsPossible++;
+                                    HashMap<HashMap<Atom,ArrayList<Atom>>,MolContactInfo> atomContactReturn = new HashMap<HashMap<Atom,ArrayList<Atom>>,MolContactInfo>();
+                                    atomContactReturn = calculateAtomContactsBetweenLigandResidues(mol1, mol2,ligandToProteinAtomContacts);
+                                    rci = atomContactReturn.values().iterator().next();
+                                    ligandToProteinAtomContacts = atomContactReturn.keySet().iterator().next();
+
                                     if( rci != null) {
                                         // There were atoms contacts!
                                         // there cannot be a lig in this contact -> always add without checking for plcc_B_write_lig_geolig
@@ -5504,9 +5516,14 @@ public class Main {
             //
             
             // Iteration over all connections of each ligand atom
-            MolContactInfo currentMci;
-            Molecule resAOld;
-            Molecule resBOld;
+            MolContactInfo currentMci = null;
+            Molecule resAOld = null;
+            Molecule resBOld = null;
+            Molecule resA;
+            Molecule resB;
+            Atom atomA;
+            Atom atomB;
+            
             
             for(ArrayList<Atom> value : ligandToProteinAtomContacts.values()){ //check retrieval, comment to delete
                 // Check all keys to evaluate contacts
@@ -5519,36 +5536,95 @@ public class Main {
                         atomB = value.get(b);
                         resB = atomB.molecule;
                         
-                        if (resA =! resB){
+                        if (resA.equals(resB)){
+                            ;
+                        }
+                        else{
                             //MolContactInfo: reuse from last iteration, retrieve or create
                             
-                            if (resAOld =! resA || resBOld =! resB){
-                                //check if MCI exists and retrieve or create
+                            if (resAOld.equals(resA) && resBOld.equals(resB)){
+                                
+                                //use last used MCI
+                                ;
+                                
+                                }
+                            else{
+                                
+                                // Check if MCI exists and retrieve or create
                                 resAOld = resA;
                                 resBOld = resB;
-                                Molecule[] newResPair = new Molecule[2];
-                                newResPair.add(resA);
-                                newResPair.add(resB);
-                                currentMci = resMciMapping.get(newResPair);
+                                Molecule[] newResPair = new Molecule[]{resA,resB};
+                                currentMci = resMciMapping.get(newResPair); //retrieve MCI
                                 System.out.println(currentMci); //to delete
                                                                                                
-                                //create new mci
+                                // Create new MCI
                                 if (currentMci == null){
-                                    //currentMci = ...
+                                    
+                                    // Initialises all necessary variables to create MCI
+                                    Integer CAdist = resA.distTo(resB);
+
+
+                                    Integer[] numPairContacts = new Integer[Main.NUM_MOLECULE_PAIR_CONTACT_TYPES];
+                                    // The positions in the numPairContacts array hold the number of contacts of each type for a pair of residues:
+                                    // Some cheap vars to make things easier to understand (a replacement for #define):
+                                    /*
+                                    Integer TT = 0;         //  0 = total number of contacts            (all residue type combinations)
+                                    Integer BB = 1;         //  1 = # of backbone-backbone contacts     (protein - protein only)
+                                    Integer CB = 2;         //  2 = # of sidechain-backbone contacts    (protein - protein only)
+                                    Integer BC = 3;         //  3 = # of backbone-sidechain contacts    (protein - protein only)
+                                    Integer CC = 4;         //  4 = # of sidechain-sidechain contacts   (protein - protein only)
+                                    Integer HB = 5;         //  5 = # of H-bridge contacts 1, N=>0      (protein - protein only)
+                                    Integer BH = 6;         //  6 = # of H-bridge contacts 2, 0=>N      (protein - protein only)
+                                    Integer BL = 7;         //  7 = # of backbone-ligand contacts       (protein - ligand only)
+                                    Integer LB = 8;         //  8 = # of ligand-backbone contacts       (protein - ligand only)
+                                    Integer CL = 9;         //  9 = # of sidechain-ligand contacts      (protein - ligand only)
+                                    Integer LC = 10;        // 10 = # of ligand-sidechain contacts      (protein - ligand only)
+                                    Integer LL = 11;        // 11 = # of ligand-ligand contacts         (ligand - ligand only)
+                                    */
+
+
+                                    Integer numTotalLigContactsPair = 0;
+                                    Integer numTotalRnaContactsPair = 0;
+
+
+
+                                    Integer[] minContactDistances = new Integer[numPairContacts.length];
+                                    // Holds the minimal distances of contacts of the appropriate type (see numPairContacts, index 0 is unused)
+
+                                    Integer[] contactAtomNumInResidueA = new Integer[numPairContacts.length];
+                                    // Holds the number Atom x has in its residue a for the contact with minimal distance of that type.
+                                    // See minContactDistances and numPairContacts; index 0 is unused; index 5 + 6 are also unused (atom is obvious + always the same)
+
+                                    Integer[] contactAtomNumInResidueB = new Integer[numPairContacts.length];
+                                    // Holds the number Atom y has in its residue b for the contact with minimal distance of that type.
+                                    // See minContactDistances and numPairContacts; index 0 is unused; index 5 + 6 are also unused (atom is obvious + always the same)
+
+
+                                    for(Integer r = 0; r < numPairContacts.length; r++) {      // init all arrays
+                                        numPairContacts[r] = 0;
+                                        minContactDistances[r] = -1;    // We are looking for the smallest distance >= 0 in this function so do NOT set '0' as the initial value or everything will get fucked up!
+                                        contactAtomNumInResidueA[r] = -1;   // We HAVE to assign '-1', NOT any other value here! See comments below for details.
+                                        contactAtomNumInResidueB[r] = -1;   // We HAVE to assign '-1', NOT any other value here! See comments below for details.
+                                        // The initial value of '-1' is required for the atom index arrays because our index
+                                        // starts at '0', but geom_neo treads a '0' in a line of <pdbid>.geo as 'no contact' because
+                                        // it starts its index at '1'.
+                                        // This problem is solved by the functions in MolContactInfo: they return (our_index + 1). This
+                                        // means that:
+                                        //   1) If no contact was detected, our_index is -1 and they return 0, which means 'no contact' to geom_neo.
+                                        //   2) If a contact was detected, our_index is converted to the geom_neo index. :)
+                                    }
+        
+                                    currentMci = new MolContactInfo(numPairContacts, minContactDistances, contactAtomNumInResidueA, contactAtomNumInResidueB, resA, resB, CAdist, numTotalLigContactsPair, numTotalRnaContactsPair);
+
                                 }
                                 else{
                                     ;
                                 }
-                            }
-                            else{
-                                //use last used MCI
-                                ;
+                            
                             }
                             // Add transitive contact to MolContactInfo
-                            
-                        }
-                        else{
-                            ;
+                            currentMci.numPairContacts[MolContactInfo.TCL]++;
+                        
                         }
                         
                         
@@ -5563,6 +5639,7 @@ public class Main {
             
             
         }
+        
         
         // - - - statistics - - -
         //
@@ -5929,27 +6006,29 @@ public class Main {
         if(x.isLigandAtom()) { statAtomIDi = 1; }       // Different ligands can have different numbers of atoms and separating them just makes no sense. We assign all contacts to the first atom.
         if(y.isLigandAtom()) { statAtomIDj = 1; }
 
-        try {
+        do{
+            try {
 
-            contact[0][0][0][0]++;                 // update global total number of contacts
-            contact[aIntID][bIntID][0][0]++;       // contacts AA type a <-> AA type b
-            contact[bIntID][aIntID][0][0]++;       // contacts AA type b <-> AA type a
+                contact[0][0][0][0]++;                 // update global total number of contacts
+                contact[aIntID][bIntID][0][0]++;       // contacts AA type a <-> AA type b
+                contact[bIntID][aIntID][0][0]++;       // contacts AA type b <-> AA type a
 
 
-            //System.out.println("DEBUG: a=" + aIntID + ",b=" + bIntID + ",i=" + statAtomIDi + ",j=" + statAtomIDj + ". Residues=" + a.getFancyName() + "," + b.getFancyName() + ".");
-            contact[aIntID][bIntID][statAtomIDi][statAtomIDj]++;       // contacts of atoms of AAs
-            contact[bIntID][aIntID][statAtomIDj][statAtomIDi]++;
+                //System.out.println("DEBUG: a=" + aIntID + ",b=" + bIntID + ",i=" + statAtomIDi + ",j=" + statAtomIDj + ". Residues=" + a.getFancyName() + "," + b.getFancyName() + ".");
+                contact[aIntID][bIntID][statAtomIDi][statAtomIDj]++;       // contacts of atoms of AAs
+                contact[bIntID][aIntID][statAtomIDj][statAtomIDi]++;
 
-            contact[aIntID][bIntID][statAtomIDi][0]++;                 // total number of contacts for atom x of this AA
-            contact[bIntID][aIntID][0][statAtomIDi]++;
+                contact[aIntID][bIntID][statAtomIDi][0]++;                 // total number of contacts for atom x of this AA
+                contact[bIntID][aIntID][0][statAtomIDi]++;
 
-            contact[aIntID][bIntID][statAtomIDj][0]++;                 // total number of contacts for atom x of this AA
-            contact[bIntID][aIntID][0][statAtomIDj]++;
-        } catch(java.lang.ArrayIndexOutOfBoundsException e) {
-            //DP.getInstance().w("calculateAtomContactsBetweenResidues():Contact statistics array out of bounds. Residues with excessive number of atoms detected: " + e.getMessage() + ".");
-            DP.getInstance().w("calculateAtomContactsBetweenResidues(): Atom count for residues too high (" + e.getMessage() + "), ignoring contacts for these atoms (aIntID=" + aIntID + ", bIntID=" + bIntID + ", statAtomIDi=" + statAtomIDi + ", statAtomIDj=" + statAtomIDj + ").");
-            continue;
-        }
+                contact[aIntID][bIntID][statAtomIDj][0]++;                 // total number of contacts for atom x of this AA
+                contact[bIntID][aIntID][0][statAtomIDj]++;
+            } catch(java.lang.ArrayIndexOutOfBoundsException e) {
+                //DP.getInstance().w("calculateAtomContactsBetweenResidues():Contact statistics array out of bounds. Residues with excessive number of atoms detected: " + e.getMessage() + ".");
+                DP.getInstance().w("calculateAtomContactsBetweenResidues(): Atom count for residues too high (" + e.getMessage() + "), ignoring contacts for these atoms (aIntID=" + aIntID + ", bIntID=" + bIntID + ", statAtomIDi=" + statAtomIDi + ", statAtomIDj=" + statAtomIDj + ").");
+                continue;
+            }
+        } while (false);
 
         // Determine the contact type.                    
         if(x.isProteinAtom() && y.isProteinAtom()) {
@@ -6004,7 +6083,7 @@ public class Main {
                 }
             }
             else {
-                System.err.println("ERROR: Congrats, you found a bug in the atom contact type determination code (res " + a.getPdbNum() + " atom " + i + " / res " + b.getPdbNum() + " atom " + j + ").");
+                System.err.println("ERROR: Congrats, you found a bug in the atom contact type determination code (res " + x.molecule.getPdbNum() + " atom " + i + " / res " + y.molecule.getPdbNum() + " atom " + j + ").");
                 System.err.println("ERROR: Atom types are: i (PDB atom #" + x.getPdbAtomNum() + ") => " + x.getAtomType() + ", j (PDB atom #" + y.getPdbAtomNum() + ") => " + y.getAtomType() + ".");
                 Main.doExit(1);
             }
@@ -6287,9 +6366,10 @@ public class Main {
      * Calculates the atom contacts between the residues 'a' and 'b' if one is a ligand.
      * @param a one of the residues of the residue pair
      * @param b one of the residues of the residue pair
+     * @param ligandToProteinAtomContacts map for remembering all contacts of all ligand atoms for transitive contacts
      * @return A MolContactInfo object with information on the atom contacts between 'a' and 'b' and a map of lig atoms to aa atoms contacts.
      */
-    public static Object[] calculateAtomContactsBetweenLigandResidues(Molecule a, Molecule b, HashMap<Atom,ArrayList<Atom>> ligandToProteinAtomContacts){
+    public static HashMap<HashMap<Atom,ArrayList<Atom>>,MolContactInfo> calculateAtomContactsBetweenLigandResidues(Molecule a, Molecule b, HashMap<Atom,ArrayList<Atom>> ligandToProteinAtomContacts){
         ArrayList<Atom> atoms_a = a.getAtoms();
         ArrayList<Atom> atoms_b = b.getAtoms();
         
@@ -6298,7 +6378,6 @@ public class Main {
         Integer dist = null;
         Integer CAdist = a.distTo(b);
         MolContactInfo result = null;
-        Boolean resContactCheck = false;
 
 
         Integer[] numPairContacts = new Integer[Main.NUM_MOLECULE_PAIR_CONTACT_TYPES];
@@ -6412,9 +6491,14 @@ public class Main {
             result = null;
         }
         
+        // Put result into map to avoid type errors
+        //HashMap<Integer, MolContactInfo> resultMapped = new HashMap<Integer, MolContactInfo>();
+        //resultMapped.put(0,result);
+        
         // Return current_map with LigAtom -> ResidueAtoms and return MCI
-        Object[] returnArray = new Object[]{result, ligandToProteinAtomContacts};
-        return(returnArray);
+        HashMap<HashMap<Atom,ArrayList<Atom>>,MolContactInfo> returnMap = new HashMap<HashMap<Atom,ArrayList<Atom>>,MolContactInfo>();
+        returnMap.put(ligandToProteinAtomContacts, result);
+        return(returnMap);
     }
     
     /**

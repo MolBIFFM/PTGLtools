@@ -138,7 +138,7 @@ public class Main {
     
     /** The number of different contact types which are stored for a pair of residues. See calculateAtomContactsBetweenResidues() and
      the MolContactInfo class for details and usage. */
-    public static final Integer NUM_MOLECULE_PAIR_CONTACT_TYPES = 15;
+    public static final Integer NUM_MOLECULE_PAIR_CONTACT_TYPES = 16;
     
     /**
      * The number of different contacts types according to the alternative contact model which are stored for a pair of residues.
@@ -5171,7 +5171,6 @@ public class Main {
                             currentResPair[0] = mol1;
                             currentResPair[1] = mol2;
                             resMciMapping.put(currentResPair,rci);
-                            System.out.println("current Mapping" + resMciMapping + "and current res pair" + currentResPair); //to delete
                         }
                     }
                     else {
@@ -5200,7 +5199,7 @@ public class Main {
                         }
 
                         numResContactsChecked++;
-
+                        
                         // We only need to check on atom level if the center spheres overlap
                         if (mol1.contactPossibleWithMolecule(mol2)) {                                        
                             numResContactsPossible++;
@@ -5218,8 +5217,9 @@ public class Main {
                                 currentResPair[0] = mol1;
                                 currentResPair[1] = mol2;
                                 resMciMapping.put(currentResPair,rci);
-                                System.out.println("new current Res Pair" + currentResPair);
+                                
                             }
+                            
                         }
                         else {
                             numResContactsImpossible++;
@@ -5454,7 +5454,7 @@ public class Main {
                                 }
                             }
                         }
-                        
+
                         // 3)
                         // HINT: for this nested loop outer and inner are swapped: this way we can profit from the lig-AA skipping
                         for (int i = 0; i < ligResiduesB.size(); i++) {
@@ -5523,17 +5523,18 @@ public class Main {
             Molecule resB;
             Atom atomA;
             Atom atomB;
+            Integer counterTransitiveContacts = 0;
             
-            
-            for(ArrayList<Atom> value : ligandToProteinAtomContacts.values()){ //check retrieval, comment to delete
+            System.out.println("start transitive contact analysis"); //to delete
+            for(ArrayList<Atom> currentTransitiveAtomList : ligandToProteinAtomContacts.values()){ //check retrieval, comment to delete
                 // Check all keys to evaluate contacts
                 
-                for(int a = 0; a < value.size(); a++){
-                    atomA = value.get(a);
+                for(int a = 0; a < currentTransitiveAtomList.size(); a++){
+                    atomA = currentTransitiveAtomList.get(a);
                     resA = atomA.molecule;
-                    for (int b = a; b < value.size(); a++){
+                    for (int b = a+1; b < currentTransitiveAtomList.size(); b++){
                         // Retrieve Residues of Atoms
-                        atomB = value.get(b);
+                        atomB = currentTransitiveAtomList.get(b);
                         resB = atomB.molecule;
                         
                         if (resA.equals(resB)){
@@ -5542,12 +5543,10 @@ public class Main {
                         else{
                             //MolContactInfo: reuse from last iteration, retrieve or create
                             
-                            if (resAOld.equals(resA) && resBOld.equals(resB)){
-                                
-                                //use last used MCI
-                                ;
-                                
-                                }
+                            if((resAOld!=null || resBOld!=null) && resAOld.equals(resA) && resBOld.equals(resB)){
+                                System.out.println("current MolContactInfo " + currentMci); //to delete                                
+                            }
+                            
                             else{
                                 
                                 // Check if MCI exists and retrieve or create
@@ -5555,7 +5554,7 @@ public class Main {
                                 resBOld = resB;
                                 Molecule[] newResPair = new Molecule[]{resA,resB};
                                 currentMci = resMciMapping.get(newResPair); //retrieve MCI
-                                System.out.println(currentMci); //to delete
+                                System.out.println("current MolContactInfo" + currentMci); //to delete
                                                                                                
                                 // Create new MCI
                                 if (currentMci == null){
@@ -5615,7 +5614,6 @@ public class Main {
                                     }
         
                                     currentMci = new MolContactInfo(numPairContacts, minContactDistances, contactAtomNumInResidueA, contactAtomNumInResidueB, resA, resB, CAdist, numTotalLigContactsPair, numTotalRnaContactsPair);
-
                                 }
                                 else{
                                     ;
@@ -5623,7 +5621,9 @@ public class Main {
                             
                             }
                             // Add transitive contact to MolContactInfo
-                            currentMci.numPairContacts[MolContactInfo.TCL]++;
+                            //currentMci.numPairContacts[MolContactInfo.TCL]++;
+                            //currentMci.numPairContacts[MolContactInfo.TT]++;
+                            counterTransitiveContacts++;
                         
                         }
                         
@@ -5636,6 +5636,8 @@ public class Main {
                     
                     
             }
+            System.out.println("transitive contact analysis done. Transitive Contacts Found: " + counterTransitiveContacts); //to delete
+            
             
             
         }
@@ -6478,8 +6480,17 @@ public class Main {
                 if(x.atomContactTo(y)) {
                     //add atom y to mapped list of ligand atom x
                     ArrayList<Atom> atomMapList = ligandToProteinAtomContacts.get(x);
-                    atomMapList.add(y);
-                    ligandToProteinAtomContacts.put(x, atomMapList);
+                    
+                    if(atomMapList == null){
+                        ArrayList<Atom> emptyAtomMapList = new ArrayList<Atom>();
+                        emptyAtomMapList.add(y);
+                        ligandToProteinAtomContacts.put(x, emptyAtomMapList);
+                    }
+                    else{
+                        atomMapList.add(y);
+                        ligandToProteinAtomContacts.put(x, atomMapList);
+                    }
+                    
                     
                     //change MCI
                     result = atomContactsStatistics(x,y,result,i,j,contactAtomNumInResidueA,contactAtomNumInResidueB,aIntID,bIntID); //!!!change to add to map instead

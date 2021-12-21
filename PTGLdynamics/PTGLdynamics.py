@@ -6,7 +6,7 @@
 #   patch: fixes, small changes
 #   no version change: fix typos, changes to comments, debug prints, small changes to non-result output, changes within git branch
 # -> only increment with commit / push / merge not while programming
-version = "1.1.0"  # TODO version of this template, change this to 1.0.0 for a new script or 2.0.0 if you upgrade another script to this template's architecture  
+version = "1.2.0" 
 
 
 ########### built-in imports ###########
@@ -329,7 +329,7 @@ if (args.outputfile != ""):
     if(check_file_writable(args.outputfile)):
         output_file = open(args.outputfile, "w")
     else:
-        logging.error("Specified output file '%s' is not writable. Exiting now.", args.outputfile)
+        log("Specified output file '%s' is not writable. Exiting now." + args.outputfile, 'e')
         sys.exit(1)
 
 # input directory
@@ -345,14 +345,14 @@ if (args.headerfile != ""):
         cmd_header_mmcif = ' --headerfile ' + header_mmcif
 
     else:
-        logging.error("Specified header file '%s' is not readable. Continuing without header file. PTGLgraphComputation will not be working properly though.", args.headerfile)
+        log("Specified header file '%s' is not readable. Continuing without header file. PTGLgraphComputation will not be working properly though." + args.headerfile, 'e')
         header_mmcif = ''
         cmd_header_mmcif = ''
 else:
     header_mmcif = ''
     cmd_header_mmcif = ''
     if (args.toMmCIF):
-        logging.error("No header file was specified. PTGLgraphComputation will not be working properly.") 
+        log("No header file was specified. PTGLgraphComputation will not be working properly.", 'w') 
         
 # compoundfile directory
 if (args.compoundfile != ""):
@@ -360,7 +360,7 @@ if (args.compoundfile != ""):
         header = os.path.abspath(args.compoundfile)
         cmd_header = ' -c ' + header
     else:
-        logging.error("Specified header file '%s' is not readable. Continuing without header file.", args.compoundfile)
+        log("Specified header file '%s' is not readable. Continuing without header file." + args.compoundfile, 'e')
         header = ''
         cmd_header = ''
 else:
@@ -375,7 +375,7 @@ if (args.applications != []):
         if program in programs:            
             program_list.append(program)
         else:
-            logging.error("Specified program '%s' is not part of the ptglDynamics pipeline. Continuing without it.", program)
+            log("Specified program '%s' is not part of the ptglDynamics pipeline. Continuing without it." + program, 'e')
 else:
     program_list = list(programs)
     
@@ -814,7 +814,6 @@ for elem in program_list:
         log('plotSnapshots computations are done.', 'i')
     
     elif (elem == 'compareContactPartnersOfResidues.py'):
-        _start_time_2 = time.time()
         if (add_compareContactPartnersOfResidues_args == ''):
 
             os.chdir(out_dir)
@@ -978,7 +977,6 @@ for elem in program_list:
             pattern = "changes_in_percent_each_res_based_on_res_*.csv"
             matching = fnmatch.filter(list_work_dir, pattern)
             changes_file = work_dir + matching[0]
-            print("changes file ", changes_file)
                 
             if os.path.isfile(changes_file):
                 heatmapVisualisation = 'python3 ' + plotting_dir + elem + ' ' + pdb_file + ' ' + changes_file + ' -p ' + out_dir
@@ -1024,8 +1022,6 @@ for elem in program_list:
        
 
 log("-- %s seconds ---"% (time.time()- _start_time), 'i')
-print("The pipeline needed ", (time.time() - _start_time), " seconds.")
-print("ResResMatching needed ", (time.time() - _start_time_2), " seconds.")
 log("All done, exiting ptglDynamics.", 'i')
 
 # tidy up

@@ -157,7 +157,7 @@ cl_parser.add_argument('-f',
 cl_parser.add_argument('-l',
                        '--last-timestep',
                        type = int,
-                       default = 5,
+                       default = 2000,
                        help='The index of the last complex graph to be compared')
 
 cl_parser.add_argument('--exclude-chains',
@@ -211,7 +211,6 @@ output_dir = check_dir_args(args.outputdirectory)
 exclude_chains = args.exclude_chains
 exclude_edges = args.exclude_edges
 divide_chainlength = check_input_files(args.divide_by_chainlength)
-print(divide_chainlength)
 
 if (args.first_timestep >= args.last_timestep):
     log("The given first frame number is greater than the number given as the last timestep.",'e')
@@ -342,19 +341,18 @@ if calculation == '(chain, CG)':
     log("Changes for each chain: " + str(changes), 'i')
   
 # Create output csv file.
-changes_out = open(output_dir + '/' + 'changes_each_' + calculate + '_based_on_' + based_on + '_frame' + str(args.first_timestep) + '_to_frame' + str(args.last_timestep) + '.csv','w')
+with open(output_dir + '/' + 'changes_each_' + calculate + '_based_on_' + based_on + '_frame' + str(args.first_timestep) + '_to_frame' + str(args.last_timestep) + '.csv','w') as changes_out:
 
-if calculation == "(chain, res)":
-    changes_out.write("chain" + "," +  "change in res-res contacts" + '\n')
-elif calculation == "(res, res)":
-    changes_out.write("residue (PDB_ID|chain|iCode)" + "," +  "change in res-res contacts" + '\n')
-elif calculation == "(chain, CG)":
-    changes_out.write("chain" + "," +  "change in CG´s" + '\n')
+    if calculation == "(chain, res)":
+        changes_out.write("chain" + "," +  "change in res-res contacts" + '\n')
+    elif calculation == "(res, res)":
+        changes_out.write("residue (PDB_ID|chain|iCode)" + "," +  "change in res-res    contacts" + '\n')
+    elif calculation == "(chain, CG)":
+        changes_out.write("chain" + "," +  "change in CG´s" + '\n')
 
-for key in changes:
-    changes_out.write(key + ',' + str(changes[key]) + '\n')
+    for key in changes:
+        changes_out.write(key + ',' + str(changes[key]) + '\n')
 
-changes_out.close()
 
 all_changes = set(changes.values())
 value_max = int(max(all_changes))
@@ -367,20 +365,17 @@ for key in changes:
     percent = round(percent, 2)
     changes[key] = percent
     
-percents = open(output_dir + '/' + 'changes_in_percent_each_' + calculate + '_based_on_' + based_on + '_frame' + str(args.first_timestep) + '_to_frame' + str(args.last_timestep) + '.csv','w')
+with open(output_dir + '/' + 'changes_in_percent_each_' + calculate + '_based_on_' + based_on + '_frame' + str(args.first_timestep) + '_to_frame' + str(args.last_timestep) + '.csv','w') as percents:
 
-if calculation == "(chain, res)":
-    percents.write("chain" + "," +  "change in res-res contacts in percent" + '\n')
-elif calculation == "(res, res)":
-    percents.write("residue (PDB_ID|chain|iCode)" + "," +  "change in res-res contacts in percent" + '\n')
-elif calculation == "(chain, CG)":
-    percents.write("chain" + "," +  "change in CG´s in percent" + '\n')
+    if calculation == "(chain, res)":
+        percents.write("chain" + "," +  "change in res-res contacts in percent" + '\n')
+    elif calculation == "(res, res)":
+        percents.write("residue (PDB_ID|chain|iCode)" + "," +  "change in res-res contacts in percent" + '\n')
+    elif calculation == "(chain, CG)":
+        percents.write("chain" + "," +  "change in CG´s in percent" + '\n')
 
-for key in changes:
-    percents.write(key + ',' + str(changes[key]) + '\n')
+    for key in changes:
+        percents.write(key + ',' + str(changes[key]) + '\n')
 
-percents.close()
-
-    
 
 log("'calculate_changes.py' computations done.", 'i')

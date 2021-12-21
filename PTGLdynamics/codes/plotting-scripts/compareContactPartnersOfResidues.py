@@ -148,18 +148,6 @@ cl_parser.add_argument('-p',
                        metavar = 'path',
                        default = '',
                        help = 'specify a path to your output files. Otherwise the current folder is used.')
-                       
-cl_parser.add_argument('--exclude-chains',
-                       type = str,
-                       nargs = '+',
-                       default = [],
-                       help = 'Specify chains that should not be considered in the comparison.')
-                       
-cl_parser.add_argument('--exclude-residues',
-                       type = str,
-                       nargs = '+',
-                       default = [],
-                       help = 'Specify residues that should not be considered in the comparison. Enter residues in the following format: "(Res_ID, Chain, iCode)".')                                             
 
 args = cl_parser.parse_args()
 
@@ -182,10 +170,6 @@ file2= check_input_files(args.file_two)
         
 # output directory
 output_dir = check_dir_args(args.outputdirectory)
-
-# exclude
-excluded_chains = args.exclude_chains
-excluded_residues = args.exclude_residues
 
 ########### vamos ###########
 

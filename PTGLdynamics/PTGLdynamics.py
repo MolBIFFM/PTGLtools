@@ -308,10 +308,7 @@ cl_parser.add_argument('--plotResResContactChanges-args',
                        type = str,
                        default = '',
                        help = 'a string with the arguments for plotResResContactChanges.py you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: --plotResResContactChanges-args="<arguments and their inputs>", including the positional arguments.')                      
-                                            
-
-                                            
-
+                                                                                
 args = cl_parser.parse_args()
 
 ########### check arguments ###########

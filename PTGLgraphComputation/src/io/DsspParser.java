@@ -226,7 +226,7 @@ public class DsspParser {
             // offset = Math.max(dLine.split(" ")[0].length() - 5, 0);  // typically first 5 columns code for res num, but if exceeded add offset
 
             if(dLine.substring(13, 14).equals("!")) {       // chain brake
-                chainBreakDssps.add(Integer.valueOf(dLine.substring(0, 5).trim()));
+                chainBreakDssps.add(getDsspNumFromLine(dLine));
                 if(! silent) {
                     if (! Settings.getBoolean("PTGLgraphComputation_B_no_chain_break_info")) {
                         System.out.println("    DSSP: Found chain brake at DSSP line " + dLineNum + ".");
@@ -236,18 +236,8 @@ public class DsspParser {
             else {          // parse the residue line
 
                 try {
-                    if (! isCIF) {
-                        // column 0 is ignored: blank
-                        dsspResNum = Integer.valueOf(dLine.substring(1, 5).trim());
-                    } else {
-                        // If DSSP num > 99999 there is "---->" and the num is in columns 169-174
-                        if (! dLine.substring(0, 5).equals("---->")) {
-                            // Don't know why above (for non-CIF) it starts from 1 instead of 0, but should not hurt to do it this way (and even maybe help)
-                            dsspResNum = Integer.valueOf(dLine.substring(0, 5).trim());
-                        } else {
-                            dsspResNum = Integer.valueOf(dLine.substring(168, 174).trim());
-                        }
-                    }
+                    dsspResNum = getDsspNumFromLine(dLine);
+
                     
                     // last used DSSP res num is later needed for ligands
                     // (and we only wand to go through dssp file once)
@@ -390,7 +380,27 @@ public class DsspParser {
         }
         
     }
+
     
+    /**
+     * Get the DSSP residue number (ID) from a DSSP line. Correctly treats large structures.
+     * @param dsspLine line from a DSSP file (not header)
+     * @return DSSP residue number
+     */
+    private static Integer getDsspNumFromLine(String dsspLine) {
+        if (dsspLine.length() > 4) {
+            if (!dsspLine.substring(0, 5).equals("---->")) {
+                return Integer.valueOf(dsspLine.substring(0, 5).trim());
+            } else {
+                // larger number than fits into five digits -> DSSP stores them in columns to the right
+                if (dsspLine.length() > 173) {
+                    return Integer.valueOf(dsspLine.substring(168, 174).trim());
+                }
+            }
+        }
+        return null;
+    }
+
     
         public static ArrayList<String> getDsspLines() {
         if(dataInitDone) {

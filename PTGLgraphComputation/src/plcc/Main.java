@@ -11258,7 +11258,7 @@ public class Main {
         System.out.println("-h | --help                : show this help message and exit");
         System.out.println("-H | --output-www-with-core: add HTML navigation files and core files to the subdir tree (implies -k, -W). ");
         //System.out.println("-i | --ignoreligands       : ignore ligand contacts in geom_neo format output files [DEBUG]");
-        System.out.println("-i | --aa-graphs           : compute and output amino acid-based graphs as well. In these graphs, each vertes is an amino acid instead of a SSE. Computes per-chain and per-PDB file AAGs.");        
+        System.out.println("-i | --aa-graphs           : compute and output amino acid-based graphs as well. In these graphs, each vertex is an amino acid instead of a SSE. Computes per-chain and per-PDB file AAGs.");        
         System.out.println("     --aa-graphs-pdb       : computes amino acid graphs (see above), but only the graphs for the whole PDB file (all chains combined into one graph).");        
         System.out.println("     --aa-graphs-chain     : computes amino acid graphs (see above), but only the graphs which model a single chain each (n graphs for a PDB file with n chains).");                
         System.out.println("-I | --mmCIF-parser        : uses mmCIF parser for provided file (looks for .cif file)");
@@ -11275,7 +11275,7 @@ public class Main {
         System.out.println("-P | --write-chains-file   : write an info file containing all chain names of the handled PDB file (for other software to know output file names)");
         System.out.println("     --gz-pdbfile <f>      : use gzipped input PDB file <f>.");
         System.out.println("-q | --fg-notations <list> : draw only the folding graph notations in <list>, e.g. 'kars' = KEY, ADJ, RED and SEQ.");
-        System.out.println("-r | --recreate-tables     : drop and recreate database tables and add base type data, then exit (see -u). Creates a reday-to-use database.*");
+        System.out.println("-r | --recreate-tables     : drop and recreate database tables and add base type data, then exit (see -u). Creates a ready-to-use database.*");
         System.out.println("     --recreate-tables-empty : drop and recreate database tables without adding base type data, then exit (see -u). Creates a completely empty database, suitable for restoring a dump exported from another server.*");        
         System.out.println("-s | --draw-linnots        : not only compute the folding graph linear notations, but draw all 4 of them to image files");
         System.out.println("-S | --sim-measure <m>     : use similarity measure <m>. Valid settings include 'string_sse', 'graph_set' and 'graph_compat'.");
@@ -11323,7 +11323,7 @@ public class Main {
         System.out.println("          java -jar PTGLgraphComputation.jar 6cbe -I --cg-threshold 2");
         System.out.println("");
         System.out.println("REQUIRED INPUT FILES: This program requires the PDB file and the DSSP file of a protein.");
-        System.out.println("                      You can find PDB files at https://rcsb.org and the DSSP program as well as dowload options at https://swift.cmbi.umcn.nl/gv/dssp/.");
+        System.out.println("                      You can find PDB files at https://rcsb.org and the DSSP program as well as download options at https://swift.cmbi.umcn.nl/gv/dssp/.");
         System.out.println("                      This does not apply to options that don't use it (marked with * above), of course.");
         System.out.println("                      A PDBID still has to be given as first argument, it will be ignored though (use 'NONE').");
         System.out.println("");

@@ -323,6 +323,8 @@ class Section {
                 
             case "Output settings":
                 settings.add(new Setting("PTGLgraphComputation_B_csv_number_residues_chains", 'B', "false", "Whether a csv file with the number of residues in each chain is created."));
+                settings.add(new Setting("PTGLgraphComputation_B_csv_contacts_inter", 'B', "false", "Whether a csv file with the interchain residue-residue contacts is created."));
+                settings.add(new Setting("PTGLgraphComputation_B_csv_contacts_intra_inter", 'B', "false", "Whether a csv file with the inter- and intrachain residue-residue contacts is created."));
                 settings.add(new Setting("PTGLgraphComputation_B_ptgl_text_output", 'B', "false", "Whether the PTGL text files (e.g., those required by the bet_neo) are written. Not writing them is faster but this program cannot replace the PTGL tool 'geom_neo' anymore if this is deactivated."));
                 settings.add(new Setting("PTGLgraphComputation_B_gml_snake_case", 'B', "false", "Whether keys in all GML files should be written in snake case, i.e., with under scores instead of camel case. HINT: Originally, GML does not support snake case and so may some parsers for GML files."));
                 settings.add(new Setting("PTGLgraphComputation_B_ptgl_geodat_output", 'B', "false", "Whether the PTGL text files geo.dat for SSE level contacts are written to a text file."));

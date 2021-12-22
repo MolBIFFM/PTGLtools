@@ -578,6 +578,9 @@ class CifParser {
      * Matches atoms <-> residues/rna/ligands <-> chains <-> models.
      */
     private static void handleAtomSiteLine() {
+        
+        Chain lastChain = new Chain(" ");
+        
         // atom coordinates should always be within a loop      
         if (! inLoop) {
             DP.getInstance().e("FP_CIF", "Parsing line " + numLine + ". Atom coordinates seem not be within a loop. Is the file broken? Exiting now.");
@@ -796,6 +799,45 @@ class CifParser {
         //     -> enables getting DsspResNum for atom from res
         // match res <-> chain here
         // load new Residue into lastMol if we approached next Residue, otherwise only add new atom
+        
+        
+        // entity stuff wird noch zu Problememn fürhern, weil in dssp_cif steht das glaub ich erst am Ende
+        
+        // todo chain ID prüfen
+        // wird das schon von - - chain - - gemacht?
+        if (!chainID.equals(lastMol.getChainID())){
+            // new chain
+            // lastChainID = chainID ?
+        }
+        
+        if (!Objects.equals(molNumPDB, lastMol.getPdbNum())){
+            // new residue
+            res = new Residue();
+            
+            res.setPdbNum(molNumPDB);
+            res.setType(Molecule.RESIDUE_TYPE_AA);  // kann man hier glaube ich noch nicht machen
+            // DsspNum sollte nicht mehr benötigt werden
+            res.setChainID(chainID);
+            res.setiCode(iCode);
+            res.setName3(molNamePDB);
+            res.setAAName1(Residue.getAAName1fromAAName3(molNamePDB));
+            res.setChain(FileParser.getChainByPdbChainID(chainID));
+            res.setModelID(m.getModelID());
+            // can't do that yet res.setSSEString(); Dazu muss ich glaube ich in den DSSP ranges schauen
+            
+            FileParser.s_molecules.add(res);
+            
+            lastMol = res;
+            lastMol.setModelID(m.getModelID());
+            lastMol.setChain(tmpChain);
+            tmpChain.addMolecule(lastMol);
+            
+            // assign PDB res name (which differs in case of modifed residues)
+            lastMol.setName3(molNamePDB);
+            lastMol.setEntityID(entityID);
+            
+        }
+        
         if (! (Objects.equals(molNumPDB, lastMol.getPdbNum()) && chainID.equals(lastMol.getChainID()) && iCode.equals(lastMol.getiCode()))) {
             tmpMol = FileParser.getResidueFromList(molNumPDB, chainID, iCode);  // null if not in DSSP data -> rna/ligand/free AA
             // check that a peptide residue could be found                   

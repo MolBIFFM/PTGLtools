@@ -325,8 +325,7 @@ class Section {
                 settings.add(new Setting("PTGLgraphComputation_B_csv_number_residues_chains", 'B', "false", "Whether a csv file with the number of residues in each chain is created."));
                 settings.add(new Setting("PTGLgraphComputation_B_ptgl_text_output", 'B', "false", "Whether the PTGL text files (e.g., those required by the bet_neo) are written. Not writing them is faster but this program cannot replace the PTGL tool 'geom_neo' anymore if this is deactivated."));
                 settings.add(new Setting("PTGLgraphComputation_B_gml_snake_case", 'B', "false", "Whether keys in all GML files should be written in snake case, i.e., with under scores instead of camel case. HINT: Originally, GML does not support snake case and so may some parsers for GML files."));
-                settings.add(new Setting("PTGLgraphComputation_B_ptgl_geodat_output", 'B', "false", "Whether the PTGL text files geo.dat for SSE level contacts are written to a text file."));
-                settings.add(new Setting("PTGLgraphComputation_B_ramachandran_plot", 'B', "false", "Whether a Ramachandran plot is drawn to a file for each chain (slower)."));                
+                settings.add(new Setting("PTGLgraphComputation_B_ptgl_geodat_output", 'B', "false", "Whether the PTGL text files geo.dat for SSE level contacts are written to a text file."));        
                 break;
                 
             case "Image settings":
@@ -351,7 +350,6 @@ class Section {
                 settings.add(new Setting("PTGLgraphComputation_I_img_min_arc_height", 'I', "100", "The minimum size of the arc area within the image area."));
                 settings.add(new Setting("PTGLgraphComputation_I_img_minPageWidth", 'I', "800", "The minimum image width in pixels, used in output images."));
                 settings.add(new Setting("PTGLgraphComputation_I_img_minPageHeight", 'I', "600", "The minimum image height in pixels, used in output images."));
-                settings.add(new Setting("PTGLgraphComputation_S_img_output_fileext", 'S', ".png", "[DEPRECATED] File extension of images. Not used for graph images anymore; applies to Ramaplot etc only."));
                 break;
                 
             case "DB: similarity search":
@@ -389,6 +387,9 @@ class Section {
                 settings.add(new Setting("PTGLgraphComputation_B_complex_graph_same", 'B', "false", "[DISABLED] Determines whether the complex graph is drawn with all nodes of the same type."));
                 settings.add(new Setting("PTGLgraphComputation_B_complex_graph_mere", 'B', "false", "[DISABLED] Determines whether the complex graph is drawn with nodes of different type for each mere."));
                 settings.add(new Setting("PTGLgraphComputation_I_ligSAS", 'I', "20", "[DISABLED] The solvent accessible surface value that is written to the dssplig file for ligands (not used atm)"));
+                settings.add(new Setting("PTGLgraphComputation_B_ramachandran_plot", 'B', "false", "[DISABLED] Whether a Ramachandran plot is drawn to a file for each chain (slower)."));
+                settings.add(new Setting("PTGLgraphComputation_S_img_output_fileext", 'S', ".png", "[DIS_B_ramachandran_plot\", 'B', \"false\", \"[DISABLED] Whether a Ramachandran plot is drawn to a file for each chain (slower).\"));\n" +
+"                settings.add(new Setting(\"PTGLgraphComputation_S_imABLED] File extension of images. Not used for graph images anymore; applies to Ramaplot etc only."));
                 break;
                 
             case "Alternate AAG":

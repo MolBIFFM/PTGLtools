@@ -28,7 +28,7 @@ public class MolContactInfo {
     //  the function that creates these arrays.
     //  Just to be sure a copy of these lines can be found below. The length of all of these is 12.
     
-    public Integer[] numPairContacts;
+    private Integer[] numPairContacts;
     // The positions in the numPairContacts array hold the number of contacts of each type for a pair of molecule:
     // Some cheap vars to make things easier to understand (a poor replacement for #define):
     public static final Integer TT = 0;         //  0 = total number of contacts            (all molecule type combinations)
@@ -434,6 +434,21 @@ public class MolContactInfo {
     
     public ArrayList<String> getAtomAtomContactTypes() { return atomAtomContactType; }
     public ArrayList<Atom[]> getAtomAtomContacts() { return atomAtomContacts; }
+    
+    public Integer increaseContact(Integer contact, Integer amount) {
+        // Setter increases every contact type by a specific amount, as well as total amount of contacts
+        // Should be used with contact names, not numbers
+        // Should not be used to increase TT (overall amount of contacts)
+        if(contact == TT){
+            System.out.println("TT cannot be used for the increaseContacts() function, as it is already increased by the function itself.");
+            return 0;
+        }
+        else{
+            numPairContacts[contact] = numPairContacts[contact] + amount; 
+            numPairContacts[TT] = numPairContacts[TT] + amount; 
+            return numPairContacts[contact];
+        }
+    }
     
     // DEBUG only
     public Molecule getMolA() { return(molA); }

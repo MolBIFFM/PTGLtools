@@ -5511,143 +5511,146 @@ public class Main {
                     chainSkippedRes += (chainANumberResidues * chainBNumberResidues);
                 }
             }
-            
-            // - - - transitive contacts between chains (through ligand contacts) - - -
-            //
-            
-            if (Settings.getBoolean("PTGLgraphComputation_transitive_contacts")){
-                // Iteration over all connections of each ligand atom
-                MolContactInfo currentMci = null;
-                Molecule resAOld = null;
-                Molecule resBOld = null;
-                Molecule resA;
-                Molecule resB;
-                Atom atomA;
-                Atom atomB;
-                Integer counterTransitiveContacts = 0;
+        }    
+        // - - - transitive contacts between chains (through ligand contacts) - - -
+        //
 
-                System.out.println("start transitive contact analysis"); //to delete
-                for(ArrayList<Atom> currentTransitiveAtomList : ligandToProteinAtomContacts.values()){ //check retrieval, comment to delete
-                    // Check all keys to evaluate contacts
+        if (Settings.getBoolean("PTGLgraphComputation_transitive_contacts")){
+            // Iteration over all connections of each ligand atom
+            MolContactInfo currentMci = null;
+            Molecule resAOld = null;
+            Molecule resBOld = null;
+            Molecule resA;
+            Molecule resB;
+            Atom atomA;
+            Atom atomB;
+            Integer counterTransitiveContacts = 0;
 
-                    for(int a = 0; a < currentTransitiveAtomList.size(); a++){
-                        atomA = currentTransitiveAtomList.get(a);
-                        resA = atomA.molecule;
-                        for (int b = a+1; b < currentTransitiveAtomList.size(); b++){
-                            // Retrieve Residues of Atoms
-                            atomB = currentTransitiveAtomList.get(b);
-                            resB = atomB.molecule;
-                            
-                            System.out.println("atomA(1TCL:1) " + atomA + "atomB(1TCL:1884) " + atomB); //to delete
+            System.out.println("start transitive contact analysis"); //to delete
+            for(ArrayList<Atom> currentTransitiveAtomList : ligandToProteinAtomContacts.values()){ //check retrieval, comment to delete
+                // Check all keys to evaluate contacts
 
-                            if (resA.equals(resB)){
-                                ;
+                for(int a = 0; a < currentTransitiveAtomList.size(); a++){
+                    atomA = currentTransitiveAtomList.get(a);
+                    resA = atomA.molecule;
+                    for (int b = a+1; b < currentTransitiveAtomList.size(); b++){
+                        // Retrieve Residues of Atoms
+                        atomB = currentTransitiveAtomList.get(b);
+                        resB = atomB.molecule;
+
+                        //System.out.println("atomA(1TCL:1) " + atomA + "atomB(1TCL:1884) " + atomB); //to delete
+
+                        if (resA.equals(resB)){
+                            ;
+                        }
+                        else{
+                            //MolContactInfo: reuse from last iteration, retrieve or create
+
+                            if((resAOld!=null || resBOld!=null) && resAOld.equals(resA) && resBOld.equals(resB)){
+                                // Reuse last MCI
+                                //System.out.println("current MolContactInfo (1TCL:should be null)" + currentMci); //to delete                                
                             }
+
                             else{
-                                //MolContactInfo: reuse from last iteration, retrieve or create
 
-                                if((resAOld!=null || resBOld!=null) && resAOld.equals(resA) && resBOld.equals(resB)){
-                                    // Reuse last MCI
-                                    System.out.println("current MolContactInfo (1TCL:should be null)" + currentMci); //to delete                                
+                                // Check if MCI exists and retrieve or create
+                                resAOld = resA;
+                                resBOld = resB;
+                                Molecule[] newResPair = new Molecule[]{resA,resB};
+                                currentMci = resMciMapping.get(newResPair); //retrieve MCI
+                                //System.out.println("current MolContactInfo" + currentMci); //to delete
+
+                                // Create new MCI
+                                if (currentMci == null){
+
+                                    // Initialises all necessary variables to create MCI
+                                    Integer CAdist = resA.distTo(resB);
+
+
+                                    Integer[] numPairContacts = new Integer[Main.NUM_MOLECULE_PAIR_CONTACT_TYPES];
+                                    // The positions in the numPairContacts array hold the number of contacts of each type for a pair of residues:
+                                    // Some cheap vars to make things easier to understand (a replacement for #define):
+                                    /*
+                                    Integer TT = 0;         //  0 = total number of contacts            (all residue type combinations)
+                                    Integer BB = 1;         //  1 = # of backbone-backbone contacts     (protein - protein only)
+                                    Integer CB = 2;         //  2 = # of sidechain-backbone contacts    (protein - protein only)
+                                    Integer BC = 3;         //  3 = # of backbone-sidechain contacts    (protein - protein only)
+                                    Integer CC = 4;         //  4 = # of sidechain-sidechain contacts   (protein - protein only)
+                                    Integer HB = 5;         //  5 = # of H-bridge contacts 1, N=>0      (protein - protein only)
+                                    Integer BH = 6;         //  6 = # of H-bridge contacts 2, 0=>N      (protein - protein only)
+                                    Integer BL = 7;         //  7 = # of backbone-ligand contacts       (protein - ligand only)
+                                    Integer LB = 8;         //  8 = # of ligand-backbone contacts       (protein - ligand only)
+                                    Integer CL = 9;         //  9 = # of sidechain-ligand contacts      (protein - ligand only)
+                                    Integer LC = 10;        // 10 = # of ligand-sidechain contacts      (protein - ligand only)
+                                    Integer LL = 11;        // 11 = # of ligand-ligand contacts         (ligand - ligand only)
+                                    */
+
+
+                                    Integer numTotalLigContactsPair = 0;
+                                    Integer numTotalRnaContactsPair = 0;
+
+
+
+                                    Integer[] minContactDistances = new Integer[numPairContacts.length];
+                                    // Holds the minimal distances of contacts of the appropriate type (see numPairContacts, index 0 is unused)
+
+                                    Integer[] contactAtomNumInResidueA = new Integer[numPairContacts.length];
+                                    // Holds the number Atom x has in its residue a for the contact with minimal distance of that type.
+                                    // See minContactDistances and numPairContacts; index 0 is unused; index 5 + 6 are also unused (atom is obvious + always the same)
+
+                                    Integer[] contactAtomNumInResidueB = new Integer[numPairContacts.length];
+                                    // Holds the number Atom y has in its residue b for the contact with minimal distance of that type.
+                                    // See minContactDistances and numPairContacts; index 0 is unused; index 5 + 6 are also unused (atom is obvious + always the same)
+
+
+                                    for(Integer r = 0; r < numPairContacts.length; r++) {      // init all arrays
+                                        numPairContacts[r] = 0;
+                                        minContactDistances[r] = -1;    // We are looking for the smallest distance >= 0 in this function so do NOT set '0' as the initial value or everything will get fucked up!
+                                        contactAtomNumInResidueA[r] = -1;   // We HAVE to assign '-1', NOT any other value here! See comments below for details.
+                                        contactAtomNumInResidueB[r] = -1;   // We HAVE to assign '-1', NOT any other value here! See comments below for details.
+                                        // The initial value of '-1' is required for the atom index arrays because our index
+                                        // starts at '0', but geom_neo treads a '0' in a line of <pdbid>.geo as 'no contact' because
+                                        // it starts its index at '1'.
+                                        // This problem is solved by the functions in MolContactInfo: they return (our_index + 1). This
+                                        // means that:
+                                        //   1) If no contact was detected, our_index is -1 and they return 0, which means 'no contact' to geom_neo.
+                                        //   2) If a contact was detected, our_index is converted to the geom_neo index. :)
+                                    }
+
+                                    currentMci = new MolContactInfo(numPairContacts, minContactDistances, contactAtomNumInResidueA, contactAtomNumInResidueB, resA, resB, CAdist, numTotalLigContactsPair, numTotalRnaContactsPair);
+                                    contactInfo.add(currentMci);
+                                    
                                 }
-
                                 else{
-
-                                    // Check if MCI exists and retrieve or create
-                                    resAOld = resA;
-                                    resBOld = resB;
-                                    Molecule[] newResPair = new Molecule[]{resA,resB};
-                                    currentMci = resMciMapping.get(newResPair); //retrieve MCI
-                                    System.out.println("current MolContactInfo" + currentMci); //to delete
-
-                                    // Create new MCI
-                                    if (currentMci == null){
-
-                                        // Initialises all necessary variables to create MCI
-                                        Integer CAdist = resA.distTo(resB);
-
-
-                                        Integer[] numPairContacts = new Integer[Main.NUM_MOLECULE_PAIR_CONTACT_TYPES];
-                                        // The positions in the numPairContacts array hold the number of contacts of each type for a pair of residues:
-                                        // Some cheap vars to make things easier to understand (a replacement for #define):
-                                        /*
-                                        Integer TT = 0;         //  0 = total number of contacts            (all residue type combinations)
-                                        Integer BB = 1;         //  1 = # of backbone-backbone contacts     (protein - protein only)
-                                        Integer CB = 2;         //  2 = # of sidechain-backbone contacts    (protein - protein only)
-                                        Integer BC = 3;         //  3 = # of backbone-sidechain contacts    (protein - protein only)
-                                        Integer CC = 4;         //  4 = # of sidechain-sidechain contacts   (protein - protein only)
-                                        Integer HB = 5;         //  5 = # of H-bridge contacts 1, N=>0      (protein - protein only)
-                                        Integer BH = 6;         //  6 = # of H-bridge contacts 2, 0=>N      (protein - protein only)
-                                        Integer BL = 7;         //  7 = # of backbone-ligand contacts       (protein - ligand only)
-                                        Integer LB = 8;         //  8 = # of ligand-backbone contacts       (protein - ligand only)
-                                        Integer CL = 9;         //  9 = # of sidechain-ligand contacts      (protein - ligand only)
-                                        Integer LC = 10;        // 10 = # of ligand-sidechain contacts      (protein - ligand only)
-                                        Integer LL = 11;        // 11 = # of ligand-ligand contacts         (ligand - ligand only)
-                                        */
-
-
-                                        Integer numTotalLigContactsPair = 0;
-                                        Integer numTotalRnaContactsPair = 0;
-
-
-
-                                        Integer[] minContactDistances = new Integer[numPairContacts.length];
-                                        // Holds the minimal distances of contacts of the appropriate type (see numPairContacts, index 0 is unused)
-
-                                        Integer[] contactAtomNumInResidueA = new Integer[numPairContacts.length];
-                                        // Holds the number Atom x has in its residue a for the contact with minimal distance of that type.
-                                        // See minContactDistances and numPairContacts; index 0 is unused; index 5 + 6 are also unused (atom is obvious + always the same)
-
-                                        Integer[] contactAtomNumInResidueB = new Integer[numPairContacts.length];
-                                        // Holds the number Atom y has in its residue b for the contact with minimal distance of that type.
-                                        // See minContactDistances and numPairContacts; index 0 is unused; index 5 + 6 are also unused (atom is obvious + always the same)
-
-
-                                        for(Integer r = 0; r < numPairContacts.length; r++) {      // init all arrays
-                                            numPairContacts[r] = 0;
-                                            minContactDistances[r] = -1;    // We are looking for the smallest distance >= 0 in this function so do NOT set '0' as the initial value or everything will get fucked up!
-                                            contactAtomNumInResidueA[r] = -1;   // We HAVE to assign '-1', NOT any other value here! See comments below for details.
-                                            contactAtomNumInResidueB[r] = -1;   // We HAVE to assign '-1', NOT any other value here! See comments below for details.
-                                            // The initial value of '-1' is required for the atom index arrays because our index
-                                            // starts at '0', but geom_neo treads a '0' in a line of <pdbid>.geo as 'no contact' because
-                                            // it starts its index at '1'.
-                                            // This problem is solved by the functions in MolContactInfo: they return (our_index + 1). This
-                                            // means that:
-                                            //   1) If no contact was detected, our_index is -1 and they return 0, which means 'no contact' to geom_neo.
-                                            //   2) If a contact was detected, our_index is converted to the geom_neo index. :)
-                                        }
-
-                                        currentMci = new MolContactInfo(numPairContacts, minContactDistances, contactAtomNumInResidueA, contactAtomNumInResidueB, resA, resB, CAdist, numTotalLigContactsPair, numTotalRnaContactsPair);
-                                        
-                                    }
-                                    else{
-                                        ;
-                                    }
-
+                                    ;
                                 }
-                                System.out.println("TT check: (1TCl:should be 0) " + currentMci.getNumContactsTotal() + "TCL check: (1TCL:should be 0) " + currentMci.getNumContactsTCL()); //to delete
-
-                                // Add transitive contact to MolContactInfo
-                                currentMci.increaseContact(MolContactInfo.TCL, 1);
-                                counterTransitiveContacts++;
-                                System.out.println("TT check: (1TCl:should be 1) " + currentMci.getNumContactsTotal() + "TCL check: (1TCL:should be 1) " + currentMci.getNumContactsTCL()); //to delete
 
                             }
+                            System.out.println("TT check: (1TCl:should be 0) " + currentMci.getNumContactsTotal() + "TCL check: (1TCL:should be 0) " + currentMci.getNumContactsTCL()); //to delete
 
-
-
+                            // Add transitive contact to MolContactInfo
+                            currentMci.increaseContact(MolContactInfo.TCL, 1);
+                            currentMci.increaseContact(MolContactInfo.TT, 1);
+                            counterTransitiveContacts++;
+                            
+                            System.out.println("TT check: (1TCl:should be 1) " + currentMci.getNumContactsTotal() + "TCL check: (1TCL:should be 1) " + currentMci.getNumContactsTCL()); //to delete
 
                         }
+
+
+
+
                     }
-
-
-
                 }
-                System.out.println("transitive contact analysis done. Transitive Contacts Found: " + counterTransitiveContacts); //to delete
+
+
+
             }
-            
-            
+            System.out.println("transitive contact analysis done. Transitive Contacts Found: " + counterTransitiveContacts); //to delete
         }
+            
+            
+        
         
         
         // - - - statistics - - -

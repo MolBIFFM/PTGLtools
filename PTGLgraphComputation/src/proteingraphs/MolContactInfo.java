@@ -436,18 +436,12 @@ public class MolContactInfo {
     public ArrayList<Atom[]> getAtomAtomContacts() { return atomAtomContacts; }
     
     public Integer increaseContact(Integer contact, Integer amount) {
-        // Setter increases every contact type by a specific amount, as well as total amount of contacts
-        // Should be used with contact names, not numbers
-        // Should not be used to increase TT (overall amount of contacts)
-        if(contact == TT){
-            System.out.println("TT cannot be used for the increaseContacts() function, as it is already increased by the function itself.");
-            return 0;
-        }
-        else{
-            numPairContacts[contact] = numPairContacts[contact] + amount; 
-            numPairContacts[TT] = numPairContacts[TT] + amount; 
-            return numPairContacts[contact];
-        }
+        // Setter increases every contact type by a specific amount
+        // Should be used with contact letter
+        // TT currently needs to be increased separately
+        numPairContacts[contact] = numPairContacts[contact] + amount;  
+        return numPairContacts[contact];
+        
     }
     
     // DEBUG only

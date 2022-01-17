@@ -5166,7 +5166,7 @@ public class Main {
                             // there cannot be a lig in this contact -> always add without checking for plcc_B_write_lig_geolig
                             contactInfo.add(rci);
                             
-                            //add MCI to Map for transitive contact analysis
+                            // Add MCI to Map for transitive contact analysis
                             Molecule[] currentResPair = new Molecule[2];
                             currentResPair[0] = mol1;
                             currentResPair[1] = mol2;
@@ -5203,6 +5203,7 @@ public class Main {
                         // We only need to check on atom level if the center spheres overlap
                         if (mol1.contactPossibleWithMolecule(mol2)) {                                        
                             numResContactsPossible++;
+                            
                             HashMap<HashMap<Atom,ArrayList<Atom>>,MolContactInfo> atomContactReturn = new HashMap<HashMap<Atom,ArrayList<Atom>>,MolContactInfo>();
                             atomContactReturn = calculateAtomContactsBetweenLigandResidues(mol1, mol2,ligandToProteinAtomContacts);
                             rci = atomContactReturn.values().iterator().next();
@@ -5212,7 +5213,7 @@ public class Main {
                                 // There were atoms contacts!
                                 contactInfo.add(rci);
                                 
-                                //add MCI to Map for transitive contact analysis
+                                // Add MCI to Map for transitive contact analysis
                                 Molecule[] currentResPair = new Molecule[2];
                                 currentResPair[0] = mol1;
                                 currentResPair[1] = mol2;
@@ -5251,7 +5252,7 @@ public class Main {
                                 contactInfo.add(rci);
                             }
                                 
-                                //add MCI to Map for transitive contact analysis
+                                // Add MCI to Map for transitive contact analysis
                                 Molecule[] currentResPair = new Molecule[2];
                                 currentResPair[0] = mol1;
                                 currentResPair[1] = mol2;
@@ -5347,7 +5348,7 @@ public class Main {
                                     // there cannot be a lig in this contact -> always add without checking for plcc_B_write_lig_geolig
                                     contactInfo.add(rci);
                                     
-                                    //add MCI to Map for transitive contact analysis
+                                    // Add MCI to Map for transitive contact analysis
                                     Molecule[] currentResPair = new Molecule[2];
                                     currentResPair[0] = mol1;
                                     currentResPair[1] = mol2;
@@ -5389,7 +5390,6 @@ public class Main {
                                 if (mol1.contactPossibleWithMolecule(mol2)) {                                        
                                     numResContactsPossible++;
 
-                                    numResContactsPossible++;
                                     HashMap<HashMap<Atom,ArrayList<Atom>>,MolContactInfo> atomContactReturn = new HashMap<HashMap<Atom,ArrayList<Atom>>,MolContactInfo>();
                                     atomContactReturn = calculateAtomContactsBetweenLigandResidues(mol1, mol2,ligandToProteinAtomContacts);
                                     rci = atomContactReturn.values().iterator().next();
@@ -5401,7 +5401,7 @@ public class Main {
                                         // there cannot be a lig in this contact -> always add without checking for plcc_B_write_lig_geolig
                                         contactInfo.add(rci);
                                         
-                                        //add MCI to Map for transitive contact analysis
+                                        // Add MCI to Map for transitive contact analysis
                                         Molecule[] currentResPair = new Molecule[2];
                                         currentResPair[0] = mol1;
                                         currentResPair[1] = mol2;
@@ -5440,7 +5440,7 @@ public class Main {
                                         // there cannot be a lig in this contact -> always add without checking for plcc_B_write_lig_geolig
                                         contactInfo.add(rci);
                                         
-                                        //add MCI to Map for transitive contact analysis
+                                        // Add MCI to Map for transitive contact analysis
                                         Molecule[] currentResPair = new Molecule[2];
                                         currentResPair[0] = mol1;
                                         currentResPair[1] = mol2;
@@ -5479,7 +5479,6 @@ public class Main {
                                 if (mol1.contactPossibleWithMolecule(mol2)) {                                        
                                     numResContactsPossible++;
 
-                                    numResContactsPossible++;
                                     HashMap<HashMap<Atom,ArrayList<Atom>>,MolContactInfo> atomContactReturn = new HashMap<HashMap<Atom,ArrayList<Atom>>,MolContactInfo>();
                                     atomContactReturn = calculateAtomContactsBetweenLigandResidues(mol1, mol2,ligandToProteinAtomContacts);
                                     rci = atomContactReturn.values().iterator().next();
@@ -5490,7 +5489,7 @@ public class Main {
                                         // there cannot be a lig in this contact -> always add without checking for plcc_B_write_lig_geolig
                                         contactInfo.add(rci);
                                         
-                                        //add MCI to Map for transitive contact analysis
+                                        // Add MCI to Map for transitive contact analysis
                                         Molecule[] currentResPair = new Molecule[2];
                                         currentResPair[0] = mol1;
                                         currentResPair[1] = mol2;
@@ -5526,8 +5525,7 @@ public class Main {
             Atom atomB;
             Integer counterTransitiveContacts = 0;
 
-            System.out.println("start transitive contact analysis"); //to delete
-            for(ArrayList<Atom> currentTransitiveAtomList : ligandToProteinAtomContacts.values()){ //check retrieval, comment to delete
+            for(ArrayList<Atom> currentTransitiveAtomList : ligandToProteinAtomContacts.values()){
                 // Check all keys to evaluate contacts
 
                 for(int a = 0; a < currentTransitiveAtomList.size(); a++){
@@ -5538,17 +5536,15 @@ public class Main {
                         atomB = currentTransitiveAtomList.get(b);
                         resB = atomB.molecule;
 
-                        //System.out.println("atomA(1TCL:1) " + atomA + "atomB(1TCL:1884) " + atomB); //to delete
-
                         if (resA.equals(resB)){
                             ;
                         }
                         else{
-                            //MolContactInfo: reuse from last iteration, retrieve or create
+                            // Update MolContactInfo: reuse from last iteration, retrieve existing MCI or create new MCI
 
                             if((resAOld!=null || resBOld!=null) && resAOld.equals(resA) && resBOld.equals(resB)){
                                 // Reuse last MCI
-                                //System.out.println("current MolContactInfo (1TCL:should be null)" + currentMci); //to delete                                
+                                ;                                
                             }
 
                             else{
@@ -5558,7 +5554,6 @@ public class Main {
                                 resBOld = resB;
                                 Molecule[] newResPair = new Molecule[]{resA,resB};
                                 currentMci = resMciMapping.get(newResPair); //retrieve MCI
-                                //System.out.println("current MolContactInfo" + currentMci); //to delete
 
                                 // Create new MCI
                                 if (currentMci == null){
@@ -5626,15 +5621,12 @@ public class Main {
                                 }
 
                             }
-                            System.out.println("TT check: (1TCl:should be 0) " + currentMci.getNumContactsTotal() + "TCL check: (1TCL:should be 0) " + currentMci.getNumContactsTCL()); //to delete
-
+                            
                             // Add transitive contact to MolContactInfo
                             currentMci.increaseContact(MolContactInfo.TCL, 1);
                             currentMci.increaseContact(MolContactInfo.TT, 1);
                             counterTransitiveContacts++;
                             
-                            System.out.println("TT check: (1TCl:should be 1) " + currentMci.getNumContactsTotal() + "TCL check: (1TCL:should be 1) " + currentMci.getNumContactsTCL()); //to delete
-
                         }
 
 
@@ -5646,7 +5638,7 @@ public class Main {
 
 
             }
-            System.out.println("transitive contact analysis done. Transitive Contacts Found: " + counterTransitiveContacts); //to delete
+            //System.out.println("Transitive Contacts Found: " + counterTransitiveContacts);
         }
             
             
@@ -5989,6 +5981,13 @@ public class Main {
      * Analyses the statistics of an atom contact and writes the MolContactInfo.
      * @param x one of the atoms of the residues of the residue pair
      * @param y one of the atoms of the residues of the residue pair
+     * @param currentMci MolContactInfo of the residue pair of the residues of x and y
+     * @param i index of atom x
+     * @param j index of atom y
+     * @param contactAtomNumInResidueA holds the number Atom x has in its residue a for the contact with minimal distance of that type
+     * @param contactAtomNumInResidueB holds the number Atom y has in its residue a for the contact with minimal distance of that type
+     * @param aIntID internal AA ID of residue a
+     * @param bIntID internal AA ID of residue a
      * @return A map of atoms of residue b mapped to residue atoms of a.
      */
     public static MolContactInfo atomContactsStatistics(Atom x, Atom y, MolContactInfo currentMci, Integer i, Integer j, Integer[] contactAtomNumInResidueA, Integer[] contactAtomNumInResidueB, Integer aIntID, Integer bIntID){
@@ -6360,7 +6359,7 @@ public class Main {
                 
                 if(x.atomContactTo(y)) {
                     //change MCI
-                    result = atomContactsStatistics(x,y,result,i,j,contactAtomNumInResidueA,contactAtomNumInResidueB,aIntID,bIntID); //!!!change to add to map instead
+                    result = atomContactsStatistics(x,y,result,i,j,contactAtomNumInResidueA,contactAtomNumInResidueB,aIntID,bIntID); 
                 }
             }
         }
@@ -6503,7 +6502,7 @@ public class Main {
                     
                     
                     //change MCI
-                    result = atomContactsStatistics(x,y,result,i,j,contactAtomNumInResidueA,contactAtomNumInResidueB,aIntID,bIntID); //!!!change to add to map instead
+                    result = atomContactsStatistics(x,y,result,i,j,contactAtomNumInResidueA,contactAtomNumInResidueB,aIntID,bIntID); 
                 }
             }
         }

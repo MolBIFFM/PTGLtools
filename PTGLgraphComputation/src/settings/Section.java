@@ -204,7 +204,7 @@ class Section {
                 settings.add(new Setting("PTGLgraphComputation_I_max_contacts_per_type", 'I', "1", "The maximum number of contacts of a certain type that is counted for a residue pair. Set it to something very large if you don't want any limit (Integer.MAX_VALUE comes to mind). "
                         + "The PTGL uses a setting of 1 (so if a pair has 3 B/B contacts and 2 C/B contacts, it is is counted as 1 B/B and 1 C/B.)"));
                 settings.add(new Setting("PTGLgraphComputation_B_forceBackboneContacts", 'B', "false", "Whether all amino acids of a protein graph should be connected sequentially, from N to C terminus, with contacts of type backbone."));
-                settings.add(new Setting("PTGLgraphComputation_transitive_contacts", 'B', "true", "Whether transitive contacts should be considered to the protein graphs."));
+                settings.add(new Setting("PTGLgraphComputation_transitive_contacts", 'B', "true", "Whether transitive contacts should be considered for the contact calculation, and subsequently in the complex graphs."));
                 break;
                 
             case "AAG":

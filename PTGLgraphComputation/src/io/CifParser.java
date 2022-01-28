@@ -81,6 +81,8 @@ class CifParser {
     private static Residue res = null;
     private static Ligand lig = null;
     private static RNA rna = null;
+    private static int newDsspNum = 0;
+    private static Molecule newMol = null;
 
     // - variables per (atom) line -
     private static Integer atomSerialNumber, coordX, coordY, coordZ, molNumPDB, entityID;
@@ -579,8 +581,6 @@ class CifParser {
      */
     private static void handleAtomSiteLine() {
         
-        Chain lastChain = new Chain(" ");
-        
         // atom coordinates should always be within a loop      
         if (! inLoop) {
             DP.getInstance().e("FP_CIF", "Parsing line " + numLine + ". Atom coordinates seem not be within a loop. Is the file broken? Exiting now.");
@@ -655,28 +655,30 @@ class CifParser {
             FileParser.s_models.add(m);
             System.out.println("   PDB: No model column. Creating default model '1'");
         }
+        
+        // md check: wenn dieser "chain-block" wieder entkommentiert wird, ist die newDsspNum wieder ungleich zur alten
 
-        // - - chain - -
-        // check for a new chain (always hold the current 
-        // get chain ID
-        if (colHeaderPosMap.get("auth_asym_id") != null && lineData.length >= colHeaderPosMap.get("auth_asym_id") + 1) {
-                String tmp_cID = lineData[colHeaderPosMap.get("auth_asym_id")];
-                
-                // get macromolID
-                String tmpMolId;
-                if (colHeaderPosMap.get("label_entity_id") != null && lineData.length >= colHeaderPosMap.get("label_entity_id") + 1) {
-                    tmpMolId = lineData[colHeaderPosMap.get("label_entity_id")];
-                } else {
-                    tmpMolId = "";
-                }
-                
-                if (tmpChain == null) {
-                    tmpChain = getOrCreateChain(tmp_cID, m, tmpMolId);
-                } else 
-                    if (! (tmpChain.getPdbChainID().equals(tmp_cID))) {
-                        tmpChain = getOrCreateChain(tmp_cID, m, tmpMolId);
-                    }
-        }
+//        // - - chain - -
+//        // check for a new chain (always hold the current 
+//        // get chain ID
+//        if (colHeaderPosMap.get("auth_asym_id") != null && lineData.length >= colHeaderPosMap.get("auth_asym_id") + 1) {
+//                String tmp_cID = lineData[colHeaderPosMap.get("auth_asym_id")];
+//                
+//                // get macromolID
+//                String tmpMolId;
+//                if (colHeaderPosMap.get("label_entity_id") != null && lineData.length >= colHeaderPosMap.get("label_entity_id") + 1) {
+//                    tmpMolId = lineData[colHeaderPosMap.get("label_entity_id")];
+//                } else {
+//                    tmpMolId = "";
+//                }
+//                
+//                if (tmpChain == null) {
+//                    tmpChain = getOrCreateChain(tmp_cID, m, tmpMolId);
+//                } else 
+//                    if (! (tmpChain.getPdbChainID().equals(tmp_cID))) {
+//                        tmpChain = getOrCreateChain(tmp_cID, m, tmpMolId);
+//                    }
+//        }
 
         // - - atom - -
         // reset variables
@@ -692,7 +694,7 @@ class CifParser {
 
         // PDBx field alias atom record name
         if (colHeaderPosMap.get("group_PDB") != null) {
-            if (colHeaderPosMap.get("group_PDB") < 0) {
+            if (colHeaderPosMap.get("group_PDB") < 0) { // todo verify nie ins if, weil Wert >= 0 returned wird
                 atomRecordName = lineData[colHeaderPosMap.get("group_PDB")];
             }
         } else {
@@ -734,7 +736,7 @@ class CifParser {
         entityID = Integer.valueOf(lineData[colHeaderPosMap.get("label_entity_id")]);
 
         // insertion code
-        // only update if column and value exist, otherwise stick to blank ""
+        // only update if column and value exist, otherwise stick to blank " "
         if (colHeaderPosMap.get("pdbx_PDB_ins_code") != null) {
             if (! (lineData[colHeaderPosMap.get("pdbx_PDB_ins_code")].equals("?") || lineData[colHeaderPosMap.get("pdbx_PDB_ins_code")].equals("."))) {
                 iCode = lineData[colHeaderPosMap.get("pdbx_PDB_ins_code")];
@@ -793,6 +795,36 @@ class CifParser {
                 return;  // atom is not used
             }
         }
+        
+        // md explanation: dssp increments the dsspNum on a chainbreak --> also increment newDsspNum to mirror that. However we need to check
+        // whether it is a new protein chain, otherwise we would increment newDsspNum for Ligands which have a different chain than the last one
+        // and that doesn't happen for the old DsspNum. Finally we have to do this after we gathered the information about the current Atom,
+        // otherwise when we check if a new chain is a protein chain, we still have the info of the last Molecule instead of the current one.
+        // - - chain - - md todo: cut and paste to old position w/o incrementing newDSSPNum. Therese no reason to to mimic a system which increments at a chainbreak. It's only here so the old and new DsspNumbering are the same for testing
+        // check for a new chain (always hold the current 
+        // get chain ID
+        if (colHeaderPosMap.get("auth_asym_id") != null && lineData.length >= colHeaderPosMap.get("auth_asym_id") + 1) {
+                String tmp_cID = lineData[colHeaderPosMap.get("auth_asym_id")];
+                
+                // get macromolID
+                String tmpMolId;
+                if (colHeaderPosMap.get("label_entity_id") != null && lineData.length >= colHeaderPosMap.get("label_entity_id") + 1) {
+                    tmpMolId = lineData[colHeaderPosMap.get("label_entity_id")];
+                } else {
+                    tmpMolId = "";
+                }
+                
+                if (tmpChain == null) {
+                    tmpChain = getOrCreateChain(tmp_cID, m, tmpMolId);
+                } else 
+                    if (! (tmpChain.getPdbChainID().equals(tmp_cID))) {
+                        if (checkType(Molecule.RESIDUE_TYPE_AA) && entityInformation.get(String.valueOf(entityID)).get("type").equals("polymer")) {
+                            newDsspNum++;
+                            System.out.println("incremented dsspnum because new protein chain"); // to delete
+                        }
+                        tmpChain = getOrCreateChain(tmp_cID, m, tmpMolId);
+                    }
+        }
 
         // >> AA <<
         // update lastMol if the atom in the current line belongs to a new molecule than the previous line 
@@ -800,48 +832,10 @@ class CifParser {
         // match res <-> chain here
         // load new Residue into lastMol if we approached next Residue, otherwise only add new atom
         
-        
-        // entity stuff wird noch zu Problememn fürhern, weil in dssp_cif steht das glaub ich erst am Ende
-        
-        // todo chain ID prüfen
-        // wird das schon von - - chain - - gemacht?
-        if (!chainID.equals(lastMol.getChainID())){
-            // new chain
-            // lastChainID = chainID ?
-        }
-        
-        if (!Objects.equals(molNumPDB, lastMol.getPdbNum())){
-            // new residue
-            res = new Residue();
-            
-            res.setPdbNum(molNumPDB);
-            res.setType(Molecule.RESIDUE_TYPE_AA);  // kann man hier glaube ich noch nicht machen
-            // DsspNum sollte nicht mehr benötigt werden
-            res.setChainID(chainID);
-            res.setiCode(iCode);
-            res.setName3(molNamePDB);
-            res.setAAName1(Residue.getAAName1fromAAName3(molNamePDB));
-            res.setChain(FileParser.getChainByPdbChainID(chainID));
-            res.setModelID(m.getModelID());
-            // can't do that yet res.setSSEString(); Dazu muss ich glaube ich in den DSSP ranges schauen
-            
-            FileParser.s_molecules.add(res);
-            
-            lastMol = res;
-            lastMol.setModelID(m.getModelID());
-            lastMol.setChain(tmpChain);
-            tmpChain.addMolecule(lastMol);
-            
-            // assign PDB res name (which differs in case of modifed residues)
-            lastMol.setName3(molNamePDB);
-            lastMol.setEntityID(entityID);
-            
-        }
-        
-        if (! (Objects.equals(molNumPDB, lastMol.getPdbNum()) && chainID.equals(lastMol.getChainID()) && iCode.equals(lastMol.getiCode()))) {
+        if (! (Objects.equals(molNumPDB, lastMol.getPdbNum()) && chainID.equals(lastMol.getChainID()) && iCode.equals(lastMol.getiCode()))) {           
             tmpMol = FileParser.getResidueFromList(molNumPDB, chainID, iCode);  // null if not in DSSP data -> rna/ligand/free AA
             // check that a peptide residue could be found                   
-            if (checkType(tmpMol.RESIDUE_TYPE_LIGAND) || entityInformation.get(String.valueOf(entityID)).get("type").equals("non-polymer")) {
+            if (checkType(Molecule.RESIDUE_TYPE_LIGAND) || entityInformation.get(String.valueOf(entityID)).get("type").equals("non-polymer")) {
                 // residue is not in DSSP file and is not part of a chain -> must be free (modified) amino acid, ligand or RNA
                 if (! silent) {
                     // print note only once
@@ -861,6 +855,7 @@ class CifParser {
                 // sometimes residues are missing from the dssp file if they are incomplete (mostly at chain breaks)
                 // in this case, they have to be parsed here
                 if (tmpMol == null) {
+                    System.out.println("MD: the chainbreak-Residue creation got used");
                     res = new Residue();
                                         
                     res.setPdbNum(molNumPDB);
@@ -883,8 +878,36 @@ class CifParser {
                     lastMol = res;
                 } else {
                     lastMol = tmpMol;
-                }
+                    
+                    //md start
+                    if (checkType(Molecule.RESIDUE_TYPE_AA) && entityInformation.get(String.valueOf(entityID)).get("type").equals("polymer")) {
+                        newDsspNum++;
+                        newMol = new Residue(molNumPDB, newDsspNum);  // md: using a "dsspNum", but it's just an incremental variable from PTGL itself. It was extracted from .dssp file in earlier versions
+                        newMol.setChainID(chainID);
 
+                        newMol.setType(Residue.RESIDUE_TYPE_AA);
+                        newMol.setiCode(iCode);
+                        newMol.setAAName1(Residue.getAAName1fromAAName3(molNamePDB));
+                        newMol.setSSEString(tmpMol.getSSEString());
+                        
+
+                        lastChainID = chainID;  // is this needed?
+                        // md: replace tmpMol in the s_molecules list. just temporarily until tmpMol isn't created in the first place
+                        int oldMolIndex = FileParser.s_molecules.indexOf(tmpMol);
+                        FileParser.s_molecules.set(oldMolIndex, newMol);
+
+                        DP.getInstance().d("MD: new residue in line " + numLine + " | " + newMol + ". SseString: >" + newMol.getSSEString()+ "<");
+                        //System.out.println(tmpMol.toString() + "\n" + newMol.toString());
+                        
+                        lastMol = newMol;
+
+                    }
+                    else{
+                        System.out.println("not the case"); // to delete
+                    }
+                    //md end
+                }
+                
                 lastMol.setModelID(m.getModelID());
                 lastMol.setChain(tmpChain);
                 tmpChain.addMolecule(lastMol);
@@ -1125,8 +1148,8 @@ class CifParser {
 
             }
     }
-            
     
+        
     /**
      * Handles lines starting with _chem_comp by filling the chemicalComponents HashMap.
      * Entries can look like this: MET={name=METHIONINE, pdbx_synonyms=?, formula=C5 H11 N O2 S, id=MET, type=L-peptide linking, formula_weight=149.211}}
@@ -1604,7 +1627,9 @@ class CifParser {
      * Only AAs in DSSP file get a real DSSP number, all other objects (RNA, ligands, free AAs) have to be assigned one.
      */
     protected static Integer assignDsspNum () {
-        return DsspParser.lastUsedDsspNum + RnaTreatedNum + ligandsTreatedNum + freeResTreatedNum;
+//        return DsspParser.lastUsedDsspNum + RnaTreatedNum + ligandsTreatedNum + freeResTreatedNum;
+        //System.out.println("MD mark " + newDsspNum + ", " + RnaTreatedNum + ", " + ligandsTreatedNum + ", " + freeResTreatedNum);
+        return newDsspNum + RnaTreatedNum + ligandsTreatedNum; // + freeResTreatedNum;  // md to delete (ganze comments in der Fkt)
     }
       
 }

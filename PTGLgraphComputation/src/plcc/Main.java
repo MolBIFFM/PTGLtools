@@ -13525,7 +13525,7 @@ public class Main {
         //imgFile = filePathImg + fs + fileNameWithExtension;
                 
         if(Settings.getBoolean("PTGLgraphComputation_B_draw_graphs")) {
-            IMAGEFORMAT[] formats = new IMAGEFORMAT[]{ DrawTools.IMAGEFORMAT.PNG, DrawTools.IMAGEFORMAT.PDF };
+            IMAGEFORMAT[] formats = Settings.getComplexGraphOutputImageFormats();
             ProteinGraphDrawer.drawProteinGraph(imgFileNoExt, false, formats, SseCg, new HashMap<Integer, String>(), new ArrayList<String>());
             if(! silent) {
                 System.out.println("    Image of complex graph written to base file '" + imgFileNoExt + "'.");

@@ -5167,10 +5167,7 @@ public class Main {
                             contactInfo.add(rci);
                             
                             // Add MCI to Map for transitive contact analysis
-                            Molecule[] currentResPair = new Molecule[2];
-                            currentResPair[0] = mol1;
-                            currentResPair[1] = mol2;
-                            resMciMapping.put(currentResPair,rci);
+                            resMciMapping.put(new Molecule[]{mol1, mol2},rci);
                         }
                     }
                     else {
@@ -5214,10 +5211,7 @@ public class Main {
                                 contactInfo.add(rci);
                                 
                                 // Add MCI to Map for transitive contact analysis
-                                Molecule[] currentResPair = new Molecule[2];
-                                currentResPair[0] = mol1;
-                                currentResPair[1] = mol2;
-                                resMciMapping.put(currentResPair,rci);
+                                resMciMapping.put(new Molecule[]{mol1, mol2},rci);
                                 
                             }
                             
@@ -5253,10 +5247,7 @@ public class Main {
                             }
                                 
                                 // Add MCI to Map for transitive contact analysis
-                                Molecule[] currentResPair = new Molecule[2];
-                                currentResPair[0] = mol1;
-                                currentResPair[1] = mol2;
-                                resMciMapping.put(currentResPair,rci);
+                                resMciMapping.put(new Molecule[]{mol1, mol2},rci);
                         }
                         else {
                             numResContactsImpossible++;
@@ -5349,10 +5340,7 @@ public class Main {
                                     contactInfo.add(rci);
                                     
                                     // Add MCI to Map for transitive contact analysis
-                                    Molecule[] currentResPair = new Molecule[2];
-                                    currentResPair[0] = mol1;
-                                    currentResPair[1] = mol2;
-                                    resMciMapping.put(currentResPair,rci);
+                                    resMciMapping.put(new Molecule[]{mol1, mol2},rci);
                                 }
                             }
                             else {
@@ -5402,10 +5390,7 @@ public class Main {
                                         contactInfo.add(rci);
                                         
                                         // Add MCI to Map for transitive contact analysis
-                                        Molecule[] currentResPair = new Molecule[2];
-                                        currentResPair[0] = mol1;
-                                        currentResPair[1] = mol2;
-                                        resMciMapping.put(currentResPair,rci);
+                                        resMciMapping.put(new Molecule[]{mol1, mol2},rci);
                                     }
                                 }
                                 else {
@@ -5441,10 +5426,7 @@ public class Main {
                                         contactInfo.add(rci);
                                         
                                         // Add MCI to Map for transitive contact analysis
-                                        Molecule[] currentResPair = new Molecule[2];
-                                        currentResPair[0] = mol1;
-                                        currentResPair[1] = mol2;
-                                        resMciMapping.put(currentResPair,rci);
+                                        resMciMapping.put(new Molecule[]{mol1, mol2},rci);
                                     }
                                 }
                                 else {
@@ -5490,10 +5472,7 @@ public class Main {
                                         contactInfo.add(rci);
                                         
                                         // Add MCI to Map for transitive contact analysis
-                                        Molecule[] currentResPair = new Molecule[2];
-                                        currentResPair[0] = mol1;
-                                        currentResPair[1] = mol2;
-                                        resMciMapping.put(currentResPair,rci);
+                                        resMciMapping.put(new Molecule[]{mol1, mol2},rci);
                                     }
                                 }
                                 else {
@@ -5528,27 +5507,20 @@ public class Main {
             for(ArrayList<Atom> currentTransitiveAtomList : ligandToProteinAtomContacts.values()){
                 // Check all keys to evaluate contacts
 
-                for(int a = 0; a < currentTransitiveAtomList.size(); a++){
-                    atomA = currentTransitiveAtomList.get(a);
+                for(int aCounter = 0; aCounter < currentTransitiveAtomList.size(); aCounter++){
+                    atomA = currentTransitiveAtomList.get(aCounter);
                     resA = atomA.molecule;
-                    for (int b = a+1; b < currentTransitiveAtomList.size(); b++){
+                    for (int bCounter = aCounter+1; bCounter < currentTransitiveAtomList.size(); bCounter++){
                         // Retrieve Residues of Atoms
-                        atomB = currentTransitiveAtomList.get(b);
+                        atomB = currentTransitiveAtomList.get(bCounter);
                         resB = atomB.molecule;
 
-                        if (resA.equals(resB)){
-                            ;
-                        }
-                        else{
+                        if (!resA.equals(resB)){
+                        
                             // Update MolContactInfo: reuse from last iteration, retrieve existing MCI or create new MCI
 
-                            if((resAOld!=null || resBOld!=null) && resAOld.equals(resA) && resBOld.equals(resB)){
-                                // Reuse last MCI
-                                ;                                
-                            }
-
-                            else{
-
+                            if(!((resAOld!=null || resBOld!=null) && resAOld.equals(resA) && resBOld.equals(resB))){
+                                // do not reuse last MCI
                                 // Check if MCI exists and retrieve or create
                                 resAOld = resA;
                                 resBOld = resB;
@@ -5611,34 +5583,19 @@ public class Main {
                                         //   1) If no contact was detected, our_index is -1 and they return 0, which means 'no contact' to geom_neo.
                                         //   2) If a contact was detected, our_index is converted to the geom_neo index. :)
                                     }
-
                                     currentMci = new MolContactInfo(numPairContacts, minContactDistances, contactAtomNumInResidueA, contactAtomNumInResidueB, resA, resB, CAdist, numTotalLigContactsPair, numTotalRnaContactsPair);
-                                    contactInfo.add(currentMci);
-                                    
+                                    contactInfo.add(currentMci);                                   
                                 }
-                                else{
-                                    ;
-                                }
-
                             }
-                            
                             // Add transitive contact to MolContactInfo
                             currentMci.increaseContact(MolContactInfo.TCL, 1);
                             currentMci.increaseContact(MolContactInfo.TT, 1);
-                            counterTransitiveContacts++;
-                            
+                            counterTransitiveContacts++;   
                         }
-
-
-
-
                     }
                 }
-
-
-
             }
-            //System.out.println("Transitive Contacts Found: " + counterTransitiveContacts);
+            System.out.println("Transitive Contacts Found: " + counterTransitiveContacts);
         }
             
             
@@ -5979,18 +5936,18 @@ public class Main {
 
     /**
      * Analyses the statistics of an atom contact and writes the MolContactInfo.
-     * @param x one of the atoms of the residues of the residue pair
-     * @param y one of the atoms of the residues of the residue pair
+     * @param atomOfResA atom of the residue A of the residue pair
+     * @param atomOfResB atom of the residue B of the residue pair
      * @param currentMci MolContactInfo of the residue pair of the residues of x and y
-     * @param i index of atom x
-     * @param j index of atom y
+     * @param indexOfAtomInResA index of atom x
+     * @param indexOfAtomInResB index of atom y
      * @param contactAtomNumInResidueA holds the number Atom x has in its residue a for the contact with minimal distance of that type
      * @param contactAtomNumInResidueB holds the number Atom y has in its residue a for the contact with minimal distance of that type
      * @param aIntID internal AA ID of residue a
      * @param bIntID internal AA ID of residue a
      * @return A map of atoms of residue b mapped to residue atoms of a.
      */
-    public static MolContactInfo atomContactsStatistics(Atom x, Atom y, MolContactInfo currentMci, Integer i, Integer j, Integer[] contactAtomNumInResidueA, Integer[] contactAtomNumInResidueB, Integer aIntID, Integer bIntID){
+    public static MolContactInfo atomContactsStatistics(Atom atomOfResA, Atom atomOfResB, MolContactInfo currentMci, Integer indexOfAtomInResA, Integer indexOfAtomInResB, Integer[] contactAtomNumInResidueA, Integer[] contactAtomNumInResidueB, Integer aIntID, Integer bIntID){
         // The van der Waals radii spheres overlap, contact found.
         currentMci.increaseContact(MolContactInfo.TT, 1);   // update total number of contacts for this residue pair
 
@@ -6006,16 +5963,12 @@ public class Main {
         
         Integer statAtomIDi, statAtomIDj;
         
-        
-        // DEBUG
-        //System.out.println("DEBUG: Atom contact in distance " + dist + " between atom " + x + " and " + y + ".");
-
 
         // Update contact statistics.
-        statAtomIDi = i + 1;    // The field '0' is used for all contacs and we need to follow geom_neo conventions so we start the index at 1 instead of 0.
-        statAtomIDj = j + 1;
-        if(x.isLigandAtom()) { statAtomIDi = 1; }       // Different ligands can have different numbers of atoms and separating them just makes no sense. We assign all contacts to the first atom.
-        if(y.isLigandAtom()) { statAtomIDj = 1; }
+        statAtomIDi = indexOfAtomInResA + 1;    // The field '0' is used for all contacs and we need to follow geom_neo conventions so we start the index at 1 instead of 0.
+        statAtomIDj = indexOfAtomInResB + 1;
+        if(atomOfResA.isLigandAtom()) { statAtomIDi = 1; }       // Different ligands can have different numbers of atoms and separating them just makes no sense. We assign all contacts to the first atom.
+        if(atomOfResB.isLigandAtom()) { statAtomIDj = 1; }
 
         do{
             try {
@@ -6042,72 +5995,72 @@ public class Main {
         } while (false);
 
         // Determine the contact type.                    
-        if(x.isProteinAtom() && y.isProteinAtom()) {
+        if(atomOfResA.isProteinAtom() && atomOfResB.isProteinAtom()) {
             // *************************** protein - protein contact *************************
 
 
             // Check the exact contact type
-            if(i <= numOfLastBackboneAtomInResidue && j <= numOfLastBackboneAtomInResidue) {
+            if(indexOfAtomInResA <= numOfLastBackboneAtomInResidue && indexOfAtomInResB <= numOfLastBackboneAtomInResidue) {
                 // to be precise, this is a backbone - backbone contact
                 currentMci.increaseContact(MolContactInfo.BB,1);
 
                 // update data if this is the first contact of this type or if it is better (smaller distance) than the old contact
                 if((currentMci.minContactDistances[MolContactInfo.BB] < 0) || currentMci.dist < currentMci.minContactDistances[MolContactInfo.BB]) {
                     currentMci.minContactDistances[MolContactInfo.BB] = currentMci.dist;
-                    contactAtomNumInResidueA[MolContactInfo.BB] = i;
-                    contactAtomNumInResidueB[MolContactInfo.BB] = j;
+                    contactAtomNumInResidueA[MolContactInfo.BB] = indexOfAtomInResA;
+                    contactAtomNumInResidueB[MolContactInfo.BB] = indexOfAtomInResB;
                 }
 
             }
-            else if(i > numOfLastBackboneAtomInResidue && j <= numOfLastBackboneAtomInResidue) {
+            else if(indexOfAtomInResA > numOfLastBackboneAtomInResidue && indexOfAtomInResB <= numOfLastBackboneAtomInResidue) {
                 // to be precise, this is a chainName - backbone contact
                 currentMci.increaseContact(MolContactInfo.CB,1);
 
                 // update data if this is the first contact of this type or if it is better (smaller distance) than the old contact
                 if((currentMci.minContactDistances[MolContactInfo.CB] < 0) || currentMci.dist < currentMci.minContactDistances[MolContactInfo.CB]) {
                     currentMci.minContactDistances[MolContactInfo.CB] = currentMci.dist;
-                    contactAtomNumInResidueA[MolContactInfo.CB] = i;
-                    contactAtomNumInResidueB[MolContactInfo.CB] = j;
+                    contactAtomNumInResidueA[MolContactInfo.CB] = indexOfAtomInResA;
+                    contactAtomNumInResidueB[MolContactInfo.CB] = indexOfAtomInResB;
                 }
 
             }
-            else if(i <= numOfLastBackboneAtomInResidue && j > numOfLastBackboneAtomInResidue) {
+            else if(indexOfAtomInResA <= numOfLastBackboneAtomInResidue && indexOfAtomInResB > numOfLastBackboneAtomInResidue) {
                 // to be precise, this is a backbone - chainName contact
                 currentMci.increaseContact(MolContactInfo.BC,1);
 
                 // update data if this is the first contact of this type or if it is better (smaller distance) than the old contact
                 if((currentMci.minContactDistances[MolContactInfo.BC] < 0) || currentMci.dist < currentMci.minContactDistances[MolContactInfo.BC]) {
                     currentMci.minContactDistances[MolContactInfo.BC] = currentMci.dist;
-                    contactAtomNumInResidueA[MolContactInfo.BC] = i;
-                    contactAtomNumInResidueB[MolContactInfo.BC] = j;
+                    contactAtomNumInResidueA[MolContactInfo.BC] = indexOfAtomInResA;
+                    contactAtomNumInResidueB[MolContactInfo.BC] = indexOfAtomInResB;
                 }
             }
-            else if(i > numOfLastBackboneAtomInResidue && j > numOfLastBackboneAtomInResidue) {
+            else if(indexOfAtomInResA > numOfLastBackboneAtomInResidue && indexOfAtomInResB > numOfLastBackboneAtomInResidue) {
                 // to be precise, this is a chainName - chainName contact
                 currentMci.increaseContact(MolContactInfo.CC,1);          // 'C' instead of 'S' for side chainName pays off
 
                 // update data if this is the first contact of this type or if it is better (smaller distance) than the old contact
                 if((currentMci.minContactDistances[MolContactInfo.CC] < 0) || currentMci.dist < currentMci.minContactDistances[MolContactInfo.CC]) {
                     currentMci.minContactDistances[MolContactInfo.CC] = currentMci.dist;
-                    contactAtomNumInResidueA[MolContactInfo.CC] = i;
-                    contactAtomNumInResidueB[MolContactInfo.CC] = j;
+                    contactAtomNumInResidueA[MolContactInfo.CC] = indexOfAtomInResA;
+                    contactAtomNumInResidueB[MolContactInfo.CC] = indexOfAtomInResB;
                 }
             }
             else {
-                System.err.println("ERROR: Congrats, you found a bug in the atom contact type determination code (res " + x.molecule.getPdbNum() + " atom " + i + " / res " + y.molecule.getPdbNum() + " atom " + j + ").");
-                System.err.println("ERROR: Atom types are: i (PDB atom #" + x.getPdbAtomNum() + ") => " + x.getAtomType() + ", j (PDB atom #" + y.getPdbAtomNum() + ") => " + y.getAtomType() + ".");
+                System.err.println("ERROR: Congrats, you found a bug in the atom contact type determination code (res " + atomOfResA.molecule.getPdbNum() + " atom " + indexOfAtomInResA + " / res " + atomOfResB.molecule.getPdbNum() + " atom " + indexOfAtomInResB + ").");
+                System.err.println("ERROR: Atom types are: i (PDB atom #" + atomOfResA.getPdbAtomNum() + ") => " + atomOfResA.getAtomType() + ", j (PDB atom #" + atomOfResB.getPdbAtomNum() + ") => " + atomOfResB.getAtomType() + ".");
                 Main.doExit(1);
             }
 
             // Check for H bridges separately
-            if(i.equals(atomIndexOfBackboneN) && j.equals(atomIndexOfBackboneO)) {
+            if(indexOfAtomInResA.equals(atomIndexOfBackboneN) && indexOfAtomInResB.equals(atomIndexOfBackboneO)) {
                 // H bridge from backbone atom 'N' of residue a to backbone atom 'O' of residue b.
                 currentMci.increaseContact(MolContactInfo.HB,1);
                 // There can only be one of these so if we found it, simply update the distance.
                 currentMci.minContactDistances[MolContactInfo.HB] = currentMci.dist;
             }
 
-            if(i.equals(atomIndexOfBackboneO) && j.equals(atomIndexOfBackboneN)) {
+            if(indexOfAtomInResA.equals(atomIndexOfBackboneO) && indexOfAtomInResB.equals(atomIndexOfBackboneN)) {
                 // H bridge from backbone atom 'O' of residue a to backbone atom 'N' of residue b.
                 currentMci.increaseContact(MolContactInfo.BH,1);
                 // There can only be one of these so if we found it, simply update the distance.
@@ -6116,20 +6069,20 @@ public class Main {
 
         }
 
-        else if(x.isProteinAtom() && y.isLigandAtom()) {
+        else if(atomOfResA.isProteinAtom() && atomOfResB.isLigandAtom()) {
             // *************************** protein - ligand contact *************************
             currentMci.numTotalLigContactsPair++;
 
             // Check the exact contact type
-            if(i <= numOfLastBackboneAtomInResidue) {
+            if(indexOfAtomInResA <= numOfLastBackboneAtomInResidue) {
                 // to be precise, this is a backbone - ligand contact
                 currentMci.increaseContact(MolContactInfo.BL,1);
 
                 // update data if this is the first contact of this type or if it is better (smaller distance) than the old contact
                 if((currentMci.minContactDistances[MolContactInfo.BL] < 0) || currentMci.dist < currentMci.minContactDistances[MolContactInfo.BL]) {
                     currentMci.minContactDistances[MolContactInfo.BL] = currentMci.dist;
-                    contactAtomNumInResidueA[MolContactInfo.BL] = i;
-                    contactAtomNumInResidueB[MolContactInfo.BL] = j;
+                    contactAtomNumInResidueA[MolContactInfo.BL] = indexOfAtomInResA;
+                    contactAtomNumInResidueB[MolContactInfo.BL] = indexOfAtomInResB;
                 }
 
             }
@@ -6140,26 +6093,26 @@ public class Main {
                 // update data if this is the first contact of this type or if it is better (smaller distance) than the old contact
                 if((currentMci.minContactDistances[MolContactInfo.CL] < 0) || currentMci.dist < currentMci.minContactDistances[MolContactInfo.CL]) {
                     currentMci.minContactDistances[MolContactInfo.CL] = currentMci.dist;
-                    contactAtomNumInResidueA[MolContactInfo.CL] = i;
-                    contactAtomNumInResidueB[MolContactInfo.CL] = j;
+                    contactAtomNumInResidueA[MolContactInfo.CL] = indexOfAtomInResA;
+                    contactAtomNumInResidueB[MolContactInfo.CL] = indexOfAtomInResB;
                 }
             }
 
         }
-        else if(x.isLigandAtom() && y.isProteinAtom()) {
+        else if(atomOfResA.isLigandAtom() && atomOfResB.isProteinAtom()) {
             // *************************** ligand - protein contact *************************
             currentMci.numTotalLigContactsPair++;
 
             // Check the exact contact type
-            if(j <= numOfLastBackboneAtomInResidue) {
+            if(indexOfAtomInResB <= numOfLastBackboneAtomInResidue) {
                 // to be precise, this is a ligand - backbone contact
                 currentMci.increaseContact(MolContactInfo.LB,1);
 
                 // update data if this is the first contact of this type or if it is better (smaller distance) than the old contact
                 if((currentMci.minContactDistances[MolContactInfo.LB] < 0) || currentMci.dist < currentMci.minContactDistances[MolContactInfo.LB]) {
                     currentMci.minContactDistances[MolContactInfo.LB] = currentMci.dist;
-                    contactAtomNumInResidueA[MolContactInfo.LB] = i;
-                    contactAtomNumInResidueB[MolContactInfo.LB] = j;
+                    contactAtomNumInResidueA[MolContactInfo.LB] = indexOfAtomInResA;
+                    contactAtomNumInResidueB[MolContactInfo.LB] = indexOfAtomInResB;
                 }
 
             }
@@ -6170,13 +6123,13 @@ public class Main {
                 // update data if this is the first contact of this type or if it is better (smaller distance) than the old contact
                 if((currentMci.minContactDistances[MolContactInfo.LC] < 0) || currentMci.dist < currentMci.minContactDistances[MolContactInfo.LC]) {
                     currentMci.minContactDistances[MolContactInfo.LC] = currentMci.dist;
-                    contactAtomNumInResidueA[MolContactInfo.LC] = i;
-                    contactAtomNumInResidueB[MolContactInfo.LC] = j;
+                    contactAtomNumInResidueA[MolContactInfo.LC] = indexOfAtomInResA;
+                    contactAtomNumInResidueB[MolContactInfo.LC] = indexOfAtomInResB;
                 }
             }
 
         }
-        else if(x.isLigandAtom() && y.isLigandAtom()) {
+        else if(atomOfResA.isLigandAtom() && atomOfResB.isLigandAtom()) {
             // *************************** ligand - ligand contact *************************
             currentMci.numTotalLigContactsPair++;
 
@@ -6186,13 +6139,13 @@ public class Main {
             // update data if this is the first contact of this type or if it is better (smaller distance) than the old contact
             if((currentMci.minContactDistances[MolContactInfo.LL] < 0) || currentMci.dist < currentMci.minContactDistances[MolContactInfo.LL]) {
                 currentMci.minContactDistances[MolContactInfo.LL] = currentMci.dist;
-                contactAtomNumInResidueA[MolContactInfo.LL] = i;
-                contactAtomNumInResidueB[MolContactInfo.LL] = j;
+                contactAtomNumInResidueA[MolContactInfo.LL] = indexOfAtomInResA;
+                contactAtomNumInResidueB[MolContactInfo.LL] = indexOfAtomInResB;
             }
 
 
         }
-        else if((x.isRnaAtom() && y.isProteinAtom()) || (x.isRnaAtom() && y.isLigandAtom())) {
+        else if((atomOfResA.isRnaAtom() && atomOfResB.isProteinAtom()) || (atomOfResA.isRnaAtom() && atomOfResB.isLigandAtom())) {
             // *************************** RNA - X contact *************************
             currentMci.numTotalRnaContactsPair++;
 
@@ -6202,11 +6155,11 @@ public class Main {
             // update data if this is the first contact of this type or if it is better (smaller distance) than the old contact
             if((currentMci.minContactDistances[MolContactInfo.RX] < 0) || currentMci.dist < currentMci.minContactDistances[MolContactInfo.RX]) {
                 currentMci.minContactDistances[MolContactInfo.RX] = currentMci.dist;
-                contactAtomNumInResidueA[MolContactInfo.RX] = i;
-                contactAtomNumInResidueB[MolContactInfo.RX] = j;
+                contactAtomNumInResidueA[MolContactInfo.RX] = indexOfAtomInResA;
+                contactAtomNumInResidueB[MolContactInfo.RX] = indexOfAtomInResB;
             }
         }
-        else if((x.isProteinAtom() && y.isRnaAtom()) || (x.isLigandAtom() && y.isRnaAtom())) {
+        else if((atomOfResA.isProteinAtom() && atomOfResB.isRnaAtom()) || (atomOfResA.isLigandAtom() && atomOfResB.isRnaAtom())) {
             // *************************** X - RNA contact *************************
             currentMci.numTotalRnaContactsPair++;
 
@@ -6216,11 +6169,11 @@ public class Main {
             // update data if this is the first contact of this type or if it is better (smaller distance) than the old contact
             if((currentMci.minContactDistances[MolContactInfo.XR] < 0) || currentMci.dist < currentMci.minContactDistances[MolContactInfo.XR]) {
                 currentMci.minContactDistances[MolContactInfo.XR] = currentMci.dist;
-                contactAtomNumInResidueA[MolContactInfo.XR] = i;
-                contactAtomNumInResidueB[MolContactInfo.XR] = j;
+                contactAtomNumInResidueA[MolContactInfo.XR] = indexOfAtomInResA;
+                contactAtomNumInResidueB[MolContactInfo.XR] = indexOfAtomInResB;
             }
         }
-        else if(x.isRnaAtom() && y.isRnaAtom()) {
+        else if(atomOfResA.isRnaAtom() && atomOfResB.isRnaAtom()) {
             // *************************** RNA - RNA contact *************************
             currentMci.numTotalRnaContactsPair++;
 
@@ -6230,14 +6183,14 @@ public class Main {
             // update data if this is the first contact of this type or if it is better (smaller distance) than the old contact
             if((currentMci.minContactDistances[MolContactInfo.RR] < 0) || currentMci.dist < currentMci.minContactDistances[MolContactInfo.RR]) {
                 currentMci.minContactDistances[MolContactInfo.RR] = currentMci.dist;
-                contactAtomNumInResidueA[MolContactInfo.RR] = i;
-                contactAtomNumInResidueB[MolContactInfo.RR] = j;
+                contactAtomNumInResidueA[MolContactInfo.RR] = indexOfAtomInResA;
+                contactAtomNumInResidueB[MolContactInfo.RR] = indexOfAtomInResB;
             }
         }
         else {
             // *************************** unknown contact, wtf? *************************
             // This branch should never be hit because atoms of type OTHER are ignored while creating the list of Atom objects
-            System.out.println("WARNING: One of the atoms " + x.getPdbAtomNum() + " and " + y.getPdbAtomNum() + " is of type UNKNOWN. Bug?");
+            System.out.println("WARNING: One of the atoms " + atomOfResA.getPdbAtomNum() + " and " + atomOfResB.getPdbAtomNum() + " is of type UNKNOWN. Bug?");
         }
         return currentMci;
     }

@@ -5490,8 +5490,9 @@ public class Main {
                 }
             }
         }    
-        // - - - transitive contacts between chains (through ligand contacts) - - -
+        // - - - contacts transitive by ligands between chains (through ligand contacts) - - -
         //
+        Integer counterTransitiveContacts = 0;
 
         if (Settings.getBoolean("PTGLgraphComputation_transitive_contacts")){
             // Iteration over all connections of each ligand atom
@@ -5502,7 +5503,7 @@ public class Main {
             Molecule resB;
             Atom atomA;
             Atom atomB;
-            Integer counterTransitiveContacts = 0;
+            
 
             for(ArrayList<Atom> currentTransitiveAtomList : ligandToProteinAtomContacts.values()){
                 // Check all keys to evaluate contacts
@@ -5588,19 +5589,15 @@ public class Main {
                                 }
                             }
                             // Add transitive contact to MolContactInfo
-                            currentMci.increaseContact(MolContactInfo.TCL, 1);
+                            currentMci.increaseContact(MolContactInfo.CTL, 1);
                             currentMci.increaseContact(MolContactInfo.TT, 1);
                             counterTransitiveContacts++;   
                         }
                     }
                 }
             }
-            System.out.println("Transitive Contacts Found: " + counterTransitiveContacts);
         }
-            
-            
-        
-        
+
         
         // - - - statistics - - -
         //
@@ -5615,6 +5612,9 @@ public class Main {
             System.out.println("  Skipped " + chainChainSkipped + " chain-chain contacts (and " + chainSkippedRes + " otherwise checked residue contacts) of " + maxChainChainContactsPossible + " maximal contacts due to chain sphere check.");
             System.out.println("  Skipped " + seqNeighSkippedResIntraChain + " intra chain and " + seqNeighSkippedResInterChain + " inter chain residue contacts due to sequence neighbor skip.");
             System.out.println("  Checked " + numResContactsChecked + " contacts for " + numberResTotal + " residues: " + numResContactsPossible + " possible, " + contactInfo.size() + " found, " + numResContactsImpossible + " impossible (collison spheres check).");
+            if(Settings.getBoolean("PTGLgraphComputation_transitive_contacts")){
+                System.out.println("  Contacts transitive by ligands found: " + counterTransitiveContacts);
+            }
         }
 
         if( ! Settings.getBoolean("PTGLgraphComputation_B_write_lig_geolig")) {

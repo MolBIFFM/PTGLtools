@@ -46,7 +46,7 @@ public class MolContactInfo {
     public static final Integer RX = 12;        // 12 = # of RNA-X contacs (X can be protein or ligand)
     public static final Integer XR = 13;        // 13 = # of X-RNA contacs (X can be protein or ligand)
     public static final Integer RR = 14;        // 14 = # of RNA-RNA contacts
-    public static final Integer TCL = 15;        // 15 = # of transitive (chain-ligand-chain) contacts by ligands (protein - protein only)
+    public static final Integer CTL = 15;        // 15 = # of transitive (chain-ligand-chain) contacts by ligands (protein - protein only)
     public static final Integer DISULFIDE = 16; // 16 = # of disulfide bridges
     public static final Integer BBHB = 17;      // 17 = # of interchain H-bridge contacts, backbone-backbone, donor-acceptor (N=>O)
     public static final Integer BBBH = 18;      // 18 = # of interchain H-bridge contacts, backbone-backbone, acceptor-donor (O=>N)
@@ -381,9 +381,9 @@ public class MolContactInfo {
     public Integer getBCOCAHContactAtomNumA() { return(contactAtomIndexInMoleculeA[BCOCAH] + 1); }
     public Integer getBCOCAHContactAtomNumB() { return(contactAtomIndexInMoleculeB[BCOCAH] + 1); }
     
-    public Integer getTCLContactDist() { return(minContactDistances[TCL]); }
-    public Integer getTCLContactAtomNumA() { return(contactAtomIndexInMoleculeA[TCL] + 1); }
-    public Integer getTCLContactAtomNumB() { return(contactAtomIndexInMoleculeB[TCL] + 1); }
+    public Integer getCTLContactDist() { return(minContactDistances[CTL]); }
+    public Integer getCTLContactAtomNumA() { return(contactAtomIndexInMoleculeA[CTL] + 1); }
+    public Integer getCTLContactAtomNumB() { return(contactAtomIndexInMoleculeB[CTL] + 1); }
     
     
 // the getters for statistics follow
@@ -430,7 +430,7 @@ public class MolContactInfo {
     public Integer getNumContactsCCOCAH() { return(numPairContacts[CCOCAH]); }
     public Integer getNumContactsBCACOH() { return(numPairContacts[BCAHCO]); }
     public Integer getNumContactsBCOCAH() { return(numPairContacts[BCOCAH]); }
-    public Integer getNumContactsTCL() { return(numPairContacts[TCL]); }
+    public Integer getNumContactsCTL() { return(numPairContacts[CTL]); }
     
     public ArrayList<String> getAtomAtomContactTypes() { return atomAtomContactType; }
     public ArrayList<Atom[]> getAtomAtomContacts() { return atomAtomContacts; }

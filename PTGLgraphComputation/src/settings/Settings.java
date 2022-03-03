@@ -103,6 +103,7 @@ public class Settings {
         sections.add(new Section("DB: similarity search", "Advanced"));        
         
         // DEVELOPER SECTIONS
+        sections.add(new Section("Deprecated", "Developer"));
         sections.add(new Section("Debug", "Developer"));
         sections.add(new Section("Disabled", "Developer"));
         sections.add(new Section("Alternate AAG", "Developer"));
@@ -209,7 +210,8 @@ public class Settings {
 
         // header
         formattedString += "##### PTGLgraphComputation SETTINGS #####\n\n";
-        formattedString += "# This file contains the settings for PTGLtools's PTGLgraphComputation as key-value pairs per line. The character after 'PTGLgraphComputation' indicates which data type is expected: "
+        formattedString += "# This file contains the settings for PTGLtools' PTGLgraphComputation as key-value pairs per line.\n"
+                + "# The character after 'PTGLgraphComputation' indicates which data type is expected: "
                 + "B(oolean), S(tring), I(nteger) or F(loat)\n";
         formattedString += "# The file is structured in sections which either belong to user, advanced or developer settings.\n\n";
         

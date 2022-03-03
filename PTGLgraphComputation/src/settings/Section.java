@@ -84,7 +84,7 @@ class Section {
                 break;
             
             case "Protein Graph (PG)":
-                settings.add(new Setting("PTGLgraphComputation_B_skip_empty_chains", 'B', "true", "Whether to skip chains without any DSSP SSEs (i.e., contain only ligands) in Protein Graphs."));
+                settings.add(new Setting("PTGLgraphComputation_B_skip_empty_chains", 'B', "true", "Whether to skip chains without any SSEs (i.e., contain only ligands) in Protein Graphs."));
                 settings.add(new Setting("PTGLgraphComputation_B_img_output_format_PNG", 'B', "true", "Whether to write Protein Graph visualizations in PNG format."));
                 settings.add(new Setting("PTGLgraphComputation_B_img_output_format_PDF", 'B', "false", "Whether to write Protein Graph visualizations in PDF format."));
                 // Removed: Currently not used as SVG is base for conversion to other file formats and therefore always created.
@@ -136,12 +136,10 @@ class Section {
                 settings.add(new Setting("PTGLgraphComputation_B_only_essential_output", 'B', "true", "Whether to print only high-level status information."));
                 settings.add(new Setting("PTGLgraphComputation_B_print_contacts", 'B', "false", "Whether to print residue contacts to stdout (slower)"));
                 settings.add(new Setting("PTGLgraphComputation_B_no_warn", 'B', "false", "Whether to suppress all warnings."));
-                settings.add(new Setting("PTGLgraphComputation_B_no_parse_warn", 'B', "true", "Whether to suppress all warnings related to parsing of atoms and other data from the PDB and DSSP input files."));
+                settings.add(new Setting("PTGLgraphComputation_B_no_parse_warn", 'B', "true", "Whether to suppress all warnings related to parsing of atoms and other data from the PDB and SSE input files."));
                 settings.add(new Setting("PTGLgraphComputation_B_no_not_impl_warn", 'B', "true", "Whether to suppress all warnings related to not implemented function."));
-                settings.add(new Setting("PTGLgraphComputation_B_no_chain_break_info", 'B', "false", "Whether to suppress chain break info while parsing DSSP file (handy for some DSSP files for CIF data)."));
                 settings.add(new Setting("PTGLgraphComputation_B_print_silent_notice", 'B', "true", "Whether to print a single line informing the user that silent mode is set in silent mode (includes PDB ID of current file)."));
                 settings.add(new Setting("PTGLgraphComputation_B_warn_cfg_fallback_to_default", 'B', "true", "Whether to print warnings when a setting is not defined in the config file and internal defaults are used."));
-                settings.add(new Setting("PTGLgraphComputation_B_split_dsspfile_warning", 'B', "false", "Whether to show a warning about splitting the DSSP file when multiple models are detected in a PDB file."));
                 break;
                 
             case "Performance":
@@ -369,6 +367,11 @@ class Section {
                 settings.add(new Setting("PTGLgraphComputation_I_compute_all_graphlet_similarities_end_graphlet_index", 'I', "29", "Determines the graphlets from the array in the DB which are considered for similarity computation. This is the index of the last (end) graphlet used. Do not forget to also set the start index properly. This is inclusive."));
                 settings.add(new Setting("PTGLgraphComputation_I_number_of_graphlets", 'I', "30", "The length of the graphlet vector in the database (the PostgreSQL SQL array). This is the number of graphlets used to compute similarity."));
                 settings.add(new Setting("PTGLgraphComputation_B_write_chains_file", 'B', "false", "Whether to write a chains file containing all chain names of the currently handled PDB file. Can be used by GraphletAnalyzer later to construct graph file names for all chains."));
+                break;
+                
+            case "Deprecated":
+                settings.add(new Setting("PTGLgraphComputation_B_no_chain_break_info", 'B', "false", "[DEPRECATED] Whether to suppress chain break info while parsing DSSP file (handy for some DSSP files for CIF data)."));
+                settings.add(new Setting("PTGLgraphComputation_B_split_dsspfile_warning", 'B', "false", "[DEPRECATED] Whether to show a warning about splitting the DSSP file when multiple models are detected in a PDB file."));
                 break;
                 
             case "Debug":

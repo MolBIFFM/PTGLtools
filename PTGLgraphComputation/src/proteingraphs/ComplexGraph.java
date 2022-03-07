@@ -826,7 +826,7 @@ public class ComplexGraph extends UAdjListGraph {
         for (EdgeWeightType weightType : EdgeWeightType.values()) {
             System.out.println("   " + weightType.name);
             AgglomerativeClustering clustering = 
-                    new AgglomerativeClustering(getEdgesAsArray(), vertexMapToVertexIdMap(chainLengthMap), weightType);
+                    new AgglomerativeClustering(getEdgesAsArray(), vertexMapToVertexIdMap(chainLengthMap), weightType, vertexMapToVertexIdMap(labelNodeMap));
             ClusteringResult clusteringResult = clustering.chainLengthClustering();
             System.out.println("    " + clusteringResult.toNewickString(vertexMapToVertexIdMap(proteinNodeMap)));
         }

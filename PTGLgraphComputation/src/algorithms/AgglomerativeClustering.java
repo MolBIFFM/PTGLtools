@@ -31,8 +31,9 @@ public class AgglomerativeClustering {
     private final static String CLASS_TAG = "CG";
     
     private ArrayList<Edge> edges;
-    private Map<Integer, Integer> chainLengths;
-    private EdgeWeightType weightType;
+    private final Map<Integer, Integer> chainLengths;
+    private final EdgeWeightType weightType;
+    private final Map<Integer, String> labelMap;
     private int curStepNum;
     
     class Edge implements Comparable<Edge> {
@@ -116,7 +117,7 @@ public class AgglomerativeClustering {
      * @param chainLengths
      * @param weightType
      */
-    public AgglomerativeClustering(int[][] edgeList, Map<Integer, Integer> chainLengths, EdgeWeightType weightType) {
+    public AgglomerativeClustering(int[][] edgeList, Map<Integer, Integer> chainLengths, EdgeWeightType weightType, Map<Integer, String> labelMap) {
         curStepNum = 0;
         
         edges = new ArrayList<>();
@@ -134,6 +135,7 @@ public class AgglomerativeClustering {
         
         this.chainLengths = new HashMap<>(chainLengths);  // Shallow copy to not change chain lengths outside of this class
         this.weightType = weightType;
+        this.labelMap = labelMap;
     }
     
     
@@ -169,6 +171,20 @@ public class AgglomerativeClustering {
         
         if (Settings.getInteger("PTGLgraphComputation_I_debug_level") > 1) {
             System.out.println("[DEBUG LV 2] Edge with highest normalized weight: " + edges.get(0).toString());
+        }
+        
+        // choose edge to merge: greedy or interactive
+        int mergeEdgeIndex;
+        if (Settings.getBoolean("PTGLgraphComputation_B_interactive_assembly_prediction")) {
+            // interactive
+            int lineNum = 0;
+            for (String line : prettyFormatEdgeList().split("\n")) {
+                System.out.println(String.valueOf(lineNum) + ": " + line);
+                lineNum++;
+            }
+        } else {
+            // greedy
+            mergeEdgeIndex = 0;
         }
         
         // add vertices of edges with highest normalized weight to merges of cluster result
@@ -211,6 +227,22 @@ public class AgglomerativeClustering {
         
         edges = new ArrayList<>(edgeMap.values());    
         curStepNum++;
+    }
+    
+    /**
+     * Return a formatted string representation of the current edge list.
+     * @return multi-line string
+     */
+    private String prettyFormatEdgeList() {
+        String formattedString = "";
+        for (Edge edge: edges) {
+            formattedString += labelMap.get(edge.v1) + "-" + labelMap.get(edge.v2) + ", #res-res contacts: " + edge.absoluteWeight;
+            if (weightType != EdgeWeightType.ABSOLUTE_WEIGHT) {
+                formattedString += ", " + weightType.name + ": " + edge.normalizedWeight;
+            }
+            formattedString += "\n";
+        }
+        return formattedString;
     }
     
     /**
@@ -274,18 +306,23 @@ public class AgglomerativeClustering {
         chainLengths.put(6, 15);
         chainLengths.put(7, 11);
         chainLengths.put(8, 7);
+        
+        Map<Integer, String> labelMap = new HashMap<>();
+        for (Integer vertexId : chainLengths.keySet()) {
+            labelMap.put(vertexId, String.valueOf(vertexId));
+        }
 
-        AgglomerativeClustering clustering = new AgglomerativeClustering(edgeList, chainLengths, EdgeWeightType.ADDITIVE_LENGTH_NORMALIZATION);
+        AgglomerativeClustering clustering = new AgglomerativeClustering(edgeList, chainLengths, EdgeWeightType.ADDITIVE_LENGTH_NORMALIZATION, labelMap);
         
         ClusteringResult cr = clustering.chainLengthClustering();
         
         System.out.println(cr.toNewickString());
         
-        clustering = new AgglomerativeClustering(edgeList, chainLengths, EdgeWeightType.MULTIPLICATIVE_LENGTH_NORMALIZATION);
+        clustering = new AgglomerativeClustering(edgeList, chainLengths, EdgeWeightType.MULTIPLICATIVE_LENGTH_NORMALIZATION, labelMap);
         
         clustering.chainLengthClustering();
         
-        clustering = new AgglomerativeClustering(edgeList, chainLengths, EdgeWeightType.ABSOLUTE_WEIGHT);
+        clustering = new AgglomerativeClustering(edgeList, chainLengths, EdgeWeightType.ABSOLUTE_WEIGHT, labelMap);
         
         clustering.chainLengthClustering();
         

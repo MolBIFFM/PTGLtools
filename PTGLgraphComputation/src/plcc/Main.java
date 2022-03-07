@@ -1549,6 +1549,11 @@ public class Main {
                         argsUsed[i] = argsUsed[i + 1] = argsUsed[i + 2] = true;  // technically plays no role since program is terminated anyways, but let's code safe
                     }
                     
+                    if (s.equals("--interactive-assembly-prediction")) {
+                        Settings.set("PTGLgraphComputation_B_interactive_assembly_prediction", "true");
+                        argsUsed[i] = true;
+                    }
+                    
                 } //end for loop
                 checkArgsUsage(args, argsUsed); // warn if there were extra command line args we do not know
             }

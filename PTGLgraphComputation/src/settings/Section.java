@@ -131,6 +131,12 @@ class Section {
                 settings.add(new Setting("PTGLgraphComputation_B_Jmol_graph_vis_resblue_commands", 'B', "false", "Whether to compute and print Jmol commands to color the residues of Protein Graphs blue in 3D."));
                 break;
                 
+            case "Assembly prediction":
+                settings.add(new Setting("PTGLgraphComputation_B_interactive_assembly_prediction", 'B', "false", "Whether to interactively create assembly prediction instead of greedily choosing best edge at each step."));
+                settings.add(new Setting("PTGLgraphComputation_S_assembly_prediction_leaf_labels", 'S', "", "Comma-seperated labels for the leaves in the interactive prediction and output newick format. "
+                        + "The labels are applied in the same order as in the PDB file. Will use chain IDs if not specified."));
+                break;
+                
             case "Prints / Error handling":
                 settings.add(new Setting("PTGLgraphComputation_B_silent", 'B', "false", "Whether to suppress all output. Cluster mode, not recommended for normal usage."));
                 settings.add(new Setting("PTGLgraphComputation_B_only_essential_output", 'B', "true", "Whether to print only high-level status information."));

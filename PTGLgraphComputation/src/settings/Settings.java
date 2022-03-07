@@ -80,6 +80,7 @@ public class Settings {
         sections.add(new Section("Folding Graph (FG)", "User"));
         sections.add(new Section("Complex Graph (CG)", "User"));
         sections.add(new Section("Structure visualization", "User"));
+        sections.add(new Section("Assembly prediction", "User"));
         
         // ADVANCED SECTIONS
         sections.add(new Section("Prints / Error handling", "Advanced"));

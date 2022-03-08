@@ -439,4 +439,17 @@ class Section {
         
         return formattedString;
     }
+    
+    
+    /**
+     * Returns each setting with its value in an own line.
+     * @return 
+     */
+    String asShortString() {
+        String shortString = "";
+        for (Setting tmpSetting : settings) {
+            shortString += tmpSetting.asKeyValueString() + "\n";
+        }
+        return shortString;
+    }
 }

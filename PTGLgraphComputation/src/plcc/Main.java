@@ -1552,8 +1552,6 @@ public class Main {
                 } //end for loop
                 checkArgsUsage(args, argsUsed); // warn if there were extra command line args we do not know
             }
-
-            
         } else {
             usage_short();      // the first argument (pdbid) is required!
             System.exit(1);
@@ -3321,6 +3319,22 @@ public class Main {
             DBManager.closeConnection();
         }
         
+        // Output the applied settings as file
+        //   Do this here in the end so that we can be sure that not settings is changed afterwards
+        String appliedSettingsHeader = "# This file contains the final settings that were applied as a short version.\n"
+                + "# Each section is divided by a blank line.\n"
+                + "# You can use this file to reproduce the run by giving it as parameter to --settingsfile.\n\n";
+        String appliedSettingsFilePath = output_dir + fs + pdbid + "__applied_settings.txt";
+        if (io.IO.writeStringToFile(appliedSettingsHeader + Settings.asShortString(), appliedSettingsFilePath, true)) {
+            if (! silent) {
+                System.out.println("Wrote all applied settings to " + appliedSettingsFilePath + ". "
+                    + "With this file you can later reconstruct which settings were used for the run and reproduce it.");
+            }
+        } else {
+            DP.getInstance().w("Main", "Could not create the file holding the applied settings under " + appliedSettingsFilePath + ". "
+                    + "You may not be able to reconstruct the applied settings later or reproduce the results.");
+        }
+        
         if(! silent) {
             System.out.println("(Too much clutter? Try the '--silent' command line option.)");
             System.out.println("All done, exiting. Total runtime was " + runtimeTotal_secs + " seconds ("+compTimes[0]+":" + String.format("%02d:%02d", compTimes[1], compTimes[2])+" hms) for " + residues.size() + " residues.");
@@ -3331,7 +3345,6 @@ public class Main {
             }
         }
         System.exit(0);
-
     }
 
     

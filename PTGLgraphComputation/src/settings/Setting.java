@@ -157,6 +157,10 @@ class Setting {
         return formattedString;
     }
     
+    String asKeyValueString() {
+        return name + "=" + getValue();
+    }
+    
     // ### simple getter / setter ###
     String getDefaultValue() { return defaultValue; }
     String getDocumentation() { return documentation; }

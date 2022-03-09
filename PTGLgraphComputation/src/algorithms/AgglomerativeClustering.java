@@ -18,6 +18,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.IntStream;
+import java.util.Scanner;
 import proteingraphs.ComplexGraphEdgeWeightTypes.EdgeWeightType;
 import proteingraphs.ComplexGraphEdgeWeightTypes;
 import tools.DP;
@@ -174,27 +175,42 @@ public class AgglomerativeClustering {
         }
         
         // choose edge to merge: greedy or interactive
-        int mergeEdgeIndex;
+        Integer mergeEdgeIndex = null;
         if (Settings.getBoolean("PTGLgraphComputation_B_interactive_assembly_prediction")) {
             // interactive
+            Scanner lineReader = new Scanner(System.in);
             int lineNum = 0;
+            System.out.println("      Step " + curStepNum + ": Please choose an edge for merging");
             for (String line : prettyFormatEdgeList().split("\n")) {
-                System.out.println(String.valueOf(lineNum) + ": " + line);
+                System.out.println("        " + String.valueOf(lineNum) + ": " + line);
                 lineNum++;
+            }
+            String input = "";
+            while (mergeEdgeIndex == null) {
+                input = lineReader.nextLine();
+                try {
+                    mergeEdgeIndex = Integer.parseInt(input);
+                    if (mergeEdgeIndex < 0 || mergeEdgeIndex > edges.size() - 1) {
+                        System.out.println("Please choose a number between zero and " + (edges.size() - 1));
+                        mergeEdgeIndex = null;
+                    }
+                } catch (NumberFormatException e) {
+                    System.out.println("Please provide a valid number");
+                }
             }
         } else {
             // greedy
             mergeEdgeIndex = 0;
         }
         
-        // add vertices of edges with highest normalized weight to merges of cluster result
-        clusteringResult.addMerge(IntStream.of(edges.get(0).getVertices()).boxed().toArray(Integer[]::new));
+        // add vertices of edges to merges of cluster result
+        clusteringResult.addMerge(IntStream.of(edges.get(mergeEdgeIndex).getVertices()).boxed().toArray(Integer[]::new));
         
-        int v1 = edges.get(0).v1;
-        int v2 = edges.get(0).v2;
+        int v1 = edges.get(mergeEdgeIndex).v1;
+        int v2 = edges.get(mergeEdgeIndex).v2;
         
         // 2.1) remove edge between merged vertices
-        edges.remove(0);
+        edges.remove(mergeEdgeIndex.intValue());
         
         // 2.2) update chain lengths
         int combinedChainLength = chainLengths.get(v1) + chainLengths.get(v2);

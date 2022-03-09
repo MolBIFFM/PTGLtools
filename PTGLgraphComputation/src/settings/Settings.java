@@ -80,7 +80,7 @@ public class Settings {
         sections.add(new Section("Folding Graph (FG)", "User"));
         sections.add(new Section("Complex Graph (CG)", "User"));
         sections.add(new Section("Structure visualization", "User"));
-        sections.add(new Section("Assembly prediction", "User"));
+        sections.add(new Section("Assembly prediction (AP)", "User"));
         
         // ADVANCED SECTIONS
         sections.add(new Section("Prints / Error handling", "Advanced"));
@@ -211,8 +211,9 @@ public class Settings {
 
         // header
         formattedString += "##### PTGLgraphComputation SETTINGS #####\n\n";
-        formattedString += "# This file contains the settings for PTGLtools's PTGLgraphComputation as key-value pairs per line. The character after 'PTGLgraphComputation' indicates which data type is expected: "
-                + "B(oolean), S(tring), I(nteger) or F(loat)\n";
+        formattedString += "# This file contains the settings for PTGLtools's PTGLgraphComputation as key-value pairs per line.\n"
+                + "The character after 'PTGLgraphComputation' indicates which data type is expected: "
+                + "B(oolean), S(tring), L(ist) I(nteger) or F(loat)\n";
         formattedString += "# The file is structured in sections which either belong to user, advanced or developer settings.\n\n";
         
         // sections
@@ -323,6 +324,17 @@ public class Settings {
             System.exit(1);
             return(false);      // never reached
         }
+    }
+    
+    
+    /**
+     * Tries to extract the value of the setting 'key' as a list and return it.
+     * Always expects comma-seperated strings as value.
+     * @param key the name of the setting
+     * @return the value of the setting as array of String
+     */
+    public static String[] getList(String key) {
+        return get(key).split(",");
     }
     
     

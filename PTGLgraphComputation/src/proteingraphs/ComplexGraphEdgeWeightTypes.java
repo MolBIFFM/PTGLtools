@@ -9,6 +9,7 @@ package proteingraphs;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -41,6 +42,17 @@ public final class ComplexGraphEdgeWeightTypes {
             MIN_LENGTH_NORMALIZATION.name = "minimum length normalization";
         }
         
+        public String shortName;
+        static {
+            ABSOLUTE_WEIGHT.shortName = "abs";
+            ADDITIVE_LENGTH_NORMALIZATION.shortName = "add";
+            MULTIPLICATIVE_LENGTH_NORMALIZATION.shortName = "mult";
+            LUCID_MULTIPLICATIVE_NORMALIZATION.shortName = "lucMult";
+            SQRT_ADDITIVE_LENGTH_NORMALIZATION.shortName = "sqrt";
+            LOG_ADDITIVE_LENGTH_NORMALIZATION.shortName = "logAdd";
+            MIN_LENGTH_NORMALIZATION.shortName = "min";
+        }
+        
         public String description;
         static {
             ABSOLUTE_WEIGHT.description = "number of residue-residue contacts";
@@ -48,7 +60,7 @@ public final class ComplexGraphEdgeWeightTypes {
             MULTIPLICATIVE_LENGTH_NORMALIZATION.description = ABSOLUTE_WEIGHT.name + " / (length chain 1 * chain 2)";
             LUCID_MULTIPLICATIVE_NORMALIZATION.description = MULTIPLICATIVE_LENGTH_NORMALIZATION.name + " / smallest multiplicative weight";
             SQRT_ADDITIVE_LENGTH_NORMALIZATION.description = ABSOLUTE_WEIGHT.name + " / sqrt(length chain 1 * chain 2)";
-            LOG_ADDITIVE_LENGTH_NORMALIZATION.description = ABSOLUTE_WEIGHT.name + " / log(length chain 1 * chain 2)";
+            LOG_ADDITIVE_LENGTH_NORMALIZATION.description = ABSOLUTE_WEIGHT.name + " / log(length chain 1 + chain 2)";
             MIN_LENGTH_NORMALIZATION.description = ABSOLUTE_WEIGHT.name + " / min(length chain 1, length chain 2)";
         }
     }
@@ -100,5 +112,13 @@ public final class ComplexGraphEdgeWeightTypes {
                     normalizedWeight = BigDecimal.valueOf(numResContacts);
             }
         return normalizedWeight;
+    }
+    
+    public static ArrayList<String> getShortNames() {
+        ArrayList<String> shortNames = new ArrayList<>();
+        for (EdgeWeightType ewt : EdgeWeightType.values()) {
+            shortNames.add(ewt.shortName);
+        }
+        return shortNames;
     }
 }

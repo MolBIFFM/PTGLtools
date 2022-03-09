@@ -823,12 +823,16 @@ public class ComplexGraph extends UAdjListGraph {
         if (!silent) {
             System.out.println("  Computing assembly prediction based on different edge weight types...");
         }
+        String[] desiredWeightTypes = Settings.getList("PTGLgraphComputation_L_AP_weight_types");
         for (EdgeWeightType weightType : EdgeWeightType.values()) {
-            System.out.println("   " + weightType.name);
+            if (! Arrays.stream(desiredWeightTypes).anyMatch(weightType.shortName::equals)) {
+                continue;
+            }
+            System.out.println("    " + weightType.name);
             AgglomerativeClustering clustering = 
                     new AgglomerativeClustering(getEdgesAsArray(), vertexMapToVertexIdMap(chainLengthMap), weightType, vertexMapToVertexIdMap(labelNodeMap));
             ClusteringResult clusteringResult = clustering.chainLengthClustering();
-            System.out.println("    " + clusteringResult.toNewickString(vertexMapToVertexIdMap(proteinNodeMap)));
+            System.out.println("    " + clusteringResult.toNewickString(vertexMapToVertexIdMap(labelNodeMap)));
         }
     }
     

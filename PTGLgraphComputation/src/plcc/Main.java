@@ -11338,6 +11338,7 @@ public class Main {
         System.out.println("   --settingsfile <f>      : load settings from file <f>.");
         System.out.println("   --set <k> <v>           : set setting <k> to value <v>.");
         System.out.println("   --random-binary-tree <r><n> : Create random rooted binary tree with <n> vertices. Rooted for <r> is 'true' and unrooted for <r> is 'false'.");
+        System.out.println("   --interactive-assembly-prediction: Interactively predict an assembly pathway by giving the user the choice which vertices to merge at each step");
         System.out.println("");
         System.out.println("The following options only make sense for database maintenance:");
         System.out.println("--set-pdb-representative-chains-pre <file> <k> : Set non-redundant chain status for all chains in DB from XML file <file>. <k> determines what to do with existing flags, valid options are 'keep' or 'remove'. Get the file from PDB REST API. Run this pre-update, BEFORE new data will be added.");

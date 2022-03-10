@@ -136,8 +136,8 @@ class Section {
                 settings.add(new Setting("PTGLgraphComputation_B_interactive_assembly_prediction", 'B', "false", "Whether to interactively create assembly prediction instead of greedily choosing best edge at each step."));
                 settings.add(new Setting("PTGLgraphComputation_S_assembly_prediction_leaf_labels", 'S', "", "Comma-seperated labels for the leaves in the interactive prediction and output newick format. "
                         + "The labels are applied in the same order as in the PDB file. Will use chain IDs if not specified."));
-                settings.add(new Setting("PTGLgraphComputation_L_AP_weight_types", 'L', String.join(", ", ComplexGraphEdgeWeightTypes.getShortNames()), "Comma-seperated list of the weight types to use for the assembly prediction. "
-                        + "For each weight type, a prediction is done. Valid choices are: " + String.join(", ", ComplexGraphEdgeWeightTypes.getShortNames()) + "."));
+                settings.add(new Setting("PTGLgraphComputation_L_AP_weight_types", 'L', String.join(",", ComplexGraphEdgeWeightTypes.getShortNames()), "Comma-seperated list of the weight types to use for the assembly prediction. "
+                        + "For each weight type, a prediction is done. Valid choices are: " + String.join(",", ComplexGraphEdgeWeightTypes.getShortNames()) + "."));
                 break;
                 
             case "Prints / Error handling":

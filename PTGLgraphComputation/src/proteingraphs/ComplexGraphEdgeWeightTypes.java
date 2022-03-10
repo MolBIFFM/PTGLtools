@@ -19,7 +19,7 @@ import java.util.Map;
  */
 public final class ComplexGraphEdgeWeightTypes {
     
-    private final static int PRECISION = 35;  // used as precision for the BigDecimal normalized edge weight, i.e., number of digits left and right of decimal point
+    public final static int PRECISION = 35;  // used as precision for the BigDecimal normalized edge weight, i.e., number of digits left and right of decimal point
     
     // List here the weights / normalizations and assign short but descriptive spaced names
     public static enum EdgeWeightType {

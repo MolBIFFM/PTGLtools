@@ -60,11 +60,13 @@ public class DsspParser {
         if(! silent) {
             System.out.println("    Read all " + dsspLines.size() + " lines of file '" + dsspFile + "'.");
         }
+        
+        dsspDataStartLine = readDsspToData();
 
         s_dsspSSEs = new ArrayList<SSE>();
     }
     
-    
+
     // reads the dssp lines (starting at first line) till it arrives at the first data line (skips header stuff)
     private static Integer readDsspToData() {
 
@@ -120,7 +122,7 @@ public class DsspParser {
         //System.out.println("    Starting search at DSSP line number '" + (dsspDataStartLine - 1) + "'.");
         for(Integer i = dsspDataStartLine - 1; i < dsspLines.size(); i++) {
             dline = dsspLines.get(i);
-            foundDsspResNum = Integer.valueOf(dline.substring(1, 5).trim());
+            foundDsspResNum = getDsspNumFromLine(dline);
 
             //System.out.println("Looking for PDB# " + prn + " at line "  + (i + 1) + ": '" + dline + "'");
 
@@ -132,7 +134,8 @@ public class DsspParser {
             // The PDB residue number string may still contain the iCode (e.g. '123A', thus we cannot simply try to cast it to Integer
             try{
                 tmpPdbResNum = dline.substring(7, 11).trim();
-                foundChain = dline.substring(11, 12).trim();
+//                foundChain = dline.substring(11, 12).trim();
+                foundChain = dline.substring(159, 163).trim(); // AUTHCHAIN column 160-163. md: we now create the residues from cif file and use auth-info. Therefore we need the authchain here
 
                 if(tmpPdbResNum.length() == 0) { // The next command (lastChar) would be out of bounds anyway if this code is executed
                     DP.getInstance().w("Length of PDB number at line " + (i + 1) + " of DSSP file is 0." );
@@ -212,8 +215,10 @@ public class DsspParser {
         Float psi = 0.0f;
         int offset;  // if > 99,999 residues everything is shifted
         
-        // moved here and was previously executed >before< calling this function at all
-        dsspDataStartLine = readDsspToData();
+        // moved here and was previously executed >before< calling this function at all.
+        // md: I moved it to init variables again so I could use the new function grabSseStringForDsspNum to get the sse String for a residue,
+        // without creating the residues from this dssp file. This is for retrofitting, so a user could still use a cif file and an old .dssp file
+        // dsspDataStartLine = readDsspToData();
 
         Residue r;
 
@@ -396,13 +401,30 @@ public class DsspParser {
                 if (dsspLine.length() > 173) {
                     return Integer.valueOf(dsspLine.substring(168, 174).trim());
                 }
+                else{
+                    DP.getInstance().e("dsspLine indicates large number to the right, but the line isn't long enough. Exiting.");
+                    System.exit(1);
+                }
+            }
+        }
+        return null;
+    }
+    
+    // md: doc
+    // no optimization because it's only for retrofitting
+    protected static String grabSseStringForDsspNum(Integer requestedDsspNum){
+        String dline;
+        
+        for (Integer i = dsspDataStartLine - 1; i < dsspLines.size(); i++) {
+            dline = dsspLines.get(i);
+            if (requestedDsspNum.equals(getDsspNumFromLine(dline))){
+                return dline.substring(16, 17);
             }
         }
         return null;
     }
 
-    
-        public static ArrayList<String> getDsspLines() {
+    public static ArrayList<String> getDsspLines() {
         if(dataInitDone) {
             return(dsspLines);
         }

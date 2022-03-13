@@ -7,6 +7,7 @@
  */
 package graphdrawing;
 
+import io.FileParser;
 import proteinstructure.SSE;
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -1526,6 +1527,9 @@ public class ProteinGraphDrawer {
         
         String proteinHeader = "" + pg.getGraphType() + " Protein Graph of PDB entry " + pg.getPdbid() + ", chain " + pg.getChainid() + "";
         proteinHeader += "\n" + Settings.getImagesCreatorVersionLine();
+        if (FileParser.getWhichSseInfo().equals("author")){
+            proteinHeader += "\nCreated with author classification of SSEs. Results can't be compared to graphs of other proteins!";
+        }
         
         Integer stringHeight = fontMetrics.getAscent();
         String sseNumberSeq;

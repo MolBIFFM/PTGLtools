@@ -307,7 +307,7 @@ public class Main {
             
             // set default file names from the pdb id (these may be overwritten by args later)
             pdbFile = pdbid + ".pdb";
-            dsspFile = pdbid + ".dssp";
+//            dsspFile = pdbid + ".dssp";  // md: dssp file isn't mandatory anymore. Furthermore the default file extension of a DSSP 4 file is .cif
 
             // parse the rest of the arguments, if any
             if(args.length > 1) {
@@ -2076,10 +2076,12 @@ public class Main {
                 
 
         // dssp file
-        input_file = new File(dsspFile);
-        if(! (input_file.exists() && input_file.isFile())) {
-            System.err.println("ERROR: dsspfile '" + dsspFile + "' not found. Exiting.");
-            System.exit(1);
+        if (! dsspFile.equals("")){  // if a file specifying the SSEs is given, check it. If not, we only work with the pdb file (.cif)
+            input_file = new File(dsspFile);
+            if(! (input_file.exists() && input_file.isFile())) {
+                System.err.println("ERROR: sse-file (containing the sse-info) '" + dsspFile + "' not found. Exiting.");
+                System.exit(1);
+            }
         }
 
         output_dir = new File(outputDir);
@@ -3626,7 +3628,7 @@ public class Main {
             if(chainDsspSSEs.isEmpty()) {
                 if(Settings.getBoolean("PTGLgraphComputation_B_skip_empty_chains")) {
                     if(! silent) {
-                        System.out.println("  +++++ Skipping chain " + chain + " due to empty residue list. +++++");
+                        System.out.println("  +++++ Skipping chain " + chain + " due to empty SSE list. +++++");
                         
                     }
                     continue;

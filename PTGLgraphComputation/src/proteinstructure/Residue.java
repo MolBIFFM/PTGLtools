@@ -383,7 +383,7 @@ public class Residue extends Molecule implements java.io.Serializable {
     
     
     @Override public String toString() {
-        return("[Residue] PDB# " + pdbNum + ", DSSP# " + dsspNum + ", Type " + type + ", AA1 " + AAName1 + ", AA3 " + Name3 + ", Chain " + chainID + ", Model " + modelID + ", # of Atoms " + atoms.size());
+        return("[Residue] PDB# " + pdbNum + ", DSSP# " + dsspNum + ", Type " + type + ", AA1 " + AAName1 + ", AA3 " + Name3 + ", Chain " + chainID + ", ModelID " + modelID + ", iCode " + iCode + ", SSEstring " + sseString + ", # of Atoms " + atoms.size());
     }
     
     public Float getPhi() { if(this.isAA()) { return(phi); } else { return(0.0f); } }

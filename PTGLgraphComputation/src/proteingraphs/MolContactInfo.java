@@ -46,35 +46,36 @@ public class MolContactInfo {
     public static final Integer RX = 12;        // 12 = # of RNA-X contacs (X can be protein or ligand)
     public static final Integer XR = 13;        // 13 = # of X-RNA contacs (X can be protein or ligand)
     public static final Integer RR = 14;        // 14 = # of RNA-RNA contacts
-    public static final Integer DISULFIDE = 15; // 15 = # of disulfide bridges
-    public static final Integer BBHB = 16;      // 16 = # of interchain H-bridge contacts, backbone-backbone, donor-acceptor (N=>O)
-    public static final Integer BBBH = 17;      // 17 = # of interchain H-bridge contacts, backbone-backbone, acceptor-donor (O=>N)
-    public static final Integer IVDW = 18;      // 18 = # of interchain van der Waals interactions
-    public static final Integer ISS = 19;       // 19 = # of interchain disulfide bridges
-    public static final Integer IPI = 20;       // 20 = # of interchain pi-effects
-    public static final Integer ISB = 21;       // 21 = # of interchain salt bridges
-    public static final Integer BCHB = 22;      // 22 = # of interchain H-bridge contacts, backbone-sidechain, donor-acceptor
-    public static final Integer BCBH = 23;      // 23 = # of interhcain H-bridge contacts, backbone-sidechain, acceptor-donor
-    public static final Integer CBHB = 24;      // 24 = # of interchain H-bridge contacts, sidechain-backbone, donor-acceptor
-    public static final Integer CBBH = 25;      // 25 = # of interchain H-bridge contacts, sidechain-backbone, acceptor-donor
-    public static final Integer CCHB = 26;      // 26 = # of interchain H-bridge contacts, sidechain-sidechain, donor-acceptor
-    public static final Integer CCBH = 27;      // 27 = # of interchain H-bridge contacts, sidechain-sidechain, acceptor-donor
-    public static final Integer NHPI = 28;      // 28 = # of interchain N-H...Pi contacts, backbone-sidechain, donor-acceptor (non-canonical interaction)
-    public static final Integer PINH = 29;      // 29 = # of interchain N-H...Pi contacts, sidechain-backbone, acceptor-donor (non-canonical interaction)
-    public static final Integer CAHPI = 30;     // 30 = # of interchain CA-H...Pi contacts, backbone-sidechain, donor-acceptor (non-canonical interaction)
-    public static final Integer PICAH = 31;     // 31 = # of interchain CA-H...Pi contacts, sidechain-backbone, acceptor-donor (non-canonical interaction) 
-    public static final Integer CNHPI = 32;     // 32 = # of interchain N-H...Pi contacts, sidechain-sidechain, donor-acceptor (non-canonical interaction)
-    public static final Integer PICNH = 33;     // 33 = # of interchain N-H...Pi contacts, sidechain-sidechain, acceptor-donor (non-canonical interaction)
-    public static final Integer SHPI = 34;      // 34 = # of interchain S-H...Pi contacts, sidechain-sidechain, donor-acceptor (non-canonical interaction)
-    public static final Integer PISH = 35;      // 35 = # of interchain S-H...Pi contacts, sidechain-sidechain, acceptor-donor (non-canonical interaction)
-    public static final Integer XOHPI = 36;     // 36 = # of interchain X-O-H...Pi contacts witch X = Ser || Thr || Tyr, sidechain-sidechain, donor-accepor (non-canonical interaction
-    public static final Integer PIXOH = 37;     // 37 = # of interchain X-O-H...Pi contacts witch X = Ser || Thr || Tyr, sidechain-sidechain, acceptor-donor(non-canonical interaction
-    public static final Integer PROCDHPI = 38;  // 38 = # of interchain Pro-CD-H...Pi contacts, sidechain-sidechain, donor-acceptor (non-canonical)
-    public static final Integer PIPROCDH = 39;  // 39 = # of interchain Pro-CD-H...Pi contacts, sidechain-sidechain, acceptor-donor (non-canonical)
-    public static final Integer CCAHCO = 40;    // 40 = # of interchain CA-H...O=C contacts, mainchain-sidechain, donor-acceptor (non-canonical)
-    public static final Integer CCOCAH = 41;    // 41 = # of interchain CA-H...O=C contacts, mainchain-sidechain, acceptor-donor (non-canonical)
-    public static final Integer BCAHCO = 42;    // 42 = # of interchain CA-H...O=C contacts, mainchain-mainchain, donor-acceptor (non-canonical)
-    public static final Integer BCOCAH = 43;    // 43 = # of interchain CA-H...O=C contacts, mainchain-mainchain, acceptor-donor (non-canonical)
+    public static final Integer CTL = 15;        // 15 = # of transitive (chain-ligand-chain) contacts by ligands (protein - protein only)
+    public static final Integer DISULFIDE = 16; // 16 = # of disulfide bridges
+    public static final Integer BBHB = 17;      // 17 = # of interchain H-bridge contacts, backbone-backbone, donor-acceptor (N=>O)
+    public static final Integer BBBH = 18;      // 18 = # of interchain H-bridge contacts, backbone-backbone, acceptor-donor (O=>N)
+    public static final Integer IVDW = 19;      // 19 = # of interchain van der Waals interactions
+    public static final Integer ISS = 20;       // 20 = # of interchain disulfide bridges
+    public static final Integer IPI = 21;       // 21 = # of interchain pi-effects
+    public static final Integer ISB = 22;       // 22 = # of interchain salt bridges
+    public static final Integer BCHB = 23;      // 23 = # of interchain H-bridge contacts, backbone-sidechain, donor-acceptor
+    public static final Integer BCBH = 24;      // 24 = # of interhcain H-bridge contacts, backbone-sidechain, acceptor-donor
+    public static final Integer CBHB = 25;      // 25 = # of interchain H-bridge contacts, sidechain-backbone, donor-acceptor
+    public static final Integer CBBH = 26;      // 26 = # of interchain H-bridge contacts, sidechain-backbone, acceptor-donor
+    public static final Integer CCHB = 27;      // 27 = # of interchain H-bridge contacts, sidechain-sidechain, donor-acceptor
+    public static final Integer CCBH = 28;      // 28 = # of interchain H-bridge contacts, sidechain-sidechain, acceptor-donor
+    public static final Integer NHPI = 29;      // 29 = # of interchain N-H...Pi contacts, backbone-sidechain, donor-acceptor (non-canonical interaction)
+    public static final Integer PINH = 30;      // 30 = # of interchain N-H...Pi contacts, sidechain-backbone, acceptor-donor (non-canonical interaction)
+    public static final Integer CAHPI = 31;     // 31 = # of interchain CA-H...Pi contacts, backbone-sidechain, donor-acceptor (non-canonical interaction)
+    public static final Integer PICAH = 32;     // 32 = # of interchain CA-H...Pi contacts, sidechain-backbone, acceptor-donor (non-canonical interaction) 
+    public static final Integer CNHPI = 33;     // 33 = # of interchain N-H...Pi contacts, sidechain-sidechain, donor-acceptor (non-canonical interaction)
+    public static final Integer PICNH = 34;     // 34 = # of interchain N-H...Pi contacts, sidechain-sidechain, acceptor-donor (non-canonical interaction)
+    public static final Integer SHPI = 35;      // 35 = # of interchain S-H...Pi contacts, sidechain-sidechain, donor-acceptor (non-canonical interaction)
+    public static final Integer PISH = 36;      // 36 = # of interchain S-H...Pi contacts, sidechain-sidechain, acceptor-donor (non-canonical interaction)
+    public static final Integer XOHPI = 37;     // 37 = # of interchain X-O-H...Pi contacts witch X = Ser || Thr || Tyr, sidechain-sidechain, donor-accepor (non-canonical interaction
+    public static final Integer PIXOH = 38;     // 38 = # of interchain X-O-H...Pi contacts witch X = Ser || Thr || Tyr, sidechain-sidechain, acceptor-donor(non-canonical interaction
+    public static final Integer PROCDHPI = 39;  // 39 = # of interchain Pro-CD-H...Pi contacts, sidechain-sidechain, donor-acceptor (non-canonical)
+    public static final Integer PIPROCDH = 40;  // 40 = # of interchain Pro-CD-H...Pi contacts, sidechain-sidechain, acceptor-donor (non-canonical)
+    public static final Integer CCAHCO = 41;    // 41 = # of interchain CA-H...O=C contacts, mainchain-sidechain, donor-acceptor (non-canonical)
+    public static final Integer CCOCAH = 42;    // 42 = # of interchain CA-H...O=C contacts, mainchain-sidechain, acceptor-donor (non-canonical)
+    public static final Integer BCAHCO = 43;    // 43 = # of interchain CA-H...O=C contacts, mainchain-mainchain, donor-acceptor (non-canonical)
+    public static final Integer BCOCAH = 44;    // 44 = # of interchain CA-H...O=C contacts, mainchain-mainchain, acceptor-donor (non-canonical)
     
     
     
@@ -84,27 +85,27 @@ public class MolContactInfo {
     //  loop in Main.calculateAllContacts()). Saving this separately seems strange but we have to
     //  do it because geom_neo does it and we want our output to be compatible with it.
 
-    private Integer numTotalLigContactsPair;
-    private Integer numTotalRnaContactsPair;
+    public Integer numTotalLigContactsPair;
+    public Integer numTotalRnaContactsPair;
 
-    private Integer[] minContactDistances;
+    public Integer[] minContactDistances;
     // Holds the minimal distances of contacts of the appropriate type (see numPairContacts, index 0 is unused)
 
-    private Integer[] contactAtomIndexInMoleculeA;
+    public Integer[] contactAtomIndexInMoleculeA;
     // Holds the number Atom x has in its molecule a for the contact with minimal distance of that type.
     // See minContactDistances and numPairContacts; index 0 is unused; index 5 + 6 are also unused (atom is obvious)
 
-    private Integer[] contactAtomIndexInMoleculeB;
+    public Integer[] contactAtomIndexInMoleculeB;
     // Holds the number Atom y has in its molecule b for the contact with minimal distance of that type.
     // See minContactDistances and numPairContacts; index 0 is unused; index 5 + 6 are also unused because the atom is
     //  fixed for these (HB1: backbone N, HB2: backbone O)
 
-    private Molecule molA, molB;
-    private Integer dist;
+    public Molecule molA, molB;
+    public Integer dist;
     
-    private ArrayList<String> atomAtomContactType;
+    public ArrayList<String> atomAtomContactType;
  //   private Atom[] atomAtomContact;
-    private ArrayList<Atom[]> atomAtomContacts;
+    public ArrayList<Atom[]> atomAtomContacts;
 
     /**
      * Constructor for a molecule pair contact between the molecules (a, b).
@@ -380,6 +381,10 @@ public class MolContactInfo {
     public Integer getBCOCAHContactAtomNumA() { return(contactAtomIndexInMoleculeA[BCOCAH] + 1); }
     public Integer getBCOCAHContactAtomNumB() { return(contactAtomIndexInMoleculeB[BCOCAH] + 1); }
     
+    public Integer getCTLContactDist() { return(minContactDistances[CTL]); }
+    public Integer getCTLContactAtomNumA() { return(contactAtomIndexInMoleculeA[CTL] + 1); }
+    public Integer getCTLContactAtomNumB() { return(contactAtomIndexInMoleculeB[CTL] + 1); }
+    
     
 // the getters for statistics follow
     public Integer getNumContactsTotal() { return(numPairContacts[TT]); }
@@ -425,9 +430,19 @@ public class MolContactInfo {
     public Integer getNumContactsCCOCAH() { return(numPairContacts[CCOCAH]); }
     public Integer getNumContactsBCACOH() { return(numPairContacts[BCAHCO]); }
     public Integer getNumContactsBCOCAH() { return(numPairContacts[BCOCAH]); }
+    public Integer getNumContactsCTL() { return(numPairContacts[CTL]); }
     
     public ArrayList<String> getAtomAtomContactTypes() { return atomAtomContactType; }
     public ArrayList<Atom[]> getAtomAtomContacts() { return atomAtomContacts; }
+    
+    public Integer increaseContact(Integer contact, Integer amount) {
+        // Setter increases every contact type by a specific amount
+        // Should be used with contact letter
+        // TT currently needs to be increased separately
+        numPairContacts[contact] = numPairContacts[contact] + amount;  
+        return numPairContacts[contact];
+        
+    }
     
     // DEBUG only
     public Molecule getMolA() { return(molA); }

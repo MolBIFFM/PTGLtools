@@ -164,6 +164,7 @@ class Section {
                 settings.add(new Setting("PTGLgraphComputation_B_include_rna", 'B', "true", "Whether RNA should be parsed and included in graph formalism and visualisation (WIP)."));
                 settings.add(new Setting("PTGLgraphComputation_B_convert_models_to_chains", 'B', "false", "Whether the PDB file should be checked for multiple models and if so convert those models to chains."));
                 settings.add(new Setting("PTGLgraphComputation_I_defaultModel", 'I', "1", "The model to use if multiple models exist in the PDB file."));
+                settings.add(new Setting("PTGLgraphComputation_B_always_skip_models", 'B', "true", "Whether models should be skipped for all methods."));
                 settings.add(new Setting("PTGLgraphComputation_S_ligAACode", 'S', "J", "The amino acid code used to mark a ligand residue."));
                 settings.add(new Setting("PTGLgraphComputation_I_lig_min_atoms", 'I', "1", "The minimum number of atoms a ligand needs to consist of to count as an SSE."));
                 settings.add(new Setting("PTGLgraphComputation_I_lig_max_atoms", 'I', "-1", "The maximum number of atoms a ligand has to consist of to count as an SSE. Set to <0 for unlimited."));

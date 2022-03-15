@@ -636,12 +636,12 @@ class CifParser {
             } else {
                 // same model as before?
                 if (! m.getModelID().equals(tmpModelID)) {
-                    if (metaData.get("experiment").contains("NMR")) {
+                    if ((metaData.get("experiment").contains("NMR")) | (Settings.getBoolean("PTGLgraphComputation_B_always_skip_models"))) {
                         if (! furtherModelWarningPrinted) {
                             System.out.println("   PDB: Found further models. Ignoring them.");
                             furtherModelWarningPrinted = true;
                         }
-                        // skip this line if the structure is NMR
+                        // skip this line if the structure is NMR or models should always be ignored
                         return;
                     }
                 }

@@ -100,7 +100,8 @@ public class Settings {
         sections.add(new Section("DB: representative chains", "Advanced"));
         sections.add(new Section("Image settings", "Advanced"));
         sections.add(new Section("Output settings", "Advanced"));
-        sections.add(new Section("DB: similarity search", "Advanced"));        
+        sections.add(new Section("DB: similarity search", "Advanced"));
+        sections.add(new Section("Random tree generation", "Advanced"));
         
         // DEVELOPER SECTIONS
         sections.add(new Section("Debug", "Developer"));
@@ -227,6 +228,20 @@ public class Settings {
         }
         
         return formattedString;
+    }
+    
+    
+    /**
+     * Returns a short header and each setting with its value in an own line.
+     * @return 
+     */
+    static public String asShortString() {
+        String shortString = "";
+        for (int i = 0; i < sections.size(); i++) {
+            shortString += sections.get(i).asShortString() + "\n";
+        }
+        shortString = shortString.trim();
+        return shortString;
     }
     
     

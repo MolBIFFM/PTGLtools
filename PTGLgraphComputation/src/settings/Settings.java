@@ -32,7 +32,7 @@ public class Settings {
     // -> only increment with commit / push / merge not while programming
     // -> when incrementing, reset lower levels to zero, e.g., 3.2.1 -> 3.3.0
 
-    static final private String VERSION = "3.5.0";
+    static final private String VERSION = "3.5.1";
     
     static final private String PROGRAM_NAME = "PTGLgraphComputation";
     

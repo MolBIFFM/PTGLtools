@@ -5560,7 +5560,8 @@ public class Main {
         }    
         // - - - contacts transitive by ligands between chains (through ligand contacts) - - -
         //
-        Integer counterTransitiveContacts = 0;
+        Integer counterInterchainCTL = 0;
+        Integer counterIntrachainCTL = 0;
 
         if (Settings.getBoolean("PTGLgraphComputation_transitive_contacts")){
             // Iteration over all connections of each ligand atom
@@ -5572,7 +5573,7 @@ public class Main {
             Atom atomA;
             Atom atomB;
             
-
+            
             for(ArrayList<Atom> currentTransitiveAtomList : ligandToProteinAtomContacts.values()){
                 // Check all keys to evaluate contacts
 
@@ -5585,10 +5586,10 @@ public class Main {
                         resB = atomB.molecule;
 
                         if (!resA.equals(resB)){
-                        
+                           
                             // Update MolContactInfo: reuse from last iteration, retrieve existing MCI or create new MCI
 
-                            if(!((resAOld!=null || resBOld!=null) && resAOld.equals(resA) && resBOld.equals(resB))){
+                            if(!(Objects.equals(resAOld,resA)) || !(Objects.equals(resBOld,resB))){
                                 // do not reuse last MCI
                                 // Check if MCI exists and retrieve or create
                                 resAOld = resA;
@@ -5659,7 +5660,15 @@ public class Main {
                             // Add transitive contact to MolContactInfo
                             currentMci.increaseContact(MolContactInfo.CTL, 1);
                             currentMci.increaseContact(MolContactInfo.TT, 1);
-                            counterTransitiveContacts++;   
+                            
+                            if(currentMci.getNumContactsCTL()==1){
+                                if (Objects.equals(resA.chain, resB.chain)){
+                                    counterIntrachainCTL++;
+                                } 
+                                else{
+                                    counterInterchainCTL++;
+                                }
+                            }   
                         }
                     }
                 }
@@ -5681,7 +5690,8 @@ public class Main {
             System.out.println("  Skipped " + seqNeighSkippedResIntraChain + " intra chain and " + seqNeighSkippedResInterChain + " inter chain residue contacts due to sequence neighbor skip.");
             System.out.println("  Checked " + numResContactsChecked + " contacts for " + numberResTotal + " residues: " + numResContactsPossible + " possible, " + contactInfo.size() + " found, " + numResContactsImpossible + " impossible (collison spheres check).");
             if(Settings.getBoolean("PTGLgraphComputation_transitive_contacts")){
-                System.out.println("  Contacts transitive by ligands found: " + counterTransitiveContacts);
+                System.out.println("  Interchain contacts transitive by ligands found: " + counterInterchainCTL);
+                System.out.println("  Intrachain contacts transitive by ligands found: " + counterIntrachainCTL);
             }
         }
 

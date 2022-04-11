@@ -9,15 +9,16 @@ package algorithms;
 
 import datastructures.ClusteringResult;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.IntStream;
+import java.util.Scanner;
+import static java.util.stream.Collectors.toList;
 import proteingraphs.ComplexGraphEdgeWeightTypes.EdgeWeightType;
 import proteingraphs.ComplexGraphEdgeWeightTypes;
 import tools.DP;
@@ -31,8 +32,9 @@ public class AgglomerativeClustering {
     private final static String CLASS_TAG = "CG";
     
     private ArrayList<Edge> edges;
-    private Map<Integer, Integer> chainLengths;
-    private EdgeWeightType weightType;
+    private final Map<Integer, Integer> chainLengths;
+    private final EdgeWeightType weightType;
+    private final Map<Integer, String> labelMap;
     private int curStepNum;
     
     class Edge implements Comparable<Edge> {
@@ -111,12 +113,13 @@ public class AgglomerativeClustering {
     }
     
     /**
-     * Constructor of an agglomerative clustering. Class cannot be static so that it can hold instances of nested class Edge.
+     * Constructor of an agglomerative clustering.Class cannot be static so that it can hold instances of nested class Edge.
      * @param edgeList Array of [vertex ID 1, vertex ID 2, edge weight]
      * @param chainLengths
      * @param weightType
+     * @param labelMap
      */
-    public AgglomerativeClustering(int[][] edgeList, Map<Integer, Integer> chainLengths, EdgeWeightType weightType) {
+    public AgglomerativeClustering(int[][] edgeList, Map<Integer, Integer> chainLengths, EdgeWeightType weightType, Map<Integer, String> labelMap) {
         curStepNum = 0;
         
         edges = new ArrayList<>();
@@ -134,6 +137,7 @@ public class AgglomerativeClustering {
         
         this.chainLengths = new HashMap<>(chainLengths);  // Shallow copy to not change chain lengths outside of this class
         this.weightType = weightType;
+        this.labelMap = labelMap;
     }
     
     
@@ -142,7 +146,7 @@ public class AgglomerativeClustering {
      * @return 
      */
     public ClusteringResult chainLengthClustering() {
-        ClusteringResult clusteringResult = new ClusteringResult(false);
+        ClusteringResult clusteringResult = new ClusteringResult(true);
     
         while (edges.size() > 0) {
             chainLengthClusteringStep(clusteringResult);
@@ -171,14 +175,22 @@ public class AgglomerativeClustering {
             System.out.println("[DEBUG LV 2] Edge with highest normalized weight: " + edges.get(0).toString());
         }
         
-        // add vertices of edges with highest normalized weight to merges of cluster result
-        clusteringResult.addMerge(IntStream.of(edges.get(0).getVertices()).boxed().toArray(Integer[]::new));
+        // choose edge to merge: greedy or interactive
+        int mergeEdgeIndex = (Settings.getBoolean("PTGLgraphComputation_B_interactive_assembly_prediction") ? getEdgeIndexFromUser(6, clusteringResult) : 0);
         
-        int v1 = edges.get(0).v1;
-        int v2 = edges.get(0).v2;
+        // add vertices of edges to merges of cluster result
+        Edge curEdge = edges.get(mergeEdgeIndex);
+        clusteringResult.addMerge(
+                IntStream.of(curEdge.getVertices()).boxed().toArray(Integer[]::new), 
+                curEdge.absoluteWeight,
+                chainLengths.get(curEdge.v1),
+                chainLengths.get(curEdge.v2));
+        
+        int v1 = curEdge.v1;
+        int v2 = curEdge.v2;
         
         // 2.1) remove edge between merged vertices
-        edges.remove(0);
+        edges.remove(mergeEdgeIndex);
         
         // 2.2) update chain lengths
         int combinedChainLength = chainLengths.get(v1) + chainLengths.get(v2);
@@ -211,6 +223,52 @@ public class AgglomerativeClustering {
         
         edges = new ArrayList<>(edgeMap.values());    
         curStepNum++;
+    }
+    
+    
+    /**
+     * Print a table of all edges and ask user for an input until it is a valid edge index.
+     * @return valid edge index as int
+     */
+    private int getEdgeIndexFromUser(int numberIndentSpaces, ClusteringResult clusteringResult) {
+        Integer edgeIndex = null;
+        Scanner lineReader = new Scanner(System.in);
+        System.out.println(" ".repeat(numberIndentSpaces) + "Step " + curStepNum + ": Please choose an edge for merging");
+        for (String line : prettyFormatEdgeList(numberIndentSpaces + 2, clusteringResult).split("\n")) {
+            System.out.println(line);
+        }
+        while (edgeIndex == null) {
+            String input = lineReader.nextLine();
+            try {
+                edgeIndex = Integer.parseInt(input.trim());
+                if (edgeIndex < 0 || edgeIndex > edges.size() - 1) {
+                    System.out.println("Please choose a number between zero and " + (edges.size() - 1));
+                    edgeIndex = null;
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("Please provide a valid number");
+            }
+        }
+        return edgeIndex;
+    }
+    
+    
+    /**
+     * Return a formatted string representation of the current edge list.
+     * @return multi-line string
+     */
+    private String prettyFormatEdgeList(int numberIndentSpaces, ClusteringResult clusteringResult) {
+        String formattedString = " ".repeat(numberIndentSpaces + 4) + "rounded normalized weight | #res-res contacts | sub assembly 1 - sub assembly 2\n";
+        Integer lineNum = 0;
+        for (Edge edge: edges) {
+            formattedString += " ".repeat(numberIndentSpaces + 2) + lineNum.toString() + ": " + 
+                    edge.normalizedWeight.setScale(4, RoundingMode.HALF_UP) + " | " + 
+                    edge.absoluteWeight + " | " +
+                    clusteringResult.getVerticesFromRepresentative(edge.v1).stream().map(ele -> labelMap.get(ele)).collect(toList()) + " - " +
+                    clusteringResult.getVerticesFromRepresentative(edge.v2).stream().map(ele -> labelMap.get(ele)).collect(toList()) + "\n";
+            lineNum++;
+        }
+        return formattedString;
     }
     
     /**
@@ -274,18 +332,23 @@ public class AgglomerativeClustering {
         chainLengths.put(6, 15);
         chainLengths.put(7, 11);
         chainLengths.put(8, 7);
+        
+        Map<Integer, String> labelMap = new HashMap<>();
+        for (Integer vertexId : chainLengths.keySet()) {
+            labelMap.put(vertexId, String.valueOf(vertexId));
+        }
 
-        AgglomerativeClustering clustering = new AgglomerativeClustering(edgeList, chainLengths, EdgeWeightType.ADDITIVE_LENGTH_NORMALIZATION);
+        AgglomerativeClustering clustering = new AgglomerativeClustering(edgeList, chainLengths, EdgeWeightType.ADDITIVE_LENGTH_NORMALIZATION, labelMap);
         
         ClusteringResult cr = clustering.chainLengthClustering();
         
         System.out.println(cr.toNewickString());
         
-        clustering = new AgglomerativeClustering(edgeList, chainLengths, EdgeWeightType.MULTIPLICATIVE_LENGTH_NORMALIZATION);
+        clustering = new AgglomerativeClustering(edgeList, chainLengths, EdgeWeightType.MULTIPLICATIVE_LENGTH_NORMALIZATION, labelMap);
         
         clustering.chainLengthClustering();
         
-        clustering = new AgglomerativeClustering(edgeList, chainLengths, EdgeWeightType.ABSOLUTE_WEIGHT);
+        clustering = new AgglomerativeClustering(edgeList, chainLengths, EdgeWeightType.ABSOLUTE_WEIGHT, labelMap);
         
         clustering.chainLengthClustering();
         

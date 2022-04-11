@@ -29,6 +29,7 @@ class Setting {
             add('I');
             add('F');
             add('S');
+            add('L');
         }
     };
     
@@ -73,7 +74,8 @@ class Setting {
     private Boolean checkDataType(String value) {
         switch (dataType) {
             case 'S':
-                return true;  // String is always String
+            case 'L':
+                return true;  // String is always String and every string is a list
             case 'I':
                 if (tools.TextTools.isInteger(value)) {
                     return true;

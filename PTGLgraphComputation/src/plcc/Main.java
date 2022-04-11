@@ -190,7 +190,7 @@ public class Main {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-                
+        
         Date computationStartTime = new Date();
         StringBuilder outputToBePrintedUnlessSilent = new StringBuilder();
         
@@ -1547,6 +1547,11 @@ public class Main {
                             syntaxError();
                         }
                         argsUsed[i] = argsUsed[i + 1] = argsUsed[i + 2] = true;  // technically plays no role since program is terminated anyways, but let's code safe
+                    }
+                    
+                    if (s.equals("--interactive-assembly-prediction")) {
+                        Settings.set("PTGLgraphComputation_B_interactive_assembly_prediction", "true");
+                        argsUsed[i] = true;
                     }
                     
                 } //end for loop
@@ -11669,6 +11674,7 @@ public class Main {
         System.out.println("   --settingsfile <f>      : load settings from file <f>.");
         System.out.println("   --set <k> <v>           : set setting <k> to value <v>.");
         System.out.println("   --random-binary-tree <r><n> : Create random rooted binary tree with <n> vertices. Rooted for <r> is 'true' and unrooted for <r> is 'false'.");
+        System.out.println("   --interactive-assembly-prediction: Interactively predict an assembly pathway by giving the user the choice which vertices to merge at each step");
         System.out.println("");
         System.out.println("The following options only make sense for database maintenance:");
         System.out.println("--set-pdb-representative-chains-pre <file> <k> : Set non-redundant chain status for all chains in DB from XML file <file>. <k> determines what to do with existing flags, valid options are 'keep' or 'remove'. Get the file from PDB REST API. Run this pre-update, BEFORE new data will be added.");

@@ -7,11 +7,16 @@
  */
 package datastructures;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import tools.DP;
+import proteingraphs.ComplexGraphEdgeWeightTypes;
+import proteingraphs.ComplexGraphEdgeWeightTypes.EdgeWeightType;
 
 /**
  *
@@ -21,14 +26,22 @@ public class ClusteringResult {
     private final static String CLASS_TAG = "CG";
     
     private final ArrayList<Integer[]> merges = new ArrayList<>();
+    private final Map<Integer, ArrayList<Integer>> mapRepresentativeToVertices = new HashMap<>();
+    private BigDecimal consecutiveLargeInterfaceScore = BigDecimal.ZERO;
+    private final Map<EdgeWeightType, BigDecimal> consecutiveLargeInterfaceScores = new HashMap<>();
     private final Boolean binary;
     private int maxNumberMergedAtOnce = 0;
     
     public ClusteringResult(Boolean binary) {
         this.binary = binary;
+        
+        // initialize each score as zero
+        for (EdgeWeightType weightType : EdgeWeightType.values()) {
+           consecutiveLargeInterfaceScores.put(weightType, BigDecimal.ZERO);
+        }
     }
     
-    public Boolean addMerge(Integer[] merge) {
+    public Boolean addMerge(Integer[] merge, int absoluteWeight, int chainLengthA, int chainLengthB) {
         if (binary) {
             if (merge.length > 2) {
                 DP.getInstance().e(CLASS_TAG, "Tried adding a merge of more than two vertices to a binary clustering result. Rejecting merge and trying to go on. "
@@ -36,9 +49,42 @@ public class ClusteringResult {
             }
         }
         merges.add(merge);
+        
+        // update representative map
+        ArrayList<Integer> leafs = new ArrayList<>();
+        for (Integer vertexID : merge) {
+            if (mapRepresentativeToVertices.containsKey(vertexID)) {
+                leafs.addAll(mapRepresentativeToVertices.get(vertexID));
+            } else {
+                leafs.add(vertexID);
+            }
+        }
+        Collections.sort(leafs);
+        mapRepresentativeToVertices.put(merge[0], leafs);
+        
+        // update score
+        updateScores(absoluteWeight, chainLengthA, chainLengthB, leafs.size());
+        //consecutiveLargeInterfaceScore = consecutiveLargeInterfaceScore.add(scoreFromThisMerge(absoluteWeight, leafs.size()));
+        
         maxNumberMergedAtOnce = Math.max(maxNumberMergedAtOnce, merge.length);
         return true;
     }
+    
+    
+    private BigDecimal scoreFromThisMerge(BigDecimal weight, int numberLeafsUnderMerge) {
+        return weight.divide(BigDecimal.valueOf(numberLeafsUnderMerge), ComplexGraphEdgeWeightTypes.PRECISION, RoundingMode.HALF_UP);
+    }
+    
+    
+    private void updateScores(int absoluteWeight, int chainLengthA, int chainLengthB, int numberLeafs) {
+        for (EdgeWeightType weightType : EdgeWeightType.values()) {
+            BigDecimal prevValue = consecutiveLargeInterfaceScores.get(weightType);
+            consecutiveLargeInterfaceScores.put(weightType, prevValue.add(
+                    ComplexGraphEdgeWeightTypes.computeLengthNormalization(absoluteWeight, chainLengthA, chainLengthB, weightType)
+                            .divide(BigDecimal.valueOf(numberLeafs), ComplexGraphEdgeWeightTypes.PRECISION, RoundingMode.HALF_UP)));
+        }
+    }
+    
     
     private ArrayList<String[]> renameVertexIdsInMerges(Map<Integer, String> mapVertexIdToName) {
         ArrayList<String[]> renamedMerges = new ArrayList<>();
@@ -55,7 +101,7 @@ public class ClusteringResult {
         }
         return renamedMerges;
     }
-    
+       
     /**
      * Returns a list of arrays as string, print of one array per line.
      * @param <T> inner array
@@ -120,6 +166,23 @@ public class ClusteringResult {
         return toNewickString(merges);
     }
     
+    public ArrayList<Integer> getVerticesFromRepresentative(Integer vertexID) {
+        ArrayList<Integer> vertices = mapRepresentativeToVertices.get(vertexID);
+        return (vertices == null ? new ArrayList<>(Arrays.asList(vertexID)) : vertices);
+    }
+    
+    public BigDecimal getScore() {
+        return consecutiveLargeInterfaceScore;
+    }
+    
+    public ArrayList<String> getScoreLines() {
+        ArrayList<String> lines = new ArrayList<>();
+        for (EdgeWeightType weightType : EdgeWeightType.values()) {
+            lines.add(weightType.name + ": " + consecutiveLargeInterfaceScores.get(weightType).toString());
+        }
+        return lines;
+    }
+    
     /**
      * Tests clusteringResult implementation.
      */
@@ -127,10 +190,31 @@ public class ClusteringResult {
         // test toNewick for non-binary dendrogram
         //   Result: ((((1,2),3),(4,5,6),7));
         ClusteringResult clusteringResult = new ClusteringResult(false);
-        clusteringResult.addMerge(new Integer[]{1,2});
-        clusteringResult.addMerge(new Integer[]{1,3});
-        clusteringResult.addMerge(new Integer[]{4,5,6});
-        clusteringResult.addMerge(new Integer[]{1,4,7});
-        System.out.println(clusteringResult.toNewickString());
+        clusteringResult.addMerge(new Integer[]{0,1}, 1, 1, 1);
+        clusteringResult.addMerge(new Integer[]{1,3}, 1, 1, 1);
+        clusteringResult.addMerge(new Integer[]{4,5,6}, 1, 1, 1);
+        clusteringResult.addMerge(new Integer[]{1,4,7}, 1, 1, 1);
+        assert "((((1,2),3),(4,5,6),7));".equals(clusteringResult.toNewickString());
+        
+        clusteringResult = new ClusteringResult(false);
+        clusteringResult.addMerge(new Integer[]{0,1}, 100, 1, 1);
+        clusteringResult.addMerge(new Integer[]{0,3}, 99, 1, 1);
+        clusteringResult.addMerge(new Integer[]{0,2}, 196, 1, 1);
+        clusteringResult.addMerge(new Integer[]{0,4}, 194, 1, 1);
+        BigDecimal expectedScore = BigDecimal.valueOf(170.8);
+        System.out.println("Expected score: " + expectedScore.toString());
+        System.out.println("Computed score: " + clusteringResult.getScore().toString());
+        assert clusteringResult.getScore().equals(expectedScore);
+        
+        clusteringResult = new ClusteringResult(false);
+        clusteringResult.addMerge(new Integer[]{1,3}, 99, 1, 1);
+        clusteringResult.addMerge(new Integer[]{1,2}, 196, 1, 1);
+        clusteringResult.addMerge(new Integer[]{1,4}, 194, 1, 1);
+        clusteringResult.addMerge(new Integer[]{0,1}, 100, 1, 1);
+        expectedScore = BigDecimal.valueOf(118).add(
+                BigDecimal.valueOf(196).divide(BigDecimal.valueOf(3), ComplexGraphEdgeWeightTypes.PRECISION, RoundingMode.HALF_UP));
+        System.out.println("Expected score: " + expectedScore.toString());
+        System.out.println("Computed score: " + clusteringResult.getScore().toString());
+        assert clusteringResult.getScore().equals(expectedScore);
     }
 }

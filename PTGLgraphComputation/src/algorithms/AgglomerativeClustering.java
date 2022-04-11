@@ -179,10 +179,15 @@ public class AgglomerativeClustering {
         int mergeEdgeIndex = (Settings.getBoolean("PTGLgraphComputation_B_interactive_assembly_prediction") ? getEdgeIndexFromUser(6, clusteringResult) : 0);
         
         // add vertices of edges to merges of cluster result
-        clusteringResult.addMerge(IntStream.of(edges.get(mergeEdgeIndex).getVertices()).boxed().toArray(Integer[]::new), edges.get(mergeEdgeIndex).normalizedWeight);
+        Edge curEdge = edges.get(mergeEdgeIndex);
+        clusteringResult.addMerge(
+                IntStream.of(curEdge.getVertices()).boxed().toArray(Integer[]::new), 
+                curEdge.absoluteWeight,
+                chainLengths.get(curEdge.v1),
+                chainLengths.get(curEdge.v2));
         
-        int v1 = edges.get(mergeEdgeIndex).v1;
-        int v2 = edges.get(mergeEdgeIndex).v2;
+        int v1 = curEdge.v1;
+        int v2 = curEdge.v2;
         
         // 2.1) remove edge between merged vertices
         edges.remove(mergeEdgeIndex);

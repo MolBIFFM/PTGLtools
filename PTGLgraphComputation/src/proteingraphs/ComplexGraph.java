@@ -833,7 +833,11 @@ public class ComplexGraph extends UAdjListGraph {
                     new AgglomerativeClustering(getEdgesAsArray(), vertexMapToVertexIdMap(chainLengthMap), weightType, vertexMapToVertexIdMap(labelNodeMap));
             ClusteringResult clusteringResult = clustering.chainLengthClustering();
             System.out.println("      " + clusteringResult.toNewickString(vertexMapToVertexIdMap(labelNodeMap)));
-            System.out.println("      Large Interface Score: " + clusteringResult.getScore().toString());
+            
+            //System.out.println("      Large Interface Score: " + clusteringResult.getScore().toString());
+            for (String line : clusteringResult.getScoreLines()) {
+                System.out.println("      Large Interface Score for " + line);
+            }
         }
     }
     

@@ -617,7 +617,7 @@ public class FileParser {
             whichSseInfo = "dssp3";
             DsspParser.initVariables(dsspFile);
             if (! silent){
-                DP.getInstance().w("old .dssp file given. Consider using the cif-parser and the annotated cif file that dssp version 4 produces.");
+                DP.getInstance().w("Old .dssp file given. Filetype isn't supported anymore, results may be wrong. Please use the annotated mmCIF file that dssp 4 produces.");
             }
         }
         else{

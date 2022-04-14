@@ -346,7 +346,7 @@ class Section {
                 settings.add(new Setting("PTGLgraphComputation_I_img_text_line_height", 'I', "40", "The vertical distance between two lines of text in the image, e.g., in the footer."));
                 settings.add(new Setting("PTGLgraphComputation_I_img_min_img_height", 'I', "160", "The minimum size of the image area where the graph is drawn."));
                 settings.add(new Setting("PTGLgraphComputation_I_img_min_arc_height", 'I', "100", "The minimum size of the arc area within the image area."));
-                settings.add(new Setting("PTGLgraphComputation_I_img_minPageWidth", 'I', "800", "The minimum image width in pixels, used in output images."));
+                settings.add(new Setting("PTGLgraphComputation_I_img_minPageWidth", 'I', "900", "The minimum image width in pixels, used in output images."));
                 settings.add(new Setting("PTGLgraphComputation_I_img_minPageHeight", 'I', "600", "The minimum image height in pixels, used in output images."));
                 break;
                 

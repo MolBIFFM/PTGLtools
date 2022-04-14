@@ -2491,12 +2491,19 @@ public class Main {
             }
 
             // write the dssplig file
-            if(! silent) {
-                System.out.println("Writing DSSP ligand file for residues...");
+            if (FileParser.getWhichSseInfo().equals("dssp3")){
+                if(! silent) {
+                    System.out.println("Writing DSSP ligand file for residues...");
+                }
+                //writeDsspLigFile(dsspFile, dsspLigFile, cInfo, residues);
+                writeOrderedDsspLigFile(dsspFile, dsspLigFile, molecules);
             }
-            //writeDsspLigFile(dsspFile, dsspLigFile, cInfo, residues);
-            writeOrderedDsspLigFile(dsspFile, dsspLigFile, molecules);
-
+            else{
+                if (! silent) {
+                    DP.getInstance().i("skipping the creation of a dssplig file. That is only done if a .dssp file is passed.");
+                }
+            }
+            
             // write chains file
             if(! silent) {
                 System.out.println("Writing chain file...");
@@ -11134,7 +11141,7 @@ public class Main {
             // Print DSSP residue number, PDB residue number, chainName, AA name in 1 letter code and SSE summary letter for ligand
             //      '   47   47 A E  E'
 
-            out.printf(loc, "  %3d  %3d %1s %1s  %1s", l.getDsspNum(), l.getPdbNum(), l.getChainID(), l.getAAName1(), Settings.get("plcc_S_ligSSECode"));
+            out.printf(loc, "  %3d  %3d %1s %1s  %1s", l.getDsspNum(), l.getPdbNum(), l.getChainID(), l.getAAName1(), Settings.get("PTGLgraphComputation_S_ligSSECode"));
 
             // Print structure detail block (empty for ligand), beta bridge 1 partner residue number (always 0 for ligands), beta bridge 2 partner residue number (always 0 for ligands),
             //  bet sheet label (empty (" ") for ligands) and solvent accessible surface (SAS) of this residue (not required by PTGL, just set to some value)
@@ -11264,7 +11271,7 @@ public class Main {
         //System.out.println("-X | --check-ssects <f>    : compare the computed SSE level contacts to those in bet_neo format file <f> and print differences");
         //System.out.println("-y | --write-geodat        : write the computed SSE level contacts in geo.dat format to a file (file name: <pdbid>_<chain>.geodat)");        
         System.out.println("-Y | --skip-vast <atoms>   : abort program execution for PDB files with more than <atoms> atoms before contact computation (for cluster mode, try 80000).");        
-        System.out.println("-z | --ramaplot            : draw a ramachandran plot of each chain to the file '<pdbid>_<chain>_plot.svg'");        
+        //System.out.println("-z | --ramaplot            : draw a ramachandran plot of each chain to the file '<pdbid>_<chain>_plot.svg'");        
         System.out.println("-Z | --silent              : silent mode. do not write output to STDOUT."); 
         System.out.println("     --verbose             : verbose mode. more detailed output."); 
         System.out.println("   --compute-graph-metrics : compute graph metrics like cluster coefficient for PGs. Slower!");
@@ -11289,6 +11296,7 @@ public class Main {
         System.out.println("");
         
         System.out.println("EXAMPLES: java -jar PTGLgraphComputation.jar 8icd");
+        System.out.println("          java -jar PTGLgraphComputation.jar 8icd -d annotated_mmCIF_8icd.cif");
         System.out.println("          java -jar PTGLgraphComputation.jar 8icd -D 2 -d /tmp/dssp/8icd.dssp -p /tmp/pdb/8icd.pdb");
         System.out.println("          java -jar PTGLgraphComputation.jar 8icd -o /tmp");
         System.out.println("          java -jar PTGLgraphComputation.jar 1o1d -E");
@@ -11296,8 +11304,10 @@ public class Main {
         System.out.println("          java -jar PTGLgraphComputation.jar none -m PNG -ddb 8icd A albelig ~/img/protein_graph");
         System.out.println("          java -jar PTGLgraphComputation.jar 6cbe -I --cg-threshold 2");
         System.out.println("");
-        System.out.println("REQUIRED INPUT FILES: This program requires the PDB file and the DSSP file of a protein.");
-        System.out.println("                      You can find PDB files at https://rcsb.org and the DSSP program as well as download options at https://swift.cmbi.umcn.nl/gv/dssp/.");
+        System.out.println("REQUIRED INPUT FILES: This program requires the PDB file of a protein.");
+        System.out.println("                      The additional usage of an annotated mmCIF file from dssp4 (containing the SSE-classification) via command line option '-d' is strongly advised.");
+        System.out.println("                      You can find PDB files at https://rcsb.org.");
+        System.out.println("                      The DSSP program as well as download options can be found at https://swift.cmbi.umcn.nl/gv/dssp/ and https://github.com/PDB-REDO/dssp");
         System.out.println("                      This does not apply to options that don't use it (marked with * above), of course.");
         System.out.println("                      A PDBID still has to be given as first argument, it will be ignored though (use 'NONE').");
         System.out.println("");

@@ -11,6 +11,7 @@ package io;
 // imports
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Objects;
 import settings.Settings;
 import proteinstructure.AminoAcid;
 import proteinstructure.Residue;
@@ -410,14 +411,17 @@ public class DsspParser {
         return null;
     }
     
-    // md: doc
-    // no optimization because it's only for retrofitting
+    /**
+     * Get the 1-letter SSE-information for a residue.
+     * @param requestedDsspNum the dssp number for the residue
+     * @return 1-letter SSE-information
+     */
     protected static String grabSseStringForDsspNum(Integer requestedDsspNum){
         String dline;
         
         for (Integer i = dsspDataStartLine - 1; i < dsspLines.size(); i++) {
             dline = dsspLines.get(i);
-            if (requestedDsspNum.equals(getDsspNumFromLine(dline))){
+            if (requestedDsspNum != null && Objects.equals(getDsspNumFromLine(dline), requestedDsspNum)){
                 return dline.substring(16, 17);
             }
         }

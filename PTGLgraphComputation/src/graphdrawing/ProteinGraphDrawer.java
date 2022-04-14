@@ -57,6 +57,8 @@ import tools.PlccUtilities;
  * @author spirit
  */
 public class ProteinGraphDrawer {
+    
+    private static final String AUTHOR_SSE_WARNING = "Created with author classification of SSEs. Results can't be compared to graphs of other proteins!";
 
     /**
      * Draws the SEQ legend for the graph at the given position. This legend is not suitable for other folding graph notations but SEQ, because their edges are different.
@@ -170,6 +172,9 @@ public class ProteinGraphDrawer {
         
         String proteinHeader = "ADJ " + pg.getGraphType() + " folding graph " + fg.getFoldingGraphFoldName() + " (# " + fg.getFoldingGraphNumber() + ") of PDB entry " + pg.getPdbid() + ", chain " + pg.getChainid() + "";
         proteinHeader += "\n" + Settings.getImagesCreatorVersionLine();
+        if (FileParser.getWhichSseInfo().equals("author")){
+            proteinHeader += "\n" + AUTHOR_SSE_WARNING;
+        }
         
         String notation = "ADJ notation: '" + pnfr.adjNotation + "'";
         Integer stringHeight = fontMetrics.getAscent();
@@ -966,6 +971,9 @@ public class ProteinGraphDrawer {
         
         String proteinHeader = "RED " + pg.getGraphType() + " folding graph " + fg.getFoldingGraphFoldName() + " (# " + fg.getFoldingGraphNumber() + ") of PDB entry " + pg.getPdbid() + ", chain " + pg.getChainid() + "";
         proteinHeader += "\n" + Settings.getImagesCreatorVersionLine();
+        if (FileParser.getWhichSseInfo().equals("author")){
+            proteinHeader += "\n" + AUTHOR_SSE_WARNING;
+        }
         
         String notation = "RED notation: '" + pnfr.redNotation + "'";
         Integer stringHeight = fontMetrics.getAscent();
@@ -1171,6 +1179,9 @@ public class ProteinGraphDrawer {
         
         String proteinHeader = "DEF " + pg.getGraphType() + " folding graph " + fg.getFoldingGraphFoldName() + " (# " + fg.getFoldingGraphNumber() + ") of PDB entry " + pg.getPdbid() + ", chain " + pg.getChainid() + "";
         proteinHeader += "\n" + Settings.getImagesCreatorVersionLine();
+        if (FileParser.getWhichSseInfo().equals("author")){
+            proteinHeader += "\n" + AUTHOR_SSE_WARNING;
+        }
         
         Integer stringHeight = fontMetrics.getAscent();
         String sseNumberSeq;
@@ -1528,7 +1539,7 @@ public class ProteinGraphDrawer {
         String proteinHeader = "" + pg.getGraphType() + " Protein Graph of PDB entry " + pg.getPdbid() + ", chain " + pg.getChainid() + "";
         proteinHeader += "\n" + Settings.getImagesCreatorVersionLine();
         if (FileParser.getWhichSseInfo().equals("author")){
-            proteinHeader += "\nCreated with author classification of SSEs. Results can't be compared to graphs of other proteins!";
+            proteinHeader += "\n" + AUTHOR_SSE_WARNING;
         }
         
         Integer stringHeight = fontMetrics.getAscent();
@@ -2450,6 +2461,9 @@ public class ProteinGraphDrawer {
         
         String proteinHeader = "SEQ " + pg.getGraphType() + " folding graph " + fg.getFoldingGraphFoldName() + " (# " + fg.getFoldingGraphNumber() + ") of PDB entry " + pg.getPdbid() + ", chain " + pg.getChainid() + "";
         proteinHeader += "\n" + Settings.getImagesCreatorVersionLine();
+        if (FileParser.getWhichSseInfo().equals("author")){
+            proteinHeader += "\n" + AUTHOR_SSE_WARNING;
+        }
         
         String notation = "SEQ notation: '" + pnfr.seqNotation + "'";
         Integer stringHeight = fontMetrics.getAscent();
@@ -2734,6 +2748,9 @@ public class ProteinGraphDrawer {
         
         String proteinHeader = "KEY " + pg.getGraphType() + " folding graph " + fg.getFoldingGraphFoldName() + " (# " + fg.getFoldingGraphNumber() + ") of PDB entry " + pg.getPdbid() + ", chain " + pg.getChainid() + "";
         proteinHeader += "\n" + Settings.getImagesCreatorVersionLine();
+        if (FileParser.getWhichSseInfo().equals("author")){
+            proteinHeader += "\n" + AUTHOR_SSE_WARNING;
+        }
         
         String notation = "KEY notation: '" + pnfr.keyNotation + "'";
         if (debug) {

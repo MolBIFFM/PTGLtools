@@ -79,8 +79,8 @@ class CifParser {
     private static Chain tmpChain = null;
     private static Ligand lig = null;
     private static RNA rna = null;
-    private static int newDsspNum = 0;
-    private static Molecule newMol = null;
+    private static int numOfResidues = 0;
+    private static Molecule newRes = null;
     private static Integer latestSseRangeIndex = 0;
     private static boolean inSse = false;
     private static String whichSseInfo = null;
@@ -161,10 +161,6 @@ class CifParser {
         
         if (whichSseInfo.equals("dssp4")) {
             SseParser.createSseRangesFromDsspCifFile();  // fills the class-variable chainwiseSseDict (has chainIDs as keys and ArrayLists of SSE-ranges as values) with the SSE-ranges given from dssp
-            if (chainwiseSseDict.isEmpty()){
-                DP.getInstance().e("SSE-file given (annotated mmcif from dssp), but no SSE-information was found. Exiting now.");
-                System.exit(1);
-            }
         }
         
         lastMol = new Residue(); // create artificial molecule to fill so there is no NullPointerException, it will be overwritten once atoms are parsed
@@ -337,8 +333,8 @@ class CifParser {
                     // obtain sse-info. It is already done in case a 'SSE-file' is given.
                     // Otherwise we will have to parse the author specification given in this cif file in the categories _struct_conf and _struct_sheet_range
                     if (whichSseInfo.equals("author")){
-                        System.out.println("handle struct conf on line " + line);
-                        handleStructConfLine();
+                        System.out.println("handle struct conf on line " + line);  // md to delete
+                        handleStructConfLine(lineData, colHeaderPosMap);
                         break;
                     }
                 case "_struct_sheet_range":
@@ -653,19 +649,32 @@ class CifParser {
             }
             
             // check if SSE-info is present
-            if (chainwiseSseDict.isEmpty() && ! whichSseInfo.equals("dssp3")){  // if the user passed a .dssp file, the sse-info will be obtained directly from that file and no chainwiseSseDict will get constructed
-                DP.getInstance().w("CifParser", "Need SseRanges to assign a SSE to a residue, but found empty Sse-HashMap. Only ComplexGraph can be used.");
-            }
-            else if (whichSseInfo.equals("dssp3")){
-                ; // if we use the old dssp, we get the sse-string directly from that file and DON'T fill the chainwise sse-dict. That means we don't have to sort and print it
+            if (chainwiseSseDict.isEmpty()){
+                switch(whichSseInfo){
+                    case "dssp4":
+                        if (! silent) {
+                            DP.getInstance().e("CifParser", "SSE-file given (annotated mmCIF from dssp), but no SSE-information was found. Exiting now.");
+                            System.exit(1);
+                        }
+                    case "author":
+                        if (! silent) {
+                            DP.getInstance().w("CifParser", "Need SseRanges to assign a SSE to a residue, but found empty Sse-HashMap. Only ComplexGraph can be used.");
+                        }
+                    case "dssp3":
+                        ;  // if we use the old .dssp file, we get the sse-string directly from that file and DON'T fill the chainwise sse-dict. So it's expected, that the chainwiseSseDict is empty
+                }
             }
             else{
-                // sorting the lists of sseRanges. Because when we read the lines we simply added them to the list without ensuring the correct order
-                // then we remove duplicate sseRanges. Those can occur because one strand may be part of multiple sheets or may be counted twice for one sheet
-                // we do those steps chainwise because the sseRanges are stored chainwise. And that's because we can't deduce the order of chains from just the sseRanges
-                //   imagine 3 chains: A,B,C where chain B does not contain Helices but does contain sheets. Since we parse struct_conf (=Helices) first,
-                //   we infer the order A-C. When we eventually parse struct_sheet_range (=strands), we find a chain B and would add it at the end, yielding the (wrong) order A-C-B. 
-                //   This issue gets aggravated because autors don't have to name chains alphabetically.
+                /* chainwiseSseDict isn't empty, so we will sort the lists of sseRanges. That has to be done because when we parse the author SSE-information,
+                we simply add a new SSE to the ArrayList of its chain without ensuring its order. And since we add all helices first and all strands second,
+                the order will certainly not be correct. Dssp states the SSEs in the _struct_conf category already in the correct order, but we will check it anyway.
+                Better safe than sorry and it won't create much runtime/memory overhead.
+                Then we remove duplicate sseRanges. Those can occur because one strand may be part of multiple sheets (-> named twice) or may be counted twice for one sheet
+                we do those steps chainwise because the sseRanges are stored chainwise. And that's because we can't deduce the order of chains from the sseRanges alone
+                  imagine 3 chains: A,B,C where chain B does not contain Helices but does contain sheets. Since we parse struct_conf (=Helices) first,
+                  we infer the order A-C. When we eventually parse struct_sheet_range (=strands), we find a chain B and would add it at the end, yielding the (wrong) order A-C-B. 
+                  This issue gets aggravated because autors don't have to name chains alphabetically.
+                */
                 for (String i : chainwiseSseDict.keySet()){
                     Collections.sort(chainwiseSseDict.get(i), (range1, range2) -> determineOrderOfSseRanges(range1, range2));
                     chainwiseSseDict.put(i, removeDuplicatesFromSortedList(chainwiseSseDict.get(i)));
@@ -730,8 +739,6 @@ class CifParser {
             System.out.println("   PDB: No model column. Creating default model '1'");
         }
         
-        // md check: wenn dieser "chain-block" wieder entkommentiert wird, ist die newDsspNum wieder ungleich zur alten
-
         // - - chain - -
         // check for a new chain (always hold the current)
         // get chain ID
@@ -898,39 +905,38 @@ class CifParser {
 
                 //md start
                 if (checkType(Molecule.RESIDUE_TYPE_AA) && entityInformation.get(String.valueOf(entityID)).get("type").equals("polymer")) {
-                    newDsspNum++;
-                    newMol = new Residue();  // md check: newMol in newRes umbenennen?
-                    newMol.setPdbNum(molNumPDB);
-                    newMol.setDsspNum(assignDsspNum());  // md: using a "dsspNum", but it's just an incremental variable from PTGL itself. It was extracted from .dssp file in earlier versions
-                    newMol.setChainID(chainID);
+                    numOfResidues++;
+                    newRes = new Residue();  // md check: newRes in newRes umbenennen?
+                    newRes.setPdbNum(molNumPDB);
+                    newRes.setDsspNum(assignDsspNum());  // md: using a "dsspNum", but it's just an incremental variable from PTGL itself. It was extracted from .dssp file in earlier versions
+                    newRes.setChainID(chainID);
 
-                    newMol.setType(Residue.RESIDUE_TYPE_AA);
-                    newMol.setiCode(iCode);
-                    newMol.setAAName1(Residue.getAAName1fromAAName3(molNamePDB));
-                    newMol.setModelID(m.getModelID());
-                    newMol.setChain(tmpChain);
-                    tmpChain.addMolecule(newMol);
-                    newMol.setName3(molNamePDB);
-                    newMol.setEntityID(entityID);                    
+                    newRes.setType(Residue.RESIDUE_TYPE_AA);
+                    newRes.setiCode(iCode);
+                    newRes.setAAName1(Residue.getAAName1fromAAName3(molNamePDB));
+                    newRes.setModelID(m.getModelID());
+                    newRes.setChain(tmpChain);
+                    tmpChain.addMolecule(newRes);
+                    newRes.setName3(molNamePDB);
+                    newRes.setEntityID(entityID);                    
 
                     if (!whichSseInfo.equals("dssp3")){
-                        newMol.setSSEString(acquireSseString()); // get the sse-string from the chainwiseSseDict
+                        newRes.setSSEString(acquireSseString()); // get the sse-string from the chainwiseSseDict
                     }
                     else{  // get the dsspNumber from the dssp-file for the curr res. Then grab the line with that dsspNumber and extract the sseString
-                        newMol.setSSEString(DsspParser.grabSseStringForDsspNum(DsspParser.getDsspResNumForPdbFields(molNumPDB, chainID, iCode)));
+                        newRes.setSSEString(DsspParser.grabSseStringForDsspNum(DsspParser.getDsspResNumForPdbFields(molNumPDB, chainID, iCode)));
                     }
 
 
                     lastChainID = chainID;  // md: is this needed? oder ist das iwienur für rna und lig
-                    FileParser.s_molecules.add(newMol);  // md: auch die komische s_indices Liste füllen?
-                    // md to delete: replace tmpMol in the s_molecules list. just temporarily until tmpMol isn't created in the first place
-//                        int oldMolIndex = FileParser.s_molecules.indexOf(tmpMol);
-//                        FileParser.s_molecules.set(oldMolIndex, newMol);
+                    FileParser.s_molecules.add(newRes);
+                    FileParser.s_residueIndices.add(FileParser.s_molecules.size() - 1);
 
-                    DP.getInstance().d("MD: new residue in line " + numLine + " | " + newMol);
-                    //System.out.println(tmpMol.toString() + "\n" + newMol.toString());
 
-                    lastMol = newMol;
+                    DP.getInstance().d("MD: new residue in line " + numLine + " | " + newRes);
+                    //System.out.println(tmpMol.toString() + "\n" + newRes.toString());
+
+                    lastMol = newRes;
 
                 }
                 else{
@@ -1177,18 +1183,20 @@ class CifParser {
     /**
      * Handles lines starting with _struct_conf.
      * Creates a String[] representing the sse and adds that to chainwiseSseDict.
-     * This category empirically only contains helices, but according to the documentation
-     * different secondary structure elements can be specified in this categorty.
+     * This function will get called from the SseParser too, which is why we can't use class variables
+     * like in most other 'handle functions'. Therefore the appropriate class variables have to be passed
+     * as argument, when this function is called.
+     * @param dataOfLine lineData class variable (values of the current line as String array
+     * @param currColHeaderPosMap colHeaderPosMap of the class/Parser, which calls this function
      */
-    private static void handleStructConfLine(){
+    protected static void handleStructConfLine(String[] dataOfLine, HashMap<String,Integer> currColHeaderPosMap){
         // extract important data from the _struct_conf-line (which SSE as well as it's start and end residue)
-        // though unlikely, I suppose there are pdb-entries where the author specified all SSEs in this category. Therefore we also need the identifier of the SSE
-        String SseStructure = lineData[colHeaderPosMap.get("conf_type_id")];  
-        String sseChain = lineData[colHeaderPosMap.get("beg_auth_asym_id")];
-        String startIndexStr = lineData[colHeaderPosMap.get("beg_auth_seq_id")];
-        String startICode = lineData[colHeaderPosMap.get("pdbx_beg_PDB_ins_code")];
-        String endIndexStr = lineData[colHeaderPosMap.get("end_auth_seq_id")];
-        String endICode = lineData[colHeaderPosMap.get("pdbx_end_PDB_ins_code")];
+        String SseStructure = dataOfLine[currColHeaderPosMap.get("conf_type_id")];  
+        String sseChain = dataOfLine[currColHeaderPosMap.get("beg_auth_asym_id")];
+        String startIndexStr = dataOfLine[currColHeaderPosMap.get("beg_auth_seq_id")];
+        String startICode = dataOfLine[currColHeaderPosMap.get("pdbx_beg_PDB_ins_code")];
+        String endIndexStr = dataOfLine[currColHeaderPosMap.get("end_auth_seq_id")];
+        String endICode = dataOfLine[currColHeaderPosMap.get("pdbx_end_PDB_ins_code")];
         
         // if there is no iCode present, set the variable to " " to be consistent and compatible with the existing code
         if (startICode.equals("?") || startICode.equals(".")){startICode = " ";}
@@ -1344,20 +1352,20 @@ class CifParser {
             }
             inSse = false;
             latestSseRangeIndex++;
-            return PTGLdsspReduction(currSse);
+            return sseKeywordToOneLetter(currSse);
         }
         else if (chainID.equals(chainOfCurrSse) && molNumPDB.equals(currSseStartNum) && iCode.equals(currSseStartIC)){
             if (Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 3){
                 DP.getInstance().d("entering SSE");
             }
             inSse = true;
-            return PTGLdsspReduction(currSse);
+            return sseKeywordToOneLetter(currSse);
         }
         else if (inSse){
             if (Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 3){
                 DP.getInstance().d("in SSE");
             }
-            return PTGLdsspReduction(currSse);
+            return sseKeywordToOneLetter(currSse);
         }
         else {
             if (Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 3){
@@ -1372,7 +1380,7 @@ class CifParser {
      * @param s multiple-letter SSE-identifier
      * @return 1-letter identifier
      */
-    private static String PTGLdsspReduction(String s){
+    private static String sseKeywordToOneLetter(String s){
         switch(s) {
             case "HELX_RH_AL_P": return "H";
             case "HELX_RH_3T_P": return "G";
@@ -1388,7 +1396,7 @@ class CifParser {
             case "HELX_P": return "H";  // name used by authors to define a helix. The names above are used by dssp.
             default: 
                 if (! silent){
-                    DP.getInstance().w("Found unknown SSE-definition >" + s + "<. Returning \" \", but data loss may occur.");
+                    DP.getInstance().w("Found unknown SSE-definition >" + s + "<. Returning \" \" but data loss will occur.");
                 }
                 return " ";
         }
@@ -1872,8 +1880,8 @@ class CifParser {
      */
     protected static Integer assignDsspNum () {
 //        return DsspParser.lastUsedDsspNum + RnaTreatedNum + ligandsTreatedNum + freeResTreatedNum;
-        //System.out.println("MD mark " + newDsspNum + ", " + RnaTreatedNum + ", " + ligandsTreatedNum + ", " + freeResTreatedNum);
-        return newDsspNum + RnaTreatedNum + ligandsTreatedNum; // + freeResTreatedNum;  // md to delete (ganze comments in der Fkt)
+        //System.out.println("MD mark " + numOfResidues + ", " + RnaTreatedNum + ", " + ligandsTreatedNum + ", " + freeResTreatedNum);
+        return numOfResidues + RnaTreatedNum + ligandsTreatedNum; // + freeResTreatedNum;  // md to delete (ganze comments in der Fkt)
     }
       
 }

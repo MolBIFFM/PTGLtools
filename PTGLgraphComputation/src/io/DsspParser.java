@@ -135,8 +135,7 @@ public class DsspParser {
             // The PDB residue number string may still contain the iCode (e.g. '123A', thus we cannot simply try to cast it to Integer
             try{
                 tmpPdbResNum = dline.substring(7, 11).trim();
-//                foundChain = dline.substring(11, 12).trim();
-                foundChain = dline.substring(159, 163).trim(); // AUTHCHAIN column 160-163. md: we now create the residues from cif file and use auth-info. Therefore we need the authchain here
+                foundChain = dline.substring(159, 163).trim(); // AUTHCHAIN column 160-164. md: we now create the residues from cif file and use auth-info. Therefore we need the authchain here
 
                 if(tmpPdbResNum.length() == 0) { // The next command (lastChar) would be out of bounds anyway if this code is executed
                     DP.getInstance().w("Length of PDB number at line " + (i + 1) + " of DSSP file is 0." );

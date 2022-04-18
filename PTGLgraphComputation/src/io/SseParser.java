@@ -11,7 +11,6 @@ package io;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.HashMap;
 import settings.Settings;
 import tools.DP;
@@ -44,7 +43,6 @@ public class SseParser {
         try{
             BufferedReader in = new BufferedReader(new FileReader(sseFile));
             while ((line = in.readLine()) != null){
-                System.out.println("============================================================================\n" + line);
                 if (line.startsWith("#")){
                     inStructConf = false;  // '#' closes a category, so we can't possibly be in the struct_conf category
                     lineData = null;  // clear lineData. so if it is accessed after the struct_conf category was parsed, it doesn't contain any misleading data
@@ -53,18 +51,15 @@ public class SseParser {
                     inStructConf = true;
                     columnHeader = line.split("\\.")[1].trim();
                     colHeaderPosMap.put(columnHeader, colHeaderPosMap.size());
-                    System.out.println("added " + columnHeader + " to colHeaderPosMap");
-                    System.out.println(colHeaderPosMap);
                 }
                 else if (inStructConf && ! line.startsWith("_")){  // if we are in the struct_conf category and the line does not start with a '_', is must be a line containing data --> create SSE from that line
                     lineData = CifParser.lineToArray(line);
-                    System.out.println("parsed the line to: " + Arrays.toString(lineData) + " now calling handle");
                     CifParser.handleStructConfLine(lineData, colHeaderPosMap);
                 }
             }
         } catch (IOException e) {
-            System.err.println("ERROR: Could not parse SSE file.");
-            System.err.println("ERROR: Message: " + e.getMessage());
+            DP.getInstance().e("Could not parse SSE file, exiting.");
+            DP.getInstance().e("Message: " + e.getMessage());
             System.exit(1);
         }
     }

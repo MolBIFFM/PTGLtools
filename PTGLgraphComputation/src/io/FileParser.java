@@ -600,10 +600,10 @@ public class FileParser {
         return whichSseInfo;
     }
     
-    public static void initData(String pdbFile, String dsspFile, String outputDir) {
+    public static void initData(String pdbFile, String sseFile, String outputDir) {
         FileParser.initVariables(pdbFile);
         
-        if (dsspFile.equals("")){
+        if (sseFile.equals("")){
             whichSseInfo = "author";
             if (! silent){
                 DP.getInstance().w("\n    ###############" + 
@@ -613,16 +613,16 @@ public class FileParser {
                         "\n    ###############");
             }
         }
-        else if (dsspFile.endsWith(".dssp")){
+        else if (sseFile.endsWith(".dssp")){
             whichSseInfo = "dssp3";
-            DsspParser.initVariables(dsspFile);
+            DsspParser.initVariables(sseFile);
             if (! silent){
                 DP.getInstance().w("Old .dssp file given. Filetype isn't supported anymore, results may be wrong. Please use the annotated mmCIF file that dssp 4 produces.");
             }
         }
         else{
             whichSseInfo = "dssp4";
-            SseParser.setSseFile(dsspFile);
+            SseParser.setSseFile(sseFile);
         }
         
         if (settingCif()) {

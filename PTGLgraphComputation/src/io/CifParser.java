@@ -120,7 +120,7 @@ class CifParser {
      * Calls hidden FileParser method initVariables and inits additional CIF Parser variables.
      * @param pf PDB file path
      */
-    @Deprecated  // md: seems outdated
+    @Deprecated  // 15.04.2022: seems outdated
     private static void initVariables(String pf) {
         metaData = new HashMap<>();
     }
@@ -153,7 +153,7 @@ class CifParser {
     
     
     /**
-     * Goes through all lines of mmCIF PDB and DSSP file and applies appropriate function to handle each line.
+     * Goes through all lines of mmCIF PDB file and applies appropriate function to handle each line.
      * Goes through mmCIF file exactly once, saves only what is needed and matches atom<->molecule<->chain<->model on the fly.
      * @return ignore (?)
      */
@@ -333,13 +333,11 @@ class CifParser {
                     // obtain sse-info. It is already done in case a 'SSE-file' is given.
                     // Otherwise we will have to parse the author specification given in this cif file in the categories _struct_conf and _struct_sheet_range
                     if (whichSseInfo.equals("author")){
-                        System.out.println("handle struct conf on line " + line);  // md to delete
                         handleStructConfLine(lineData, colHeaderPosMap);
                         break;
                     }
                 case "_struct_sheet_range":
                     if (whichSseInfo.equals("author")){
-                        System.out.println("handle struct sheet range on line " + line);
                         handleStructSheetRangeLine();
                         break;
                     }
@@ -635,15 +633,10 @@ class CifParser {
             for (int i = 0; i < authCols.length; i++) {
                 if (colHeaderPosMap.get(authCols[i]) == null) {
                     colHeaderPosMap.put(authCols[i], colHeaderPosMap.get(pdbCols[i]));
-                    // md: folgendes ist nicht möglich, da wir doch oft nach label_X fragen. Wenn wir label durch auth ersetzten, um die gleiche Größe zu behalten, bekommen wirll eine nullPointerEx wenn wir nach label_X fragen
-//                    colHeaderPosMap.remove(pdbCols[i]);  // remove the label_X key from the dict to keep the same size of the dict. 
-                                                         // Otherwise a line will have fewer values than there are keys in the colHeaderPos map (because two keys point to the same value)
-                                                         // and the parser would think a line is interrupted, therefore merging it with the next one.
-                                                         // That would effectively remove half of the Atom lines
                     if (! silent) {
                         DP.getInstance().w("Using " + pdbCols[i] + " instead of "+ 
                                 "missing column " + authCols[i]);
-                        DP.getInstance().w("This is work in progress, current output will be WRONG!");
+                        DP.getInstance().w("This is work in progress, current output WILL be wrong!");
                     }
                 }
             }
@@ -652,10 +645,8 @@ class CifParser {
             if (chainwiseSseDict.isEmpty()){
                 switch(whichSseInfo){
                     case "dssp4":
-                        if (! silent) {
-                            DP.getInstance().e("CifParser", "SSE-file given (annotated mmCIF from dssp), but no SSE-information was found. Exiting now.");
-                            System.exit(1);
-                        }
+                        DP.getInstance().e("CifParser", "SSE-file given (annotated mmCIF from dssp), but no SSE-information was found. Exiting now.");
+                        System.exit(1);
                     case "author":
                         if (! silent) {
                             DP.getInstance().w("CifParser", "Need SseRanges to assign a SSE to a residue, but found empty Sse-HashMap. Only ComplexGraph can be used.");
@@ -680,13 +671,13 @@ class CifParser {
                     chainwiseSseDict.put(i, removeDuplicatesFromSortedList(chainwiseSseDict.get(i)));
                 }
 
-                if (Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 0) { // md: final auf level 1 erhöhen
+                if (Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 1) {
                     // counting how many sseRanges were found
                     int count = 0;
                     for (String dictChainID : chainwiseSseDict.keySet()){
                         count = count + chainwiseSseDict.get(dictChainID).size();
                     }
-                    // printing the SSE-list for of chains
+                    // printing the SSE-list for all chains
                     DP.getInstance().p("Found the following " + count + " SSE-ranges in the chainwise-SseRanges-HashMap:");
                     for (String dictChainID : chainwiseSseDict.keySet()){
                         System.out.println("Chain " + dictChainID + ":");
@@ -694,8 +685,6 @@ class CifParser {
                             System.out.println(Arrays.toString(sse));
                         }
                     }                
-                    DP.getInstance().p("Now commencing with ATOM-lines");  // to delete
-                    System.out.println("============================");
                 }
             }
 
@@ -775,7 +764,7 @@ class CifParser {
 
         // PDBx field alias atom record name
         if (colHeaderPosMap.get("group_PDB") != null) {
-            if (colHeaderPosMap.get("group_PDB") < 0) { // todo verify nie ins if, weil Wert >= 0 returned wird
+            if (colHeaderPosMap.get("group_PDB") >= 0) {
                 atomRecordName = lineData[colHeaderPosMap.get("group_PDB")];
             }
         } else {
@@ -877,76 +866,7 @@ class CifParser {
             }
         }
         
-        // >> AA <<
-        // update lastMol if the atom in the current line belongs to a new molecule than the previous line 
-        //     -> enables getting DsspResNum for atom from res
-        // match res <-> chain here
-        // load new Residue into lastMol if we approached next Residue, otherwise only add new atom
-        
-        if (! (Objects.equals(molNumPDB, lastMol.getPdbNum()) && chainID.equals(lastMol.getChainID()) && iCode.equals(lastMol.getiCode()))) {           
-//            tmpMol = FileParser.getResidueFromList(molNumPDB, chainID, iCode);  // null if not in DSSP data -> rna/ligand/free AA
-            // check that a peptide residue could be found                   
-            if (checkType(Molecule.RESIDUE_TYPE_LIGAND) || entityInformation.get(String.valueOf(entityID)).get("type").equals("non-polymer")) {
-                // residue is not in DSSP file and is not part of a chain -> must be free (modified) amino acid, ligand or RNA
-                if (! silent) {
-                    // print note only once
-                    if (! molNumPDB.equals(lastLigandNumPDB))
-
-                        if(Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 1) {
-                            System.out.println("   PDB: Found a ligand, RNA or free (modified) amino acid at PDB# " + molNumPDB + ". Free amino acids are treated as ligands.");
-                        }
-                }
-
-            } else {
-                
-                if(Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 2) {  // md: wut is this
-                    System.out.println("    [DEBUG LV 2] Found an amino acid at PDB# " + molNumPDB + " that is not listed in the DSSP file (might be at a chain break). Parsing it as part of a chain.");
-                }
-
-                //md start
-                if (checkType(Molecule.RESIDUE_TYPE_AA) && entityInformation.get(String.valueOf(entityID)).get("type").equals("polymer")) {
-                    numOfResidues++;
-                    newRes = new Residue();  // md check: newRes in newRes umbenennen?
-                    newRes.setPdbNum(molNumPDB);
-                    newRes.setDsspNum(assignDsspNum());  // md: using a "dsspNum", but it's just an incremental variable from PTGL itself. It was extracted from .dssp file in earlier versions
-                    newRes.setChainID(chainID);
-
-                    newRes.setType(Residue.RESIDUE_TYPE_AA);
-                    newRes.setiCode(iCode);
-                    newRes.setAAName1(Residue.getAAName1fromAAName3(molNamePDB));
-                    newRes.setModelID(m.getModelID());
-                    newRes.setChain(tmpChain);
-                    tmpChain.addMolecule(newRes);
-                    newRes.setName3(molNamePDB);
-                    newRes.setEntityID(entityID);                    
-
-                    if (!whichSseInfo.equals("dssp3")){
-                        newRes.setSSEString(acquireSseString()); // get the sse-string from the chainwiseSseDict
-                    }
-                    else{  // get the dsspNumber from the dssp-file for the curr res. Then grab the line with that dsspNumber and extract the sseString
-                        newRes.setSSEString(DsspParser.grabSseStringForDsspNum(DsspParser.getDsspResNumForPdbFields(molNumPDB, chainID, iCode)));
-                    }
-
-
-                    lastChainID = chainID;  // md: is this needed? oder ist das iwienur für rna und lig
-                    FileParser.s_molecules.add(newRes);
-                    FileParser.s_residueIndices.add(FileParser.s_molecules.size() - 1);
-
-
-                    DP.getInstance().d("MD: new residue in line " + numLine + " | " + newRes);
-                    //System.out.println(tmpMol.toString() + "\n" + newRes.toString());
-
-                    lastMol = newRes;
-
-                }
-                else{
-                    System.out.println("not the case: " + Arrays.toString(lineData) + " Line: " + numLine); // to delete
-                }
-                //md end
-            
-            }
-        }
-
+        // create atom here but fill it later. It needs to be created here, because it is refereced in the rna/lig creation (to set ATOMTYPE_IGNORED_LIGAND and return if applicable)
         Atom a = new Atom();
 
         if (FileParser.isIgnoredAtom(chemSym)) {
@@ -958,16 +878,50 @@ class CifParser {
                 return;
             }
         }
-
-        // only ATOMs, not HETATMs, have a DSSP entry
-        if((Settings.getBoolean("PTGLgraphComputation_B_handle_hydrogen_atoms_from_reduce") && chemSym.trim().equals("H"))) {
-            a.setDsspResNum(null);
-        }
-        else {
-            a.setDsspResNum(lastMol.getDsspNum());
-        }
         
-        if ((checkType(Molecule.RESIDUE_TYPE_RNA) && entityInformation.get(String.valueOf(entityID)).get("type").equals("polymer"))) {  // Nucleotides are only parsed as RNA if they are polymers, not if they act as single ligands.
+        // >> AA <<
+        // update lastMol if the atom in the current line belongs to a new molecule than the previous line 
+        // match res <-> chain here
+        // load new Residue into lastMol if we approached next Residue, otherwise only add new atom
+
+            // md: diese if else blöcke nochmal durchgehen
+        if (checkType(Molecule.RESIDUE_TYPE_AA) && entityInformation.get(String.valueOf(entityID)).get("type").equals("polymer")) {
+            if (! (Objects.equals(molNumPDB, lastMol.getPdbNum()) && chainID.equals(lastMol.getChainID()) && iCode.equals(lastMol.getiCode()))) {
+                numOfResidues++;
+                newRes = new Residue();
+                newRes.setPdbNum(molNumPDB);
+                newRes.setDsspNum(assignSequentialNum());  // setting the "dsspNum", but it's just an incremental number from PTGL itself. It was extracted from the .dssp file in earlier versions, but is independent of DSSP by now
+                newRes.setChainID(chainID);
+                tmpChain.addMolecule(newRes);
+                newRes.setiCode(iCode);
+
+                newRes.setType(Residue.RESIDUE_TYPE_AA);
+                newRes.setAAName1(Residue.getAAName1fromAAName3(molNamePDB));
+                newRes.setName3(molNamePDB);
+                newRes.setModelID(m.getModelID());
+                newRes.setChain(tmpChain);
+                newRes.setEntityID(entityID);                    
+
+                if (!whichSseInfo.equals("dssp3")){
+                    newRes.setSSEString(acquireSseString()); // get the sse-string from the chainwiseSseDict
+                }
+                else{  // get the dsspNumber from the dssp-file for the curr res. Then grab the line with that dsspNumber and extract the sseString
+                    newRes.setSSEString(DsspParser.grabSseStringForDsspNum(DsspParser.getDsspResNumForPdbFields(molNumPDB, chainID, iCode)));
+                }
+
+
+                lastChainID = chainID;
+                FileParser.s_molecules.add(newRes);
+                FileParser.s_residueIndices.add(FileParser.s_molecules.size() - 1);
+
+                if(Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 1){
+                    DP.getInstance().d("Created new residue in line " + numLine + " | " + newRes);   
+                }
+
+                lastMol = newRes;
+            }
+        }
+        else if ((checkType(Molecule.RESIDUE_TYPE_RNA) && entityInformation.get(String.valueOf(entityID)).get("type").equals("polymer"))) {  // Nucleotides are only parsed as RNA if they are polymers, not if they act as single ligands.
             System.out.println("MDerr1: im rna-block");
             // >> RNA <<
             // if the line we are currently in belongs to the same molecule as the previous one, we only create a new atom for this line.
@@ -979,7 +933,7 @@ class CifParser {
                 rna.setType(Molecule.RESIDUE_TYPE_RNA);                
                 
                 RnaTreatedNum++;
-                rna.setDsspNum(assignDsspNum());
+                rna.setDsspNum(assignSequentialNum());
                 
                 rna.setChainID(chainID);
                 rna.setiCode(iCode);
@@ -1022,18 +976,21 @@ class CifParser {
                 }
             }       
         }
-        
         // If a molecule is not parsed at this point, it has to be a ligand
-        else if (checkType(Molecule.RESIDUE_TYPE_LIGAND) ||                                          // if the molecule is categorized as a ligand through chem_comp map
-                (entityInformation.get(String.valueOf(entityID)).get("type").equals("non-polymer"))) // if entity is defined as 'non-polymer' (e.g. free AA/RNA)
-            
-        {
+        else if (checkType(Molecule.RESIDUE_TYPE_LIGAND) ||                                           // if the molecule is categorized as a ligand through chem_comp map
+                (entityInformation.get(String.valueOf(entityID)).get("type").equals("non-polymer"))){ // if entity is defined as 'non-polymer' (e.g. free AA/RNA)
             // >> LIG <<
                      
             // idea: add always residue (for consistency) but atom only if it is not an ignored ligand
 
             // check if we have created ligand residue for s_residue
+            System.out.println("chainID: " + chainID + ", lastMol cID: " + lastMol.getChainID() + ", lastChainID: " + lastChainID); //md
             if( ! ( molNumPDB.equals(lastLigandNumPDB) && chainID.equals(lastChainID) ) ) {
+                if (! silent) {
+                        if(Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 1) {
+                                DP.getInstance().d("PDB: Found a ligand or free (modified) amino acid/RNA at PDB# " + molNumPDB + ". Free amino acids/RNA are treated as ligands.");
+                        }
+                }
 
                 // create new Residue from info, we'll have to see whether we really add it below though
                 lig = new Ligand();
@@ -1043,7 +1000,7 @@ class CifParser {
 
                 // assign fake DSSP Num increasing with each seen ligand
                 ligandsTreatedNum ++;
-                lig.setDsspNum(assignDsspNum());
+                lig.setDsspNum(assignSequentialNum());
                 
                 lig.setChainID(chainID);
                 lig.setiCode(iCode);
@@ -1104,16 +1061,19 @@ class CifParser {
                 // DP.getInstance().w("FP_CIF", " Ignored ligand atom of '" +  resNamePDB + "-" + molNumPDB + "', chain " + chainID + " (line " + numLine + ", ligand #" + ligandsTreatedNum + ", Fake DSSP #" + lig.getDsspResNum().toString() + ").");
                 return; // can we do this here? Does it cut off other important stuff? -> added to res but not atom (s.a.)
             }
-            else {
-                a.setAtomtype(Atom.ATOMTYPE_LIGAND);       // valid ligand
-                //a.setDsspResNum(getDsspResNumForPdbFields(molNumPDB, chainID, iCode));  // We can't do this because the fake DSSP residue number has not yet been assigned
+            // Atomtype (for not ignored atoms) is set at the end of the function
+//            else {
+//                a.setAtomtype(Atom.ATOMTYPE_LIGAND);       // valid ligand
+//                //a.setDsspResNum(getDsspResNumForPdbFields(molNumPDB, chainID, iCode));  // We can't do this because the fake DSSP residue number has not yet been assigned
+//            }
+        }
+        else{
+            if (! silent){
+                DP.getInstance().w("Didn't recoginze type of Atom # " + atomSerialNumber + ". This is probably a bug!");
             }
         }
 
-        // now create the new Atom
-
-        // lastMol may be NULL
-        // Note that the command above may have returned NULL, we care for that below
+        // lastMol may be NULL  // md: no it won't
 
         a.setPdbAtomNum(atomSerialNumber);
         a.setAtomName(atomName);
@@ -1122,13 +1082,16 @@ class CifParser {
         a.setChainID(chainID);        
         a.setChain(FileParser.getChainByPdbChainID(chainID));
         a.setPdbResNum(molNumPDB);
-        // we cant get the DSSP res num easily here and have to do it later (I guess)
-        // old parser seems to assign 0 here whatsoever so we just leave the default value there
-        // a.setDsspResNum(resNumDSSP);
         a.setCoordX(coordX);
         a.setCoordY(coordY);
         a.setCoordZ(coordZ);
         a.setChemSym(chemSym);
+        if((Settings.getBoolean("PTGLgraphComputation_B_handle_hydrogen_atoms_from_reduce") && chemSym.trim().equals("H"))) {
+            a.setDsspResNum(null);
+        }
+        else {
+            a.setDsspResNum(lastMol.getDsspNum());
+        }
 
         // from old parser, not working with models right now
         /*
@@ -1138,46 +1101,81 @@ class CifParser {
         }
         */
         
-            if (lastMol.getType() == Molecule.RESIDUE_TYPE_AA || lastMol.getType() == Molecule.RESIDUE_TYPE_RNA){
-                if (lastMol == null) {
-                    DP.getInstance().w("Molecule with PDB # " + molNumPDB + " of chain '" + chainID + "' with iCode '" + iCode + "' not listed in CIF data, skipping atom " + atomSerialNumber + " belonging to that residue (PDB line " + numLine.toString() + ").");
-                    return;
-                } else {
-                    if(Settings.getBoolean("PTGLgraphComputation_B_handle_hydrogen_atoms_from_reduce") && chemSym.trim().equals("H")) {
-                        lastMol.addHydrogenAtom(a);
-                    }
-                    else {
-                        // add Atom to list of atoms of current molecule as well as list of all atoms
-                        FileParser.s_atoms.add(a);
-                        if (checkType(Molecule.RESIDUE_TYPE_AA)){
-                            if(Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 2) {
-                                System.out.println("    [DEBUG LV 2] New AA atom added: " + a.toString());
-                            }
-                            a.setAtomtype(Atom.ATOMTYPE_AA);
-                            lastMol.addAtom(a);
-                        }
-                        if (checkType(Molecule.RESIDUE_TYPE_RNA)){
-                            if(Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 2) {
-                                System.out.println("    [DEBUG LV 2] New RNA atom added: " + a.toString());
-                            }
-                            a.setAtomtype(Atom.ATOMTYPE_RNA);
-                            a.setMolecule(rna);
-                            rna.addAtom(a);
-                        }
-                    }
-                }
+        // md delete
+//        if (lastMol.getType() == Molecule.RESIDUE_TYPE_AA || lastMol.getType() == Molecule.RESIDUE_TYPE_RNA){
+//            if (lastMol == null) {
+//                DP.getInstance().w("Molecule with PDB # " + molNumPDB + " of chain '" + chainID + "' with iCode '" + iCode + "' not listed in CIF data, skipping atom " + atomSerialNumber + " belonging to that residue (PDB line " + numLine.toString() + ").");
+//                return;
+//            } else {
+//                if(Settings.getBoolean("PTGLgraphComputation_B_handle_hydrogen_atoms_from_reduce") && chemSym.trim().equals("H")) {
+//                    lastMol.addHydrogenAtom(a);
+//                }
+//                else {
+//                    // add Atom to list of atoms of current molecule as well as list of all atoms
+//                    FileParser.s_atoms.add(a);
+//                    if (checkType(Molecule.RESIDUE_TYPE_AA)){
+//                        if(Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 2) {
+//                            System.out.println("    [DEBUG LV 2] New AA atom added: " + a.toString());
+//                        }
+//                        a.setAtomtype(Atom.ATOMTYPE_AA);
+//                        newRes.addAtom(a);
+//                    }
+//                    if (checkType(Molecule.RESIDUE_TYPE_RNA)){
+//                        if(Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 2) {
+//                            System.out.println("    [DEBUG LV 2] New RNA atom added: " + a.toString());
+//                        }
+//                        a.setAtomtype(Atom.ATOMTYPE_RNA);
+//                        rna.addAtom(a);
+//                    }
+//                }
+//            }
+//        }
+//        else {
+//            if (! (lig == null)){
+//                if(Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 2) {
+//                   System.out.println("    [DEBUG LV 2] New ligand atom added: " + a.toString());
+//                }
+//                lig.addAtom(a);
+//                //lig.addAtom(a);
+//                FileParser.s_atoms.add(a);
+//            }
+//
+//        }
+        
+        if (lastMol.getType() == Molecule.RESIDUE_TYPE_AA || lastMol.getType() == Molecule.RESIDUE_TYPE_RNA || lastMol.getType() == Molecule.RESIDUE_TYPE_LIGAND){
+            if(Settings.getBoolean("PTGLgraphComputation_B_handle_hydrogen_atoms_from_reduce") && chemSym.trim().equals("H")) {
+                lastMol.addHydrogenAtom(a);
             }
             else {
-                if (! (lig == null)){
+                // add Atom to list of atoms of current molecule as well as list of all atoms
+                FileParser.s_atoms.add(a);
+                lastMol.addAtom(a);
+                if (checkType(Molecule.RESIDUE_TYPE_AA)){
+                    if(Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 2) {
+                        System.out.println("    [DEBUG LV 2] New AA atom added: " + a.toString());
+                    }
+                    a.setAtomtype(Atom.ATOMTYPE_AA);
+//                    lastMol.addAtom(a);  // md die 3 stmt löschen wenn ok
+                }
+                else if (checkType(Molecule.RESIDUE_TYPE_RNA)){
+                    if(Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 2) {
+                        System.out.println("    [DEBUG LV 2] New RNA atom added: " + a.toString());
+                    }
+                    a.setAtomtype(Atom.ATOMTYPE_RNA);
+//                    rna.addAtom(a);
+                }
+                else if (checkType(Molecule.RESIDUE_TYPE_LIGAND)){
                     if(Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 2) {
                        System.out.println("    [DEBUG LV 2] New ligand atom added: " + a.toString());
                     }
-                    lig.addAtom(a);
-                    a.setMolecule(lig);
-                    FileParser.s_atoms.add(a);
+                    a.setAtomtype(Atom.ATOMTYPE_LIGAND);
+//                    lig.addAtom(a);
                 }
-
             }
+        }
+        
+        System.out.println("md4343: " + a.getDsspResNum() + " || " +  a.toString()); //md
+            
     }
 
     /**
@@ -1240,7 +1238,9 @@ class CifParser {
         if (chainwiseSseDict.get(chainOfSse) == null){
             chainwiseSseDict.put(chainOfSse, new ArrayList<String[]>());
             chainwiseSseDict.get(chainOfSse).add(sse);
-            System.out.println("new chain found - init new SseList\n~~~~~~~~~~~~~~~~~~~~~~~~");
+            if(Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 1){
+                DP.getInstance().d("new chain >" + chainOfSse + "<found - initialized new sseList for this chain");
+            }
         }
         else{
             chainwiseSseDict.get(chainOfSse).add(sse);
@@ -1303,7 +1303,6 @@ class CifParser {
      * @return 1-char representation of the SSE or " " if the residue doesn't belong to a SSE
      */
     private static String acquireSseString(){
-        System.out.println("------------------------------"); // md to delete
         if (! chainID.equals(currChainIdForSseAssignment)){  // we store the SSE-ranges chainwise. So if the curr residue has a different chain to our curr list, we need to grab the list for the chain of the residue
             if (Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 3){
                 DP.getInstance().d("chainID was: " + chainID + " but currChainIdForSseAssignment was: " + currChainIdForSseAssignment + ". Grabbing sse-list of new chain");
@@ -1321,7 +1320,9 @@ class CifParser {
         }
         
         if (latestSseRangeIndex >= sseRangesPerChain.size()){ // we must be beyond the last SSE of the chain, return " " for all remaining residues
-            System.out.println("last SSE of this chain passed, returning \" \"");
+            if(Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 3){
+                DP.getInstance().d("last SSE of this chain passed, returning \" \"");
+            }
             return " ";
         }
         
@@ -1387,7 +1388,7 @@ class CifParser {
             case "HELX_RH_PI_P": return "I";
             case "HELX_LH_PP_P": 
                 if (Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 1){
-                    DP.getInstance().d("Inside a left-hand helix at " + chainID + "-" + molNumPDB + "-" + iCode + " (chainID-molNumPDB-iCode). But those get ignored at the moment, returning \" \"");
+                    DP.getInstance().d("Inside a left-hand helix at " + chainID + "-" + molNumPDB + "-" + iCode + " (chainID-molNumPDB-iCode). Those get ignored at the moment, returning \" \"");
                 }
                 return " ";  // disregard left-hand helices for now
             case "STRN": return "E";
@@ -1875,13 +1876,10 @@ class CifParser {
     
     
     /**
-     * Assigns a fake DSSP-Number based on all objects that have received DSSP-Numbers.
-     * Only AAs in DSSP file get a real DSSP number, all other objects (RNA, ligands, free AAs) have to be assigned one.
+     * Assigns the next sequential number based on all molecule-objects that have been created already.
      */
-    protected static Integer assignDsspNum () {
-//        return DsspParser.lastUsedDsspNum + RnaTreatedNum + ligandsTreatedNum + freeResTreatedNum;
-        //System.out.println("MD mark " + numOfResidues + ", " + RnaTreatedNum + ", " + ligandsTreatedNum + ", " + freeResTreatedNum);
-        return numOfResidues + RnaTreatedNum + ligandsTreatedNum; // + freeResTreatedNum;  // md to delete (ganze comments in der Fkt)
+    protected static Integer assignSequentialNum () {
+        return numOfResidues + RnaTreatedNum + ligandsTreatedNum;
     }
       
 }

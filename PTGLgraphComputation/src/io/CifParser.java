@@ -884,7 +884,6 @@ class CifParser {
         // match res <-> chain here
         // load new Residue into lastMol if we approached next Residue, otherwise only add new atom
 
-            // md: diese if else blöcke nochmal durchgehen
         if (checkType(Molecule.RESIDUE_TYPE_AA) && entityInformation.get(String.valueOf(entityID)).get("type").equals("polymer")) {
             if (! (Objects.equals(molNumPDB, lastMol.getPdbNum()) && chainID.equals(lastMol.getChainID()) && iCode.equals(lastMol.getiCode()))) {
                 numOfResidues++;
@@ -922,12 +921,10 @@ class CifParser {
             }
         }
         else if ((checkType(Molecule.RESIDUE_TYPE_RNA) && entityInformation.get(String.valueOf(entityID)).get("type").equals("polymer"))) {  // Nucleotides are only parsed as RNA if they are polymers, not if they act as single ligands.
-            System.out.println("MDerr1: im rna-block");
             // >> RNA <<
             // if the line we are currently in belongs to the same molecule as the previous one, we only create a new atom for this line.
             // otherwise, a new RNA molecule is created
             if( ! ( molNumPDB.equals(lastRnaNumPDB) && chainID.equals(lastChainID) ) ) {
-                System.out.println("MDerr1: im tieferen rna-block");
                 rna = new RNA();
                 rna.setPdbNum(molNumPDB);
                 rna.setType(Molecule.RESIDUE_TYPE_RNA);                
@@ -976,7 +973,6 @@ class CifParser {
                 }
             }       
         }
-        // If a molecule is not parsed at this point, it has to be a ligand
         else if (checkType(Molecule.RESIDUE_TYPE_LIGAND) ||                                           // if the molecule is categorized as a ligand through chem_comp map
                 (entityInformation.get(String.valueOf(entityID)).get("type").equals("non-polymer"))){ // if entity is defined as 'non-polymer' (e.g. free AA/RNA)
             // >> LIG <<
@@ -984,7 +980,6 @@ class CifParser {
             // idea: add always residue (for consistency) but atom only if it is not an ignored ligand
 
             // check if we have created ligand residue for s_residue
-            System.out.println("chainID: " + chainID + ", lastMol cID: " + lastMol.getChainID() + ", lastChainID: " + lastChainID); //md
             if( ! ( molNumPDB.equals(lastLigandNumPDB) && chainID.equals(lastChainID) ) ) {
                 if (! silent) {
                         if(Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 1) {
@@ -1101,47 +1096,6 @@ class CifParser {
         }
         */
         
-        // md delete
-//        if (lastMol.getType() == Molecule.RESIDUE_TYPE_AA || lastMol.getType() == Molecule.RESIDUE_TYPE_RNA){
-//            if (lastMol == null) {
-//                DP.getInstance().w("Molecule with PDB # " + molNumPDB + " of chain '" + chainID + "' with iCode '" + iCode + "' not listed in CIF data, skipping atom " + atomSerialNumber + " belonging to that residue (PDB line " + numLine.toString() + ").");
-//                return;
-//            } else {
-//                if(Settings.getBoolean("PTGLgraphComputation_B_handle_hydrogen_atoms_from_reduce") && chemSym.trim().equals("H")) {
-//                    lastMol.addHydrogenAtom(a);
-//                }
-//                else {
-//                    // add Atom to list of atoms of current molecule as well as list of all atoms
-//                    FileParser.s_atoms.add(a);
-//                    if (checkType(Molecule.RESIDUE_TYPE_AA)){
-//                        if(Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 2) {
-//                            System.out.println("    [DEBUG LV 2] New AA atom added: " + a.toString());
-//                        }
-//                        a.setAtomtype(Atom.ATOMTYPE_AA);
-//                        newRes.addAtom(a);
-//                    }
-//                    if (checkType(Molecule.RESIDUE_TYPE_RNA)){
-//                        if(Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 2) {
-//                            System.out.println("    [DEBUG LV 2] New RNA atom added: " + a.toString());
-//                        }
-//                        a.setAtomtype(Atom.ATOMTYPE_RNA);
-//                        rna.addAtom(a);
-//                    }
-//                }
-//            }
-//        }
-//        else {
-//            if (! (lig == null)){
-//                if(Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 2) {
-//                   System.out.println("    [DEBUG LV 2] New ligand atom added: " + a.toString());
-//                }
-//                lig.addAtom(a);
-//                //lig.addAtom(a);
-//                FileParser.s_atoms.add(a);
-//            }
-//
-//        }
-        
         if (lastMol.getType() == Molecule.RESIDUE_TYPE_AA || lastMol.getType() == Molecule.RESIDUE_TYPE_RNA || lastMol.getType() == Molecule.RESIDUE_TYPE_LIGAND){
             if(Settings.getBoolean("PTGLgraphComputation_B_handle_hydrogen_atoms_from_reduce") && chemSym.trim().equals("H")) {
                 lastMol.addHydrogenAtom(a);
@@ -1155,27 +1109,21 @@ class CifParser {
                         System.out.println("    [DEBUG LV 2] New AA atom added: " + a.toString());
                     }
                     a.setAtomtype(Atom.ATOMTYPE_AA);
-//                    lastMol.addAtom(a);  // md die 3 stmt löschen wenn ok
                 }
                 else if (checkType(Molecule.RESIDUE_TYPE_RNA)){
                     if(Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 2) {
                         System.out.println("    [DEBUG LV 2] New RNA atom added: " + a.toString());
                     }
                     a.setAtomtype(Atom.ATOMTYPE_RNA);
-//                    rna.addAtom(a);
                 }
                 else if (checkType(Molecule.RESIDUE_TYPE_LIGAND)){
                     if(Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 2) {
                        System.out.println("    [DEBUG LV 2] New ligand atom added: " + a.toString());
                     }
                     a.setAtomtype(Atom.ATOMTYPE_LIGAND);
-//                    lig.addAtom(a);
                 }
             }
-        }
-        
-        System.out.println("md4343: " + a.getDsspResNum() + " || " +  a.toString()); //md
-            
+        }            
     }
 
     /**

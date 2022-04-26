@@ -1187,7 +1187,7 @@ class CifParser {
             chainwiseSseDict.put(chainOfSse, new ArrayList<String[]>());
             chainwiseSseDict.get(chainOfSse).add(sse);
             if(Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 1){
-                DP.getInstance().d("new chain >" + chainOfSse + "<found - initialized new sseList for this chain");
+                DP.getInstance().d("Initialized new sseList for chain '" + chainOfSse + "'");
             }
         }
         else{
@@ -1262,14 +1262,14 @@ class CifParser {
         
         if (sseRangesPerChain == null){
             if (Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 3){
-                DP.getInstance().d("Found no SSE-ranges for current chain, so \" \" will be assigned. ");
+                DP.getInstance().d("Found no SSE-ranges for current chain, so ' ' will be assigned. ");
             }
             return " ";
         }
         
         if (latestSseRangeIndex >= sseRangesPerChain.size()){ // we must be beyond the last SSE of the chain, return " " for all remaining residues
             if(Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 3){
-                DP.getInstance().d("last SSE of this chain passed, returning \" \"");
+                DP.getInstance().d("last SSE of this chain passed, returning ' '");
             }
             return " ";
         }
@@ -1293,7 +1293,7 @@ class CifParser {
         if (Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 3){
             DP.getInstance().d("SSE: chain: " + chainOfCurrSse + " StartNum: " + currSseStartNum + " StartIcode: " + currSseStartIC);
             DP.getInstance().d("SSE: chain: " + chainOfCurrSse + " EndNum:   " + currSseEndNum + " EndIcode  : " + currSseEndIC);
-            DP.getInstance().d("Res: chain: " + chainID + "      Num: " + molNumPDB + " Icode: " + iCode);
+            DP.getInstance().d("Res: chain: " + chainID + " Num:      " + molNumPDB + " Icode: " + iCode);
         }
         if (chainID.equals(chainOfCurrSse) && molNumPDB.equals(currSseEndNum) && iCode.equals(currSseEndIC)){
             if (Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 3){
@@ -1336,7 +1336,7 @@ class CifParser {
             case "HELX_RH_PI_P": return "I";
             case "HELX_LH_PP_P": 
                 if (Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 1){
-                    DP.getInstance().d("Inside a left-hand helix at " + chainID + "-" + molNumPDB + "-" + iCode + " (chainID-molNumPDB-iCode). Those get ignored at the moment, returning \" \"");
+                    DP.getInstance().d("Inside a left-handed helix at " + chainID + "-" + molNumPDB + "-" + iCode + " (chainID-molNumPDB-iCode). Those get ignored at the moment, returning ' '.");
                 }
                 return " ";  // disregard left-hand helices for now
             case "STRN": return "E";
@@ -1345,7 +1345,7 @@ class CifParser {
             case "HELX_P": return "H";  // name used by authors to define a helix. The names above are used by dssp.
             default: 
                 if (! silent){
-                    DP.getInstance().w("Found unknown SSE-definition >" + s + "<. Returning \" \" but data loss will occur.");
+                    DP.getInstance().w("Found unknown SSE-definition '" + s + "'. Returning ' ' but data loss will occur.");
                 }
                 return " ";
         }

@@ -596,28 +596,24 @@ public class FileParser {
         }
     }
     
-    public static String getWhichSseInfo(){
-        return whichSseInfo;
-    }
-    
     public static void initData(String pdbFile, String sseFile, String outputDir) {
         FileParser.initVariables(pdbFile);
         
         if (sseFile.equals("")){
             whichSseInfo = "author";
-            if (! silent){
+            if (! Settings.getBoolean("PTGLgraphComputation_B_no_warn")){
                 DP.getInstance().w("\n    ###############" + 
                         "\n    No sseFile given. Trying to use author classification of SSEs." + 
                         "\n    Because of that, results are not comparable between proteins, helices may be missing or inaccurately represented." +
-                        "\n    Using an mmcif file annotated by dssp is strongly advised (use command-line option -d)." +
+                        "\n    Using an mmCIF annotated by dssp4 is strongly advised (use command-line option -d)." +
                         "\n    ###############");
             }
         }
         else if (sseFile.endsWith(".dssp")){
             whichSseInfo = "dssp3";
             DsspParser.initVariables(sseFile);
-            if (! silent){
-                DP.getInstance().w("Old .dssp file given. Filetype isn't supported anymore, results may be wrong. Please use the annotated mmCIF file that dssp 4 produces.");
+            if (! Settings.getBoolean("PTGLgraphComputation_B_no_warn")){
+                DP.getInstance().w(".dssp file given. Filetype is not supported anymore, results may be wrong. Please use the annotated mmCIF that dssp4 produces.");
             }
         }
         else{
@@ -700,6 +696,10 @@ public class FileParser {
         } else {
             return LegacyParser.getMetaInfo(pdbid, chain);
         }
+    }
+    
+    public static String getWhichSseInfo(){
+        return whichSseInfo;
     }
 
     // setting methods

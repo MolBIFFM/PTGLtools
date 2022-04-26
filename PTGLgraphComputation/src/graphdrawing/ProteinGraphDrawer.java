@@ -58,7 +58,7 @@ import tools.PlccUtilities;
  */
 public class ProteinGraphDrawer {
     
-    private static final String AUTHOR_SSE_WARNING = "Created with author classification of SSEs. Results can't be compared to graphs of other proteins!";
+    private static final String AUTHOR_SSE_WARNING = "Created with author classification of SSEs. Results ca not be compared to graphs of other proteins!";
 
     /**
      * Draws the SEQ legend for the graph at the given position. This legend is not suitable for other folding graph notations but SEQ, because their edges are different.

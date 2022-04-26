@@ -2079,7 +2079,7 @@ public class Main {
         if (! sseFile.equals("")){  // if a file specifying the SSEs is given, check it. If not, we only work with the pdb file (.cif)
             input_file = new File(sseFile);
             if(! (input_file.exists() && input_file.isFile())) {
-                System.err.println("ERROR: sse-file (containing the sse-info) '" + sseFile + "' not found. Exiting.");
+                System.err.println("ERROR: sse-file (containing the information of SSEs) '" + sseFile + "' not found. Exiting.");
                 System.exit(1);
             }
         }
@@ -11229,7 +11229,7 @@ public class Main {
         System.out.println("-c | --dont-calc-graphs    : do not calculate SSEs contact graphs, stop after residue level contact computation");
         System.out.println("-C | --create-config       : creates a default config file if none exists yet, then exits.*");
         System.out.println("-D | --debug <level>       : set debug level (0: off, 1: normal debug output. >=2: detailed debug output, up to 4 currently)  [DEBUG]");
-        System.out.println("-d | --ssefile <ssefile>   : use the sse-information specified in <ssefile> (instead of using that of the authors)");
+        System.out.println("-d | --ssefile <ssefile>   : use the information of secondary structure specified in <ssefile> (instead of using that of the authors)");
         System.out.println("     --gz-dsspfile <f>     : use gzipped input DSSP file <f>.");
         System.out.println("-e | --force-chain <c>     : only handle the chain with chain ID <c>.");
         System.out.println("-E | --separate-contacts   : separate contact computation by chain (way faster but disables all functions which require inter-chain contacts (stats, complex graphs)");
@@ -11305,7 +11305,7 @@ public class Main {
         System.out.println("          java -jar PTGLgraphComputation.jar 6cbe -I --cg-threshold 2");
         System.out.println("");
         System.out.println("REQUIRED INPUT FILES: This program requires the PDB file of a protein.");
-        System.out.println("                      The additional usage of an annotated mmCIF file from dssp4 (containing the SSE-classification) via command line option '-d' is strongly advised.");
+        System.out.println("                      The additional usage of an annotated mmCIF file from dssp4 (containing the classification of secondary structure) via command line option '-d' is strongly advised.");
         System.out.println("                      You can find PDB files at https://rcsb.org.");
         System.out.println("                      The DSSP program as well as download options can be found at https://swift.cmbi.umcn.nl/gv/dssp/ and https://github.com/PDB-REDO/dssp");
         System.out.println("                      This does not apply to options that don't use it (marked with * above), of course.");

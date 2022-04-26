@@ -3,7 +3,7 @@
  *
  * Copyright Tim Schäfer 2012. PTGLtools is free software, see the LICENSE and README files for details.
  *
- * @author ts
+ * @author md
  */
 
 package io;
@@ -34,7 +34,7 @@ public class SseParser {
     }
     
     /**
-     * largely copied from CifParser. Reads file and creates SseRanges from _struct_conf data-lines.
+     * Reads file and creates SseRanges from _struct_conf data-lines. largely copied from CifParser.
      */
     protected static void createSseRangesFromDsspCifFile(){
         String columnHeader;

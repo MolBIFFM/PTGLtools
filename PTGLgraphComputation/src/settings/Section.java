@@ -84,7 +84,7 @@ class Section {
                 break;
             
             case "Protein Graph (PG)":
-                settings.add(new Setting("PTGLgraphComputation_B_skip_empty_chains", 'B', "true", "Whether to skip chains without any DSSP SSEs (i.e., contain only ligands) in Protein Graphs."));
+                settings.add(new Setting("PTGLgraphComputation_B_skip_empty_chains", 'B', "true", "Whether to skip chains without any SSEs (i.e., contain only ligands) in Protein Graphs."));
                 settings.add(new Setting("PTGLgraphComputation_B_img_output_format_PNG", 'B', "true", "Whether to write Protein Graph visualizations in PNG format."));
                 settings.add(new Setting("PTGLgraphComputation_B_img_output_format_PDF", 'B', "false", "Whether to write Protein Graph visualizations in PDF format."));
                 // Removed: Currently not used as SVG is base for conversion to other file formats and therefore always created.
@@ -136,12 +136,10 @@ class Section {
                 settings.add(new Setting("PTGLgraphComputation_B_only_essential_output", 'B', "true", "Whether to print only high-level status information."));
                 settings.add(new Setting("PTGLgraphComputation_B_print_contacts", 'B', "false", "Whether to print residue contacts to stdout (slower)"));
                 settings.add(new Setting("PTGLgraphComputation_B_no_warn", 'B', "false", "Whether to suppress all warnings."));
-                settings.add(new Setting("PTGLgraphComputation_B_no_parse_warn", 'B', "true", "Whether to suppress all warnings related to parsing of atoms and other data from the PDB and DSSP input files."));
+                settings.add(new Setting("PTGLgraphComputation_B_no_parse_warn", 'B', "true", "Whether to suppress all warnings related to parsing of atoms and other data from the PDB and SSE input files."));
                 settings.add(new Setting("PTGLgraphComputation_B_no_not_impl_warn", 'B', "true", "Whether to suppress all warnings related to not implemented function."));
-                settings.add(new Setting("PTGLgraphComputation_B_no_chain_break_info", 'B', "false", "Whether to suppress chain break info while parsing DSSP file (handy for some DSSP files for CIF data)."));
                 settings.add(new Setting("PTGLgraphComputation_B_print_silent_notice", 'B', "true", "Whether to print a single line informing the user that silent mode is set in silent mode (includes PDB ID of current file)."));
                 settings.add(new Setting("PTGLgraphComputation_B_warn_cfg_fallback_to_default", 'B', "true", "Whether to print warnings when a setting is not defined in the config file and internal defaults are used."));
-                settings.add(new Setting("PTGLgraphComputation_B_split_dsspfile_warning", 'B', "false", "Whether to show a warning about splitting the DSSP file when multiple models are detected in a PDB file."));
                 break;
                 
             case "Performance":
@@ -327,8 +325,7 @@ class Section {
                 settings.add(new Setting("PTGLgraphComputation_B_csv_contacts_intra_inter", 'B', "false", "Whether a csv file with the inter- and intrachain residue-residue contacts is created."));
                 settings.add(new Setting("PTGLgraphComputation_B_ptgl_text_output", 'B', "false", "Whether the PTGL text files (e.g., those required by the bet_neo) are written. Not writing them is faster but this program cannot replace the PTGL tool 'geom_neo' anymore if this is deactivated."));
                 settings.add(new Setting("PTGLgraphComputation_B_gml_snake_case", 'B', "false", "Whether keys in all GML files should be written in snake case, i.e., with under scores instead of camel case. HINT: Originally, GML does not support snake case and so may some parsers for GML files."));
-                settings.add(new Setting("PTGLgraphComputation_B_ptgl_geodat_output", 'B', "false", "Whether the PTGL text files geo.dat for SSE level contacts are written to a text file."));
-                settings.add(new Setting("PTGLgraphComputation_B_ramachandran_plot", 'B', "false", "Whether a Ramachandran plot is drawn to a file for each chain (slower)."));                
+                settings.add(new Setting("PTGLgraphComputation_B_ptgl_geodat_output", 'B', "false", "Whether the PTGL text files geo.dat for SSE level contacts are written to a text file."));        
                 break;
                 
             case "Image settings":
@@ -351,9 +348,8 @@ class Section {
                 settings.add(new Setting("PTGLgraphComputation_I_img_text_line_height", 'I', "40", "The vertical distance between two lines of text in the image, e.g., in the footer."));
                 settings.add(new Setting("PTGLgraphComputation_I_img_min_img_height", 'I', "160", "The minimum size of the image area where the graph is drawn."));
                 settings.add(new Setting("PTGLgraphComputation_I_img_min_arc_height", 'I', "100", "The minimum size of the arc area within the image area."));
-                settings.add(new Setting("PTGLgraphComputation_I_img_minPageWidth", 'I', "800", "The minimum image width in pixels, used in output images."));
+                settings.add(new Setting("PTGLgraphComputation_I_img_minPageWidth", 'I', "900", "The minimum image width in pixels, used in output images."));
                 settings.add(new Setting("PTGLgraphComputation_I_img_minPageHeight", 'I', "600", "The minimum image height in pixels, used in output images."));
-                settings.add(new Setting("PTGLgraphComputation_S_img_output_fileext", 'S', ".png", "[DEPRECATED] File extension of images. Not used for graph images anymore; applies to Ramaplot etc only."));
                 break;
                 
             case "DB: similarity search":
@@ -375,6 +371,11 @@ class Section {
                 settings.add(new Setting("PTGLgraphComputation_B_write_chains_file", 'B', "false", "Whether to write a chains file containing all chain names of the currently handled PDB file. Can be used by GraphletAnalyzer later to construct graph file names for all chains."));
                 break;
                 
+            case "Deprecated":
+                settings.add(new Setting("PTGLgraphComputation_B_no_chain_break_info", 'B', "false", "[DEPRECATED] Whether to suppress chain break info while parsing DSSP file (handy for some DSSP files for CIF data)."));
+                settings.add(new Setting("PTGLgraphComputation_B_split_dsspfile_warning", 'B', "false", "[DEPRECATED] Whether to show a warning about splitting the DSSP file when multiple models are detected in a PDB file."));
+                break;
+                
             case "Debug":
                 settings.add(new Setting("PTGLgraphComputation_I_debug_level", 'I', "0", "Debug level. Higher value means more output."));
                 settings.add(new Setting("PTGLgraphComputation_B_debug_compareSSEContacts", 'B', "false", "Whether to compare the computed SSE level contacts to those in the geom_neo output file that is supplied."));
@@ -391,6 +392,8 @@ class Section {
                 settings.add(new Setting("PTGLgraphComputation_B_complex_graph_same", 'B', "false", "[DISABLED] Determines whether the complex graph is drawn with all nodes of the same type."));
                 settings.add(new Setting("PTGLgraphComputation_B_complex_graph_mere", 'B', "false", "[DISABLED] Determines whether the complex graph is drawn with nodes of different type for each mere."));
                 settings.add(new Setting("PTGLgraphComputation_I_ligSAS", 'I', "20", "[DISABLED] The solvent accessible surface value that is written to the dssplig file for ligands (not used atm)"));
+                settings.add(new Setting("PTGLgraphComputation_B_ramachandran_plot", 'B', "false", "[DISABLED] Whether a Ramachandran plot is drawn to a file for each chain (slower)."));
+                settings.add(new Setting("PTGLgraphComputation_S_img_output_fileext", 'S', ".png", "[DISABLED] File extension of images. Not used for graph images anymore; applies to Ramaplot etc only."));
                 break;
                 
             case "Alternate AAG":

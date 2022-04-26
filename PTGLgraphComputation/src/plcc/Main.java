@@ -238,7 +238,7 @@ public class Main {
         deleteFilesOnExit = new ArrayList<File>();
         
         String pdbid = "";
-        String dsspFile = "";
+        String sseFile = "";
         String dsspLigFile = "";
         String pdbFile = "";
         String outputDir = ".";
@@ -307,7 +307,7 @@ public class Main {
             
             // set default file names from the pdb id (these may be overwritten by args later)
             pdbFile = pdbid + ".pdb";
-            dsspFile = pdbid + ".dssp";
+//            dsspFile = pdbid + ".dssp";  // md: dsspFile (now sseFile) isn't mandatory anymore. Furthermore the default file extension of a DSSP 4 file is .cif
 
             // parse the rest of the arguments, if any
             if(args.length > 1) {
@@ -347,12 +347,12 @@ public class Main {
                         }
                     }
 
-                    if(s.equals("-d") || s.equals("--dsspfile")) {
+                    if(s.equals("-d") || s.equals("--ssefile")) {
                         if(args.length <= i+1 ) {
                             syntaxError();
                         }
                         else {
-                            dsspFile = args[i+1];
+                            sseFile = args[i+1];
                             argsUsed[i] = true;
                             argsUsed[i+1] = true;
                         }
@@ -392,7 +392,7 @@ public class Main {
                                 String tmpDir = Settings.get("PTGLgraphComputation_S_temp_dir");                                
                                 dsspFileUnpacked = IO.unGzip(dsspFileGZ, new File(tmpDir));
                                 deleteFilesOnExit.add(dsspFileUnpacked);
-                                dsspFile = dsspFileUnpacked.toString();
+                                sseFile = dsspFileUnpacked.toString();
                             }
                             catch(Exception e) {
                                 System.err.println("ERROR: Could not extract input DSSP file in gz format at '" + dsspFilenameGZ + "'.");
@@ -1626,7 +1626,7 @@ public class Main {
         if(useFileFromCommandline) {
             if(! silent) {
                 if( ! pdbid.toUpperCase().equals("NONE")) {
-                    System.out.println("  Using PDB file '" + pdbFile + "', dssp file '" + dsspFile + "', output directory '" + outputDir + "'.");
+                    System.out.println("  Using PDB file '" + pdbFile + "', sse file '" + sseFile + "', output directory '" + outputDir + "'.");
                 }
             }
         }
@@ -2076,10 +2076,12 @@ public class Main {
                 
 
         // dssp file
-        input_file = new File(dsspFile);
-        if(! (input_file.exists() && input_file.isFile())) {
-            System.err.println("ERROR: dsspfile '" + dsspFile + "' not found. Exiting.");
-            System.exit(1);
+        if (! sseFile.equals("")){  // if a file specifying the SSEs is given, check it. If not, we only work with the pdb file (.cif)
+            input_file = new File(sseFile);
+            if(! (input_file.exists() && input_file.isFile())) {
+                System.err.println("ERROR: sse-file (containing the information of SSEs) '" + sseFile + "' not found. Exiting.");
+                System.exit(1);
+            }
         }
 
         output_dir = new File(outputDir);
@@ -2115,7 +2117,7 @@ public class Main {
             System.out.println("Getting data...");
         }
         
-        FileParser.initData(pdbFile, dsspFile, outputDir);
+        FileParser.initData(pdbFile, sseFile, outputDir);
                
         if (Settings.getBoolean("PTGLgraphComputation_B_debug_only_parse")) {
             System.out.println("Exiting now as requested by settings.");
@@ -2517,12 +2519,19 @@ public class Main {
             }
 
             // write the dssplig file
-            if(! silent) {
-                System.out.println("Writing DSSP ligand file for residues...");
+            if (FileParser.getWhichSseInfo().equals("dssp3")){
+                if(! silent) {
+                    System.out.println("Writing DSSP ligand file for residues...");
+                }
+                //writeDsspLigFile(sseFile, dsspLigFile, cInfo, residues);
+                writeOrderedDsspLigFile(sseFile, dsspLigFile, molecules);
             }
-            //writeDsspLigFile(dsspFile, dsspLigFile, cInfo, residues);
-            writeOrderedDsspLigFile(dsspFile, dsspLigFile, molecules);
-
+            else{
+                if (! silent) {
+                    DP.getInstance().i("skipping the creation of a dssplig file. That is only done if a .dssp file is passed.");
+                }
+            }
+            
             // write chains file
             if(! silent) {
                 System.out.println("Writing chain file...");
@@ -3654,7 +3663,7 @@ public class Main {
             if(chainDsspSSEs.isEmpty()) {
                 if(Settings.getBoolean("PTGLgraphComputation_B_skip_empty_chains")) {
                     if(! silent) {
-                        System.out.println("  +++++ Skipping chain " + chain + " due to empty residue list. +++++");
+                        System.out.println("  +++++ Skipping chain " + chain + " due to empty SSE list. +++++");
                         
                     }
                     continue;
@@ -10937,13 +10946,13 @@ public class Main {
 
     /**
      * Writes a modified version of the original DSSP file. This version includes info on the ligand residues that is appended after the last line of the regular DSSP file.
-     * @param dsspFile the input DSSP file that will be parsed for info
+     * @param sseFile the input DSSP file that will be parsed for info
      * @param dsspLigFile the output path of the DSSPLig file, which is generated by this function by adding ligand info lines to the DSSP data
      * @param contacts the contacts to consider
      * @param res the residues to consider
      */
     @Deprecated
-    public static Boolean writeDsspLigFile(String dsspFile, String dsspLigFile, ArrayList<MolContactInfo> contacts, ArrayList<Residue> res) {
+    public static Boolean writeDsspLigFile(String sseFile, String dsspLigFile, ArrayList<MolContactInfo> contacts, ArrayList<Residue> res) {
         
         DP.getInstance().w("writeDsspLigFile(): This function is deprecated, use writeOrderedDsspLigFile() instead.\n");
         
@@ -10952,9 +10961,9 @@ public class Main {
 
         // copy the DSSP file first, we will then append the ligand-specific lines to the copied file
         try {
-            copyFile(new File(dsspFile), new File(dsspLigFile));
+            copyFile(new File(sseFile), new File(dsspLigFile));
         } catch (Exception ef) {
-            System.err.println("ERROR: Could not copy file '" + dsspFile + "' to '" + dsspLigFile + "'.");
+            System.err.println("ERROR: Could not copy file '" + sseFile + "' to '" + dsspLigFile + "'.");
             ef.printStackTrace();
             Main.doExit(1);
         }
@@ -11028,22 +11037,22 @@ public class Main {
     /**
      * Writes an ordered dssplig file. Ordered means that the ligand residues are not simply appended to the end of the file, but each ligand is inserted as the
  last residue of the chainName it is associated with. This is required for PTGL compatibility (don't ask).
-     * @param dsspFile the input DSSP file that will be parsed for info
+     * @param sseFile the input DSSP file that will be parsed for info
      * @param dsspLigFile the output path of the DSSPLig file, which is generated by this function by adding ligand info lines to the DSSP data
      * @param res the residues to consider
      * @return true if it worked out. Note though that this is considered critical.
      * 
      */
-    public static Boolean writeOrderedDsspLigFile(String dsspFile, String dsspLigFile, List<Molecule> mols) {
+    public static Boolean writeOrderedDsspLigFile(String sseFile, String dsspLigFile, List<Molecule> mols) {
 
-        File dFile = new File(dsspFile);
+        File dFile = new File(sseFile);
         File dligFile = new File(dsspLigFile);
 
         // copy the DSSP file first, we will then append the ligand-specific lines to the copied file
         try {
             copyFile(dFile, dligFile);
         } catch (Exception ef) {
-            System.err.println("ERROR: Could not copy file '" + dsspFile + "' to '" + dsspLigFile + "': '" + ef.getMessage() + "'.");
+            System.err.println("ERROR: Could not copy file '" + sseFile + "' to '" + dsspLigFile + "': '" + ef.getMessage() + "'.");
             ef.printStackTrace();
             System.exit(1);
         }
@@ -11160,7 +11169,7 @@ public class Main {
             // Print DSSP residue number, PDB residue number, chainName, AA name in 1 letter code and SSE summary letter for ligand
             //      '   47   47 A E  E'
 
-            out.printf(loc, "  %3d  %3d %1s %1s  %1s", l.getDsspNum(), l.getPdbNum(), l.getChainID(), l.getAAName1(), Settings.get("plcc_S_ligSSECode"));
+            out.printf(loc, "  %3d  %3d %1s %1s  %1s", l.getDsspNum(), l.getPdbNum(), l.getChainID(), l.getAAName1(), Settings.get("PTGLgraphComputation_S_ligSSECode"));
 
             // Print structure detail block (empty for ligand), beta bridge 1 partner residue number (always 0 for ligands), beta bridge 2 partner residue number (always 0 for ligands),
             //  bet sheet label (empty (" ") for ligands) and solvent accessible surface (SAS) of this residue (not required by PTGL, just set to some value)
@@ -11248,7 +11257,7 @@ public class Main {
         System.out.println("-c | --dont-calc-graphs    : do not calculate SSEs contact graphs, stop after residue level contact computation");
         System.out.println("-C | --create-config       : creates a default config file if none exists yet, then exits.*");
         System.out.println("-D | --debug <level>       : set debug level (0: off, 1: normal debug output. >=2: detailed debug output, up to 4 currently)  [DEBUG]");
-        System.out.println("-d | --dsspfile <dsspfile> : use input DSSP file <dsspfile> (instead of assuming '<pdbid>.dssp')");
+        System.out.println("-d | --ssefile <ssefile>   : use the information of secondary structure specified in <ssefile> (instead of using that of the authors)");
         System.out.println("     --gz-dsspfile <f>     : use gzipped input DSSP file <f>.");
         System.out.println("-e | --force-chain <c>     : only handle the chain with chain ID <c>.");
         System.out.println("-E | --separate-contacts   : separate contact computation by chain (way faster but disables all functions which require inter-chain contacts (stats, complex graphs)");
@@ -11290,7 +11299,7 @@ public class Main {
         //System.out.println("-X | --check-ssects <f>    : compare the computed SSE level contacts to those in bet_neo format file <f> and print differences");
         //System.out.println("-y | --write-geodat        : write the computed SSE level contacts in geo.dat format to a file (file name: <pdbid>_<chain>.geodat)");        
         System.out.println("-Y | --skip-vast <atoms>   : abort program execution for PDB files with more than <atoms> atoms before contact computation (for cluster mode, try 80000).");        
-        System.out.println("-z | --ramaplot            : draw a ramachandran plot of each chain to the file '<pdbid>_<chain>_plot.svg'");        
+        //System.out.println("-z | --ramaplot            : draw a ramachandran plot of each chain to the file '<pdbid>_<chain>_plot.svg'");        
         System.out.println("-Z | --silent              : silent mode. do not write output to STDOUT."); 
         System.out.println("     --verbose             : verbose mode. more detailed output."); 
         System.out.println("   --compute-graph-metrics : compute graph metrics like cluster coefficient for PGs. Slower!");
@@ -11315,6 +11324,7 @@ public class Main {
         System.out.println("");
         
         System.out.println("EXAMPLES: java -jar PTGLgraphComputation.jar 8icd");
+        System.out.println("          java -jar PTGLgraphComputation.jar 8icd -d annotated_mmCIF_8icd.cif");
         System.out.println("          java -jar PTGLgraphComputation.jar 8icd -D 2 -d /tmp/dssp/8icd.dssp -p /tmp/pdb/8icd.pdb");
         System.out.println("          java -jar PTGLgraphComputation.jar 8icd -o /tmp");
         System.out.println("          java -jar PTGLgraphComputation.jar 1o1d -E");
@@ -11322,8 +11332,10 @@ public class Main {
         System.out.println("          java -jar PTGLgraphComputation.jar none -m PNG -ddb 8icd A albelig ~/img/protein_graph");
         System.out.println("          java -jar PTGLgraphComputation.jar 6cbe -I --cg-threshold 2");
         System.out.println("");
-        System.out.println("REQUIRED INPUT FILES: This program requires the PDB file and the DSSP file of a protein.");
-        System.out.println("                      You can find PDB files at https://rcsb.org and the DSSP program as well as download options at https://swift.cmbi.umcn.nl/gv/dssp/.");
+        System.out.println("REQUIRED INPUT FILES: This program requires the PDB file of a protein.");
+        System.out.println("                      The additional usage of an annotated mmCIF file from dssp4 (containing the classification of secondary structure) via command line option '-d' is strongly advised.");
+        System.out.println("                      You can find PDB files at https://rcsb.org.");
+        System.out.println("                      The DSSP program as well as download options can be found at https://swift.cmbi.umcn.nl/gv/dssp/ and https://github.com/PDB-REDO/dssp");
         System.out.println("                      This does not apply to options that don't use it (marked with * above), of course.");
         System.out.println("                      A PDBID still has to be given as first argument, it will be ignored though (use 'NONE').");
         System.out.println("");

@@ -14,6 +14,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
@@ -64,23 +65,29 @@ class CifParser {
     //  -> if auth columns from atom_site not present they will be mapped to the PDB columns
     //     therefore always use auth columns unless you explicitly want the PDB ones
     private static HashMap<String,Integer> colHeaderPosMap = new HashMap<>();
-    private static Boolean columnsChecked = false;
+    private static Boolean doChecksInFirstLineOfCategory = true;  // for code that has to be executed only once at the start of a category - i.e. its first line
     private static ArrayList<String> currentLineValues = new ArrayList<String>();    //stores values of non-loop-blocks so they can be parsed as "fake-loops"
     
     // - - atom_site - -
     private static int ligandsTreatedNum = 0;
     private static int RnaTreatedNum = 0;
-    private static int freeResTreatedNum = 0;
     private static int numberAtoms = 0;
     
     // - variables for successive matching atom -> residue/RNA : Molecule -> chain -
     private static Model m = null;
     private static Molecule lastMol = null;    // starts as first residue and is always the actual one
-    private static Molecule tmpMol = null;      // used to save lastMol if getResidue returns null
     private static Chain tmpChain = null;
-    private static Residue res = null;
     private static Ligand lig = null;
     private static RNA rna = null;
+    private static int numOfResidues = 0;
+    private static Molecule newRes = null;
+    private static Integer latestSseRangeIndex = 0;
+    private static boolean inSse = false;
+    private static String whichSseInfo = null;
+ 
+    private static String currChainIdForSseAssignment = null;
+    private static ArrayList<String[]> sseRangesPerChain = new ArrayList<String[]>();
+    protected static HashMap<String, ArrayList<String[]>> chainwiseSseDict = new HashMap<>();  // chainID as key and a list of all SSE in that chain as value
 
     // - variables per (atom) line -
     private static Integer atomSerialNumber, coordX, coordY, coordZ, molNumPDB, entityID;
@@ -113,6 +120,7 @@ class CifParser {
      * Calls hidden FileParser method initVariables and inits additional CIF Parser variables.
      * @param pf PDB file path
      */
+    @Deprecated  // 15.04.2022: seems outdated
     private static void initVariables(String pf) {
         metaData = new HashMap<>();
     }
@@ -120,21 +128,22 @@ class CifParser {
     /**
      * Like initData but for mmCIF data.
      * @param pf Path to a PDB file. Does NOT test whether it exist, do that earlier.
-     * @param df Path to a DSSP file. Does NOT test whether it exist, do that earlier.
      * @return 
      */
     protected static Boolean initData(String pf) {
         
-        initVariables(pf);
+        metaData = new HashMap<>();
         
         silent = FileParser.settingSilent();
+        
+        whichSseInfo = FileParser.getWhichSseInfo();
         
         if(parseData()) {
             dataInitDone = true;
             return(true);
         }
         else {
-            System.err.println("ERROR: Could not parse dssp and pdb data.");
+            System.err.println("ERROR: Could not parse pdb data.");
             dataInitDone = false;
             System.exit(1);
             return(false);          // for the IDE ;)
@@ -144,13 +153,16 @@ class CifParser {
     
     
     /**
-     * Goes through all lines of mmCIF PDB and DSSP file and applies appropriate function to handle each line.
+     * Goes through all lines of mmCIF PDB file and applies appropriate function to handle each line.
      * Goes through mmCIF file exactly once, saves only what is needed and matches atom<->molecule<->chain<->model on the fly.
      * @return ignore (?)
      */
     private static Boolean parseData() {
         
-        createResidues();
+        if (whichSseInfo.equals("dssp4")) {
+            SseParser.createSseRangesFromDsspCifFile();  // fills the class-variable chainwiseSseDict (has chainIDs as keys and ArrayLists of SSE-ranges as values) with the SSE-ranges given from dssp
+        }
+        
         lastMol = new Residue(); // create artificial molecule to fill so there is no NullPointerException, it will be overwritten once atoms are parsed
         
         try {
@@ -179,11 +191,11 @@ class CifParser {
                 if (line.startsWith("#")) {
                     inLoop = false;
                     colHeaderPosMap.clear();
-                    columnsChecked = false;
+                    doChecksInFirstLineOfCategory = true;
                     currentCategory = null;
                     inString = false;
                     interruptedLine = "";
-                    currentLineValues.clear();
+                    currentLineValues.clear();                   
                     continue;  // nothing else to do / parse here
                 }
                 // from now on: line does not start with '#' (is no comment)
@@ -317,6 +329,18 @@ class CifParser {
                 case "_pdbx_database_status":
                     handlePdbxDatabaseStatus();
                     break;
+                case "_struct_conf":
+                    // obtain sse-info. It is already done in case a 'SSE-file' is given.
+                    // Otherwise we will have to parse the author specification given in this cif file in the categories _struct_conf and _struct_sheet_range
+                    if (whichSseInfo.equals("author")){
+                        handleStructConfLine(lineData, colHeaderPosMap);
+                        break;
+                    }
+                case "_struct_sheet_range":
+                    if (whichSseInfo.equals("author")){
+                        handleStructSheetRangeLine();
+                        break;
+                    }
                 }
                 
                 // reset here, b/c we only get here when a (combined) line was treated
@@ -383,6 +407,7 @@ class CifParser {
     /**
      * Calls DSSP parser to create all residues from DSSP file.
      */
+    @Deprecated
     private static void createResidues() {
         if(! silent) {
             System.out.println("  Creating all Molecules...");
@@ -578,6 +603,7 @@ class CifParser {
      * Matches atoms <-> residues/rna/ligands <-> chains <-> models.
      */
     private static void handleAtomSiteLine() {
+        
         // atom coordinates should always be within a loop      
         if (! inLoop) {
             DP.getInstance().e("FP_CIF", "Parsing line " + numLine + ". Atom coordinates seem not be within a loop. Is the file broken? Exiting now.");
@@ -588,8 +614,9 @@ class CifParser {
 
         numberAtoms++;
 
+        // things to check only in the first Atom-line
         // check once if required column headers are present
-        if (! columnsChecked) {
+        if (doChecksInFirstLineOfCategory) {
             ArrayList<String> missingCols = checkColumns(currentCategory, new ArrayList<>(colHeaderPosMap.keySet()));
             if (missingCols.size() > 0) {
                 DP.getInstance().e("FP_CIF", "Missing following columns in " + currentCategory + 
@@ -607,13 +634,61 @@ class CifParser {
                 if (colHeaderPosMap.get(authCols[i]) == null) {
                     colHeaderPosMap.put(authCols[i], colHeaderPosMap.get(pdbCols[i]));
                     if (! silent) {
-                        System.out.println("   Using " + pdbCols[i] + " instead of "+ 
+                        DP.getInstance().w("Using " + pdbCols[i] + " instead of "+ 
                                 "missing column " + authCols[i]);
+                        DP.getInstance().w("This is work in progress, current output WILL be wrong!");
                     }
                 }
             }
+            
+            // check if SSE-info is present
+            if (chainwiseSseDict.isEmpty()){
+                switch(whichSseInfo){
+                    case "dssp4":
+                        DP.getInstance().e("CifParser", "SSE-file given (annotated mmCIF from dssp), but no SSE-information was found. Exiting now.");
+                        System.exit(1);
+                    case "author":
+                        if (! silent) {
+                            DP.getInstance().w("CifParser", "Need SseRanges to assign a SSE to a residue, but found empty Sse-HashMap. Only ComplexGraph can be used.");
+                        }
+                    case "dssp3":
+                        ;  // if we use the old .dssp file, we get the sse-string directly from that file and DON'T fill the chainwise sse-dict. So it's expected, that the chainwiseSseDict is empty
+                }
+            }
+            else{
+                /* chainwiseSseDict isn't empty, so we will sort the lists of sseRanges. That has to be done because when we parse the author SSE-information,
+                we simply add a new SSE to the ArrayList of its chain without ensuring its order. And since we add all helices first and all strands second,
+                the order will certainly not be correct. Dssp states the SSEs in the _struct_conf category already in the correct order, but we will check it anyway.
+                Better safe than sorry and it won't create much runtime/memory overhead.
+                Then we remove duplicate sseRanges. Those can occur because one strand may be part of multiple sheets (-> named twice) or may be counted twice for one sheet
+                we do those steps chainwise because the sseRanges are stored chainwise. And that's because we can't deduce the order of chains from the sseRanges alone
+                  imagine 3 chains: A,B,C where chain B does not contain Helices but does contain sheets. Since we parse struct_conf (=Helices) first,
+                  we infer the order A-C. When we eventually parse struct_sheet_range (=strands), we find a chain B and would add it at the end, yielding the (wrong) order A-C-B. 
+                  This issue gets aggravated because autors don't have to name chains alphabetically.
+                */
+                for (String i : chainwiseSseDict.keySet()){
+                    Collections.sort(chainwiseSseDict.get(i), (range1, range2) -> determineOrderOfSseRanges(range1, range2));
+                    chainwiseSseDict.put(i, removeDuplicatesFromSortedList(chainwiseSseDict.get(i)));
+                }
 
-            columnsChecked = true;
+                if (Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 1) {
+                    // counting how many sseRanges were found
+                    int count = 0;
+                    for (String dictChainID : chainwiseSseDict.keySet()){
+                        count = count + chainwiseSseDict.get(dictChainID).size();
+                    }
+                    // printing the SSE-list for all chains
+                    DP.getInstance().p("Found the following " + count + " SSE-ranges in the chainwise-SseRanges-HashMap:");
+                    for (String dictChainID : chainwiseSseDict.keySet()){
+                        System.out.println("Chain " + dictChainID + ":");
+                        for (String[] sse : chainwiseSseDict.get(dictChainID)){
+                            System.out.println(Arrays.toString(sse));
+                        }
+                    }                
+                }
+            }
+
+            doChecksInFirstLineOfCategory = false;
         }
 
         // - - model - -
@@ -652,9 +727,9 @@ class CifParser {
             FileParser.s_models.add(m);
             System.out.println("   PDB: No model column. Creating default model '1'");
         }
-
+        
         // - - chain - -
-        // check for a new chain (always hold the current 
+        // check for a new chain (always hold the current)
         // get chain ID
         if (colHeaderPosMap.get("auth_asym_id") != null && lineData.length >= colHeaderPosMap.get("auth_asym_id") + 1) {
                 String tmp_cID = lineData[colHeaderPosMap.get("auth_asym_id")];
@@ -689,7 +764,7 @@ class CifParser {
 
         // PDBx field alias atom record name
         if (colHeaderPosMap.get("group_PDB") != null) {
-            if (colHeaderPosMap.get("group_PDB") < 0) {
+            if (colHeaderPosMap.get("group_PDB") >= 0) {
                 atomRecordName = lineData[colHeaderPosMap.get("group_PDB")];
             }
         } else {
@@ -731,7 +806,7 @@ class CifParser {
         entityID = Integer.valueOf(lineData[colHeaderPosMap.get("label_entity_id")]);
 
         // insertion code
-        // only update if column and value exist, otherwise stick to blank ""
+        // only update if column and value exist, otherwise stick to blank " "
         if (colHeaderPosMap.get("pdbx_PDB_ins_code") != null) {
             if (! (lineData[colHeaderPosMap.get("pdbx_PDB_ins_code")].equals("?") || lineData[colHeaderPosMap.get("pdbx_PDB_ins_code")].equals("."))) {
                 iCode = lineData[colHeaderPosMap.get("pdbx_PDB_ins_code")];
@@ -790,69 +865,8 @@ class CifParser {
                 return;  // atom is not used
             }
         }
-
-        // >> AA <<
-        // update lastMol if the atom in the current line belongs to a new molecule than the previous line 
-        //     -> enables getting DsspResNum for atom from res
-        // match res <-> chain here
-        // load new Residue into lastMol if we approached next Residue, otherwise only add new atom
-        if (! (Objects.equals(molNumPDB, lastMol.getPdbNum()) && chainID.equals(lastMol.getChainID()) && iCode.equals(lastMol.getiCode()))) {
-            tmpMol = FileParser.getResidueFromList(molNumPDB, chainID, iCode);  // null if not in DSSP data -> rna/ligand/free AA
-            // check that a peptide residue could be found                   
-            if (checkType(tmpMol.RESIDUE_TYPE_LIGAND) || entityInformation.get(String.valueOf(entityID)).get("type").equals("non-polymer")) {
-                // residue is not in DSSP file and is not part of a chain -> must be free (modified) amino acid, ligand or RNA
-                if (! silent) {
-                    // print note only once
-                    if (! molNumPDB.equals(lastLigandNumPDB))
-
-                        if(Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 1) {
-                            System.out.println("   PDB: Found a ligand, RNA or free (modified) amino acid at PDB# " + molNumPDB + ". Free amino acids are treated as ligands.");
-                        }
-                }
-
-            } else {
-                
-                if(Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 2) {
-                    System.out.println("    [DEBUG LV 2] Found an amino acid at PDB# " + molNumPDB + " that is not listed in the DSSP file (might be at a chain break). Parsing it as part of a chain.");
-                }
-                
-                // sometimes residues are missing from the dssp file if they are incomplete (mostly at chain breaks)
-                // in this case, they have to be parsed here
-                if (tmpMol == null) {
-                    res = new Residue();
-                                        
-                    res.setPdbNum(molNumPDB);
-                    res.setType(Molecule.RESIDUE_TYPE_AA);
-                    
-                    // assign fake dssp number taking into account other elements that have been given a dssp number
-                    freeResTreatedNum++;
-                    res.setDsspNum(assignDsspNum());
-
-                    res.setChainID(chainID);
-                    res.setiCode(iCode);
-                    res.setName3(molNamePDB);
-                    res.setAAName1(Residue.getAAName1fromAAName3(molNamePDB));
-                    res.setChain(FileParser.getChainByPdbChainID(chainID));
-                    res.setModelID(m.getModelID());
-                    res.setSSEString("C");
-                    
-                    lastChainID = chainID;
-                    FileParser.s_molecules.add(res);
-                    lastMol = res;
-                } else {
-                    lastMol = tmpMol;
-                }
-
-                lastMol.setModelID(m.getModelID());
-                lastMol.setChain(tmpChain);
-                tmpChain.addMolecule(lastMol);
-
-                // assign PDB res name (which differs in case of modifed residues)
-                lastMol.setName3(molNamePDB);
-                lastMol.setEntityID(entityID);
-            }
-        }
-
+        
+        // create atom here but fill it later. It needs to be created here, because it is refereced in the rna/lig creation (to set ATOMTYPE_IGNORED_LIGAND and return if applicable)
         Atom a = new Atom();
 
         if (FileParser.isIgnoredAtom(chemSym)) {
@@ -864,16 +878,49 @@ class CifParser {
                 return;
             }
         }
-
-        // only ATOMs, not HETATMs, have a DSSP entry
-        if((Settings.getBoolean("PTGLgraphComputation_B_handle_hydrogen_atoms_from_reduce") && chemSym.trim().equals("H"))) {
-            a.setDsspResNum(null);
-        }
-        else {
-            a.setDsspResNum(lastMol.getDsspNum());
-        }
         
-        if ((checkType(Molecule.RESIDUE_TYPE_RNA) && entityInformation.get(String.valueOf(entityID)).get("type").equals("polymer"))) {  // Nucleotides are only parsed as RNA if they are polymers, not if they act as single ligands.
+        // >> AA <<
+        // update lastMol if the atom in the current line belongs to a new molecule than the previous line 
+        // match res <-> chain here
+        // load new Residue into lastMol if we approached next Residue, otherwise only add new atom
+
+        if (checkType(Molecule.RESIDUE_TYPE_AA) && entityInformation.get(String.valueOf(entityID)).get("type").equals("polymer")) {
+            if (! (Objects.equals(molNumPDB, lastMol.getPdbNum()) && chainID.equals(lastMol.getChainID()) && iCode.equals(lastMol.getiCode()))) {
+                numOfResidues++;
+                newRes = new Residue();
+                newRes.setPdbNum(molNumPDB);
+                newRes.setDsspNum(assignSequentialNum());  // setting the "dsspNum", but it's just an incremental number from PTGL itself. It was extracted from the .dssp file in earlier versions, but is independent of DSSP by now
+                newRes.setChainID(chainID);
+                tmpChain.addMolecule(newRes);
+                newRes.setiCode(iCode);
+
+                newRes.setType(Residue.RESIDUE_TYPE_AA);
+                newRes.setAAName1(Residue.getAAName1fromAAName3(molNamePDB));
+                newRes.setName3(molNamePDB);
+                newRes.setModelID(m.getModelID());
+                newRes.setChain(tmpChain);
+                newRes.setEntityID(entityID);                    
+
+                if (!whichSseInfo.equals("dssp3")){
+                    newRes.setSSEString(acquireSseString()); // get the sse-string from the chainwiseSseDict
+                }
+                else{  // get the dsspNumber from the dssp-file for the curr res. Then grab the line with that dsspNumber and extract the sseString
+                    newRes.setSSEString(DsspParser.grabSseStringForDsspNum(DsspParser.getDsspResNumForPdbFields(molNumPDB, chainID, iCode)));
+                }
+
+
+                lastChainID = chainID;
+                FileParser.s_molecules.add(newRes);
+                FileParser.s_residueIndices.add(FileParser.s_molecules.size() - 1);
+
+                if(Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 1){
+                    DP.getInstance().d("Created new residue in line " + numLine + " | " + newRes);   
+                }
+
+                lastMol = newRes;
+            }
+        }
+        else if ((checkType(Molecule.RESIDUE_TYPE_RNA) && entityInformation.get(String.valueOf(entityID)).get("type").equals("polymer"))) {  // Nucleotides are only parsed as RNA if they are polymers, not if they act as single ligands.
             // >> RNA <<
             // if the line we are currently in belongs to the same molecule as the previous one, we only create a new atom for this line.
             // otherwise, a new RNA molecule is created
@@ -883,7 +930,7 @@ class CifParser {
                 rna.setType(Molecule.RESIDUE_TYPE_RNA);                
                 
                 RnaTreatedNum++;
-                rna.setDsspNum(assignDsspNum());
+                rna.setDsspNum(assignSequentialNum());
                 
                 rna.setChainID(chainID);
                 rna.setiCode(iCode);
@@ -926,18 +973,19 @@ class CifParser {
                 }
             }       
         }
-        
-        // If a molecule is not parsed at this point, it has to be a ligand
-        else if (checkType(Molecule.RESIDUE_TYPE_LIGAND) ||                                          // if the molecule is categorized as a ligand through chem_comp map
-                (entityInformation.get(String.valueOf(entityID)).get("type").equals("non-polymer"))) // if entity is defined as 'non-polymer' (e.g. free AA/RNA)
-            
-        {
+        else if (checkType(Molecule.RESIDUE_TYPE_LIGAND) ||                                           // if the molecule is categorized as a ligand through chem_comp map
+                (entityInformation.get(String.valueOf(entityID)).get("type").equals("non-polymer"))){ // if entity is defined as 'non-polymer' (e.g. free AA/RNA)
             // >> LIG <<
                      
             // idea: add always residue (for consistency) but atom only if it is not an ignored ligand
 
             // check if we have created ligand residue for s_residue
             if( ! ( molNumPDB.equals(lastLigandNumPDB) && chainID.equals(lastChainID) ) ) {
+                if (! silent) {
+                        if(Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 1) {
+                                DP.getInstance().d("PDB: Found a ligand or free (modified) amino acid/RNA at PDB# " + molNumPDB + ". Free amino acids/RNA are treated as ligands.");
+                        }
+                }
 
                 // create new Residue from info, we'll have to see whether we really add it below though
                 lig = new Ligand();
@@ -947,7 +995,7 @@ class CifParser {
 
                 // assign fake DSSP Num increasing with each seen ligand
                 ligandsTreatedNum ++;
-                lig.setDsspNum(assignDsspNum());
+                lig.setDsspNum(assignSequentialNum());
                 
                 lig.setChainID(chainID);
                 lig.setiCode(iCode);
@@ -1008,16 +1056,19 @@ class CifParser {
                 // DP.getInstance().w("FP_CIF", " Ignored ligand atom of '" +  resNamePDB + "-" + molNumPDB + "', chain " + chainID + " (line " + numLine + ", ligand #" + ligandsTreatedNum + ", Fake DSSP #" + lig.getDsspResNum().toString() + ").");
                 return; // can we do this here? Does it cut off other important stuff? -> added to res but not atom (s.a.)
             }
-            else {
-                a.setAtomtype(Atom.ATOMTYPE_LIGAND);       // valid ligand
-                //a.setDsspResNum(getDsspResNumForPdbFields(molNumPDB, chainID, iCode));  // We can't do this because the fake DSSP residue number has not yet been assigned
+            // Atomtype (for not ignored atoms) is set at the end of the function
+//            else {
+//                a.setAtomtype(Atom.ATOMTYPE_LIGAND);       // valid ligand
+//                //a.setDsspResNum(getDsspResNumForPdbFields(molNumPDB, chainID, iCode));  // We can't do this because the fake DSSP residue number has not yet been assigned
+//            }
+        }
+        else{
+            if (! silent){
+                DP.getInstance().w("Didn't recoginze type of Atom # " + atomSerialNumber + ". This is probably a bug!");
             }
         }
 
-        // now create the new Atom
-
-        // lastMol may be NULL
-        // Note that the command above may have returned NULL, we care for that below
+        // lastMol may be NULL  // md: no it won't
 
         a.setPdbAtomNum(atomSerialNumber);
         a.setAtomName(atomName);
@@ -1026,13 +1077,16 @@ class CifParser {
         a.setChainID(chainID);        
         a.setChain(FileParser.getChainByPdbChainID(chainID));
         a.setPdbResNum(molNumPDB);
-        // we cant get the DSSP res num easily here and have to do it later (I guess)
-        // old parser seems to assign 0 here whatsoever so we just leave the default value there
-        // a.setDsspResNum(resNumDSSP);
         a.setCoordX(coordX);
         a.setCoordY(coordY);
         a.setCoordZ(coordZ);
         a.setChemSym(chemSym);
+        if((Settings.getBoolean("PTGLgraphComputation_B_handle_hydrogen_atoms_from_reduce") && chemSym.trim().equals("H"))) {
+            a.setDsspResNum(null);
+        }
+        else {
+            a.setDsspResNum(lastMol.getDsspNum());
+        }
 
         // from old parser, not working with models right now
         /*
@@ -1042,48 +1096,260 @@ class CifParser {
         }
         */
         
-            if (lastMol.getType() == Molecule.RESIDUE_TYPE_AA || lastMol.getType() == Molecule.RESIDUE_TYPE_RNA){
-                if (lastMol == null) {
-                    DP.getInstance().w("Molecule with PDB # " + molNumPDB + " of chain '" + chainID + "' with iCode '" + iCode + "' not listed in CIF data, skipping atom " + atomSerialNumber + " belonging to that residue (PDB line " + numLine.toString() + ").");
-                    return;
-                } else {
-                    if(Settings.getBoolean("PTGLgraphComputation_B_handle_hydrogen_atoms_from_reduce") && chemSym.trim().equals("H")) {
-                        lastMol.addHydrogenAtom(a);
-                    }
-                    else {
-                        // add Atom to list of atoms of current molecule as well as list of all atoms
-                        FileParser.s_atoms.add(a);
-                        if (checkType(Molecule.RESIDUE_TYPE_AA)){
-                            if(Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 2) {
-                                System.out.println("    [DEBUG LV 2] New AA atom added: " + a.toString());
-                            }
-                            a.setAtomtype(Atom.ATOMTYPE_AA);
-                            lastMol.addAtom(a);
-                        }
-                        if (checkType(Molecule.RESIDUE_TYPE_RNA)){
-                            if(Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 2) {
-                                System.out.println("    [DEBUG LV 2] New RNA atom added: " + a.toString());
-                            }
-                            a.setAtomtype(Atom.ATOMTYPE_RNA);
-                            a.setMolecule(rna);
-                            rna.addAtom(a);
-                        }
-                    }
-                }
+        if (lastMol.getType() == Molecule.RESIDUE_TYPE_AA || lastMol.getType() == Molecule.RESIDUE_TYPE_RNA || lastMol.getType() == Molecule.RESIDUE_TYPE_LIGAND){
+            if(Settings.getBoolean("PTGLgraphComputation_B_handle_hydrogen_atoms_from_reduce") && chemSym.trim().equals("H")) {
+                lastMol.addHydrogenAtom(a);
             }
             else {
-                if (! (lig == null)){
+                // add Atom to list of atoms of current molecule as well as list of all atoms
+                FileParser.s_atoms.add(a);
+                lastMol.addAtom(a);
+                if (checkType(Molecule.RESIDUE_TYPE_AA)){
+                    if(Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 2) {
+                        System.out.println("    [DEBUG LV 2] New AA atom added: " + a.toString());
+                    }
+                    a.setAtomtype(Atom.ATOMTYPE_AA);
+                }
+                else if (checkType(Molecule.RESIDUE_TYPE_RNA)){
+                    if(Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 2) {
+                        System.out.println("    [DEBUG LV 2] New RNA atom added: " + a.toString());
+                    }
+                    a.setAtomtype(Atom.ATOMTYPE_RNA);
+                }
+                else if (checkType(Molecule.RESIDUE_TYPE_LIGAND)){
                     if(Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 2) {
                        System.out.println("    [DEBUG LV 2] New ligand atom added: " + a.toString());
                     }
-                    lig.addAtom(a);
-                    a.setMolecule(lig);
-                    FileParser.s_atoms.add(a);
+                    a.setAtomtype(Atom.ATOMTYPE_LIGAND);
                 }
-
             }
+        }            
     }
-            
+
+    /**
+     * Handles lines starting with _struct_conf.
+     * Creates a String[] representing the sse and adds that to chainwiseSseDict.
+     * This function will get called from the SseParser too, which is why we can't use class variables
+     * like in most other 'handle functions'. Therefore the appropriate class variables have to be passed
+     * as argument, when this function is called.
+     * @param dataOfLine lineData class variable (values of the current line as String array
+     * @param currColHeaderPosMap colHeaderPosMap of the class/Parser, which calls this function
+     */
+    protected static void handleStructConfLine(String[] dataOfLine, HashMap<String,Integer> currColHeaderPosMap){
+        // extract important data from the _struct_conf-line (which SSE as well as it's start and end residue)
+        String SseStructure = dataOfLine[currColHeaderPosMap.get("conf_type_id")];  
+        String sseChain = dataOfLine[currColHeaderPosMap.get("beg_auth_asym_id")];
+        String startIndexStr = dataOfLine[currColHeaderPosMap.get("beg_auth_seq_id")];
+        String startICode = dataOfLine[currColHeaderPosMap.get("pdbx_beg_PDB_ins_code")];
+        String endIndexStr = dataOfLine[currColHeaderPosMap.get("end_auth_seq_id")];
+        String endICode = dataOfLine[currColHeaderPosMap.get("pdbx_end_PDB_ins_code")];
+        
+        // if there is no iCode present, set the variable to " " to be consistent and compatible with the existing code
+        if (startICode.equals("?") || startICode.equals(".")){startICode = " ";}
+        if (endICode.equals("?") || endICode.equals(".")){endICode = " ";}
+        
+        // add the current SSE to the ArrayList of the other SSE-Ranges of its chain
+        String[] currRange = {SseStructure, sseChain, startIndexStr, startICode, endIndexStr, endICode};
+        addSseToSseDict(currRange);
+    }
+    
+    /**
+     * Handles lines starting with _struct_sheet_range.
+     * Creates a String[] representing the strand and adds it to chainwiseSseDict.
+     * This category contains the author-defined ranges for each strand. The strands
+     * are sorted by the beta-sheets they belong to.
+     */
+    private static void handleStructSheetRangeLine(){
+        // extract data for the sheet of the current line    
+        String sheetChain = lineData[colHeaderPosMap.get("beg_auth_asym_id")];
+        String startIndexStr = lineData[colHeaderPosMap.get("beg_auth_seq_id")];
+        String startICode = lineData[colHeaderPosMap.get("pdbx_beg_PDB_ins_code")];
+        String endIndexStr = lineData[colHeaderPosMap.get("end_auth_seq_id")];
+        String endICode = lineData[colHeaderPosMap.get("pdbx_end_PDB_ins_code")];
+        
+        // if there is no iCode present, set the variable to " " to be consistent and compatible with the existing code
+        if (startICode.equals("?") || startICode.equals(".")){startICode = " ";}
+        if (endICode.equals("?") || endICode.equals(".")){endICode = " ";}
+        
+        String[] currRange = {"STRN", sheetChain, startIndexStr, startICode, endIndexStr, endICode};
+        addSseToSseDict(currRange);
+    }
+    
+    /**
+     * Append sse to the SSE-list of its chain in chainwiseSseDict.
+     * Sorting of those SSE-lists will be done later.
+     * @param sse The secondary-structre-element-range that shall be added.
+     */
+    protected static void addSseToSseDict(String[] sse){
+        String chainOfSse = sse[1];
+        // if the sse has a new chain: create a new ArrayList for that chain and add the sse
+        if (chainwiseSseDict.get(chainOfSse) == null){
+            chainwiseSseDict.put(chainOfSse, new ArrayList<String[]>());
+            chainwiseSseDict.get(chainOfSse).add(sse);
+            if(Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 1){
+                DP.getInstance().d("Initialized new sseList for chain '" + chainOfSse + "'");
+            }
+        }
+        else{
+            chainwiseSseDict.get(chainOfSse).add(sse);
+        }
+    }
+    
+    /**
+     * Removes any duplicates from a sorted (!) ArrayList of String[].
+     * Does not check, whether the ArrayList is sorted.
+     * @param list the ArrayList from which duplicates shall be removed.
+     * @return the ArrayList without duplicates. It is still sorted.
+     */
+    private static ArrayList<String[]> removeDuplicatesFromSortedList(ArrayList<String[]> list){        
+        int listSize = list.size();
+        ArrayList<String[]> noDuplicates = new ArrayList<>();
+        noDuplicates.add(list.get(0));  // adding the first range to avoid NullPointerException in the first iteration
+        
+        for (int i = 1; i < listSize; i++){  // starting at 1 because we already added the first sseRange
+            // only add the sseRange, if it differs from the last sseRange in the noDuplicates list
+            if (! Arrays.equals(list.get(i), noDuplicates.get(noDuplicates.size() - 1))){
+                noDuplicates.add(list.get(i));
+            }
+            else{
+                if (Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 2){
+                    DP.getInstance().d("Removed " + Arrays.toString(list.get(i)));
+                }
+            }
+        }
+        return noDuplicates;
+    }
+    
+    /**
+     * Takes two sseRanges (must be from the same chain) and determines their order
+     * using the Number and ICode of their start-residue.
+     * @param range1
+     * @param range2
+     * @return indicates the order of the given ranges: negative (range1 smaller range2)/positive/zero
+     */
+    private static int determineOrderOfSseRanges(String[] range1, String[] range2){
+        int start1 = Integer.parseInt(range1[2]);
+        int start2 = Integer.parseInt(range2[2]);
+        int start1ICode = (int) range1[3].charAt(0);
+        int start2ICode = (int) range2[3].charAt(0);
+        
+        if (!range1[1].equals(range2[1])){  // check if their chain is different
+            DP.getInstance().e("Tried to compare two SseRanges, but they are from different chains. Exiting now.");
+            System.exit(1);
+        }
+        
+        if (start1 == start2){  // sseRanges have equal StartNum -> order depends on ICode
+            return start1ICode - start2ICode;
+        }
+        else{  // sseRanges have different start num -> the order can be derived without the ICode
+            return start1 - start2;
+        }
+    }
+    
+    /**
+     * Acquires the SSE-String for the current Residue (by chainID, molNumPDB, iCode)
+     * @return 1-char representation of the SSE or " " if the residue doesn't belong to a SSE
+     */
+    private static String acquireSseString(){
+        if (! chainID.equals(currChainIdForSseAssignment)){  // we store the SSE-ranges chainwise. So if the curr residue has a different chain to our curr list, we need to grab the list for the chain of the residue
+            if (Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 3){
+                DP.getInstance().d("chainID was: " + chainID + " but currChainIdForSseAssignment was: " + currChainIdForSseAssignment + ". Grabbing sse-list of new chain");
+            }
+            sseRangesPerChain = chainwiseSseDict.get(chainID);
+            currChainIdForSseAssignment = chainID;
+            latestSseRangeIndex = 0;
+        }
+        
+        if (sseRangesPerChain == null){
+            if (Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 3){
+                DP.getInstance().d("Found no SSE-ranges for current chain, so ' ' will be assigned. ");
+            }
+            return " ";
+        }
+        
+        if (latestSseRangeIndex >= sseRangesPerChain.size()){ // we must be beyond the last SSE of the chain, return " " for all remaining residues
+            if(Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 3){
+                DP.getInstance().d("last SSE of this chain passed, returning ' '");
+            }
+            return " ";
+        }
+        
+        
+        // gather the info for our current sseRange
+        String[] currSseRange = sseRangesPerChain.get(latestSseRangeIndex);
+        String currSse = currSseRange[0];
+        String chainOfCurrSse = currSseRange[1];
+        int currSseStartNum = Integer.parseInt(currSseRange[2]);
+        String currSseStartIC = currSseRange[3];
+        int currSseEndNum = Integer.parseInt(currSseRange[4]);
+        String currSseEndIC = currSseRange[5];
+        
+        /* The end-residue and the start-residue of an sse must be reached if we sequentially go through
+        the list of residues and the list of sse (also, every residue must only be associated to one sse.
+        everything else would make no biological sense and is considered a bad input). We therefore
+        catch the end-residue and the start-residue of every sse and toggle inSse accordingly.
+        We need to check for the end-residue first in order for SSE's of length 1 to be parsed correctly.
+        */
+        if (Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 3){
+            DP.getInstance().d("SSE: chain: " + chainOfCurrSse + " StartNum: " + currSseStartNum + " StartIcode: " + currSseStartIC);
+            DP.getInstance().d("SSE: chain: " + chainOfCurrSse + " EndNum:   " + currSseEndNum + " EndIcode  : " + currSseEndIC);
+            DP.getInstance().d("Res: chain: " + chainID + " Num:      " + molNumPDB + " Icode: " + iCode);
+        }
+        if (chainID.equals(chainOfCurrSse) && molNumPDB.equals(currSseEndNum) && iCode.equals(currSseEndIC)){
+            if (Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 3){
+                DP.getInstance().d("exiting SSE and increment SSE-range pointer");
+            }
+            inSse = false;
+            latestSseRangeIndex++;
+            return sseKeywordToOneLetter(currSse);
+        }
+        else if (chainID.equals(chainOfCurrSse) && molNumPDB.equals(currSseStartNum) && iCode.equals(currSseStartIC)){
+            if (Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 3){
+                DP.getInstance().d("entering SSE");
+            }
+            inSse = true;
+            return sseKeywordToOneLetter(currSse);
+        }
+        else if (inSse){
+            if (Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 3){
+                DP.getInstance().d("in SSE");
+            }
+            return sseKeywordToOneLetter(currSse);
+        }
+        else {
+            if (Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 3){
+                DP.getInstance().d("not in SSE");
+            }
+            return " ";
+        }
+    }
+    
+    /**
+     * Maps the multiple-letter SSE-identifier (from dssp or author) to one letter.
+     * @param s multiple-letter SSE-identifier
+     * @return 1-letter identifier
+     */
+    private static String sseKeywordToOneLetter(String s){
+        switch(s) {
+            case "HELX_RH_AL_P": return "H";
+            case "HELX_RH_3T_P": return "G";
+            case "HELX_RH_PI_P": return "I";
+            case "HELX_LH_PP_P": 
+                if (Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 1){
+                    DP.getInstance().d("Inside a left-handed helix at " + chainID + "-" + molNumPDB + "-" + iCode + " (chainID-molNumPDB-iCode). Those get ignored at the moment, returning ' '.");
+                }
+                return " ";  // disregard left-hand helices for now
+            case "STRN": return "E";
+            case "TURN_TY1_P": return "T";
+            case "BEND": return "S";
+            case "HELX_P": return "H";  // name used by authors to define a helix. The names above are used by dssp.
+            default: 
+                if (! silent){
+                    DP.getInstance().w("Found unknown SSE-definition '" + s + "'. Returning ' ' but data loss will occur.");
+                }
+                return " ";
+        }
+    }
     
     /**
      * Handles lines starting with _chem_comp by filling the chemicalComponents HashMap.
@@ -1097,8 +1363,8 @@ class CifParser {
             category = cat;
             value = lineData[colHeaderPosMap.get(cat)];
             tmpComponent.put(category, value);
-            chemicalComponents.put(lineData[colHeaderPosMap.get("id")], tmpComponent);      // matches one component with all its category/value pairings
         }
+        chemicalComponents.put(lineData[colHeaderPosMap.get("id")], tmpComponent);      // matches one component with all its category/value pairings
     }
     
     
@@ -1218,7 +1484,7 @@ class CifParser {
      * @param line
      * @return
      */
-    private static String[] lineToArray(String line) {
+    protected static String[] lineToArray(String line) {
         ArrayList<String> dataItemList = new ArrayList<>();
         String tmpItem = "";
         boolean inLineString = false;  // marked by single-quoation mark
@@ -1558,11 +1824,10 @@ class CifParser {
     
     
     /**
-     * Assigns a fake DSSP-Number based on all objects that have received DSSP-Numbers.
-     * Only AAs in DSSP file get a real DSSP number, all other objects (RNA, ligands, free AAs) have to be assigned one.
+     * Assigns the next sequential number based on all molecule-objects that have been created already.
      */
-    protected static Integer assignDsspNum () {
-        return DsspParser.lastUsedDsspNum + RnaTreatedNum + ligandsTreatedNum + freeResTreatedNum;
+    protected static Integer assignSequentialNum () {
+        return numOfResidues + RnaTreatedNum + ligandsTreatedNum;
     }
       
 }

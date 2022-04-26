@@ -73,8 +73,9 @@ public class FileParser {
 
     static Integer[] resIndexPDB = null;        // for a DSSP res number, holds the index of that residue in s_residues
     static Integer[] resIndexDSSP = null;       // for a PDB res number, holds the index of that residue in s_residues
-
-
+    
+    private static String whichSseInfo = null;  // whether to use author info, dssp Version 3 or dssp Version 4
+ 
       
     /**
      * Parses the contents of a line from the given startIndex to the end of the line.
@@ -595,15 +596,42 @@ public class FileParser {
         }
     }
     
-    public static void initData(String pdbFile, String dsspFile, String outputDir) {
-        DsspParser.initVariables(dsspFile);
+    public static void initData(String pdbFile, String sseFile, String outputDir) {
         FileParser.initVariables(pdbFile);
+        
+        if (sseFile.equals("")){
+            whichSseInfo = "author";
+            if (! Settings.getBoolean("PTGLgraphComputation_B_no_warn")){
+                DP.getInstance().w("\n    ###############" + 
+                        "\n    No sseFile given. Trying to use author classification of SSEs." + 
+                        "\n    Because of that, results are not comparable between proteins, helices may be missing or inaccurately represented." +
+                        "\n    Using an mmCIF annotated by dssp4 is strongly advised (use command-line option -d)." +
+                        "\n    ###############");
+            }
+        }
+        else if (sseFile.endsWith(".dssp")){
+            whichSseInfo = "dssp3";
+            DsspParser.initVariables(sseFile);
+            if (! Settings.getBoolean("PTGLgraphComputation_B_no_warn")){
+                DP.getInstance().w(".dssp file given. Filetype is not supported anymore, results may be wrong. Please use the annotated mmCIF that dssp4 produces.");
+            }
+        }
+        else{
+            whichSseInfo = "dssp4";
+            SseParser.setSseFile(sseFile);
+        }
         
         if (settingCif()) {
             CifParser.initData(pdbFile);
         } else {
             DP.getInstance().w("Legacy-Parser chosen: This parser is no longer kept up to date, results might not be correct anymore. If possible, use Cif-Parser in the future.");
-            LegacyParser.initData(pdbFile);
+            if (!whichSseInfo.equals("dssp3")){
+                DP.getInstance().e("Legacy-Parser requires .dssp file. Exiting now.");
+                System.exit(1);
+            }
+            else{
+                LegacyParser.initData(pdbFile);
+            }
         }
         
         if (Settings.getBoolean("PTGLgraphComputation_B_csv_number_residues_chains")) {
@@ -668,6 +696,10 @@ public class FileParser {
         } else {
             return LegacyParser.getMetaInfo(pdbid, chain);
         }
+    }
+    
+    public static String getWhichSseInfo(){
+        return whichSseInfo;
     }
 
     // setting methods

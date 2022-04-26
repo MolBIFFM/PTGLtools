@@ -83,6 +83,7 @@ import graphdrawing.ProteinGraphColors;
 import graphformats.IGEXFFormat;
 import graphformats.IManualSVGFormat;
 import graphformats.ISimpleProteinGraphFormat;
+import io.FileParser;
 import io.IO;
 import settings.Settings;
 import static proteingraphs.FoldingGraph.ORIENTATION_DOWNWARDS;
@@ -2906,6 +2907,9 @@ E	3	3	3
         gmlf.append("  creator \"").append(Settings.getProgramName()).append("\"\n");
         gmlf.append("  version \"").append(Settings.getVersion()).append("\"\n");
         gmlf.append("  label \"" + "PTGLtools Protein Graph ").append(shortStr).append("\"\n");
+        if (FileParser.getWhichSseInfo().equals("author")){
+            gmlf.append("  SseNote \"Created with author classification of SSEs. Results can't be compared to graphs of other proteins!\"\n");
+        }
         gmlf.append("  comment \"").append(this.getOneLineMetadataString()).append("\"\n");
         gmlf.append("  directed 0\n");
         gmlf.append("  ").append(TextTools.formatAsCaseStyle(Arrays.asList("is", "planar"), snakeCase)).append(" 0\n");

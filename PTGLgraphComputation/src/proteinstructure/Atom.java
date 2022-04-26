@@ -31,7 +31,7 @@ public class Atom implements java.io.Serializable {
     private String modelID = null;
     private Model model = null;
     private Integer pdbAtomNumber = null;       // atom number from pdb file
-    private Molecule molecule = null;             // Molecule this Atom belongs to
+    public Molecule molecule = null;             // Molecule this Atom belongs to
     private Integer type = null;               // atom type:  0=AA, 1=Ligand, 2=Ignored HETATM (e.g. 'DOD'-molecule atoms) 3=Ignored ATOM (e.g. H, Q)
     private Integer pdbResNum = null;
     private Integer dsspResNum = null;

@@ -11,6 +11,7 @@ package settings;
 import java.util.ArrayList;
 import java.util.HashMap;
 import tools.DP;
+import proteingraphs.ComplexGraphEdgeWeightTypes;
 
 /**
  *
@@ -131,6 +132,14 @@ class Section {
                 settings.add(new Setting("PTGLgraphComputation_B_Jmol_graph_vis_resblue_commands", 'B', "false", "Whether to compute and print Jmol commands to color the residues of Protein Graphs blue in 3D."));
                 break;
                 
+            case "Assembly prediction (AP)":
+                settings.add(new Setting("PTGLgraphComputation_B_interactive_assembly_prediction", 'B', "false", "Whether to interactively create assembly prediction instead of greedily choosing best edge at each step."));
+                settings.add(new Setting("PTGLgraphComputation_S_assembly_prediction_leaf_labels", 'S', "", "Comma-seperated labels for the leaves in the interactive prediction and output newick format. "
+                        + "The labels are applied in the same order as in the PDB file. Will use chain IDs if not specified."));
+                settings.add(new Setting("PTGLgraphComputation_L_AP_weight_types", 'L', String.join(",", ComplexGraphEdgeWeightTypes.getShortNames()), "Comma-seperated list of the weight types to use for the assembly prediction. "
+                        + "For each weight type, a prediction is done. Valid choices are: " + String.join(",", ComplexGraphEdgeWeightTypes.getShortNames()) + "."));
+                break;
+                
             case "Prints / Error handling":
                 settings.add(new Setting("PTGLgraphComputation_B_silent", 'B', "false", "Whether to suppress all output. Cluster mode, not recommended for normal usage."));
                 settings.add(new Setting("PTGLgraphComputation_B_only_essential_output", 'B', "true", "Whether to print only high-level status information."));
@@ -162,6 +171,7 @@ class Section {
                 settings.add(new Setting("PTGLgraphComputation_B_include_rna", 'B', "true", "Whether RNA should be parsed and included in graph formalism and visualisation (WIP)."));
                 settings.add(new Setting("PTGLgraphComputation_B_convert_models_to_chains", 'B', "false", "Whether the PDB file should be checked for multiple models and if so convert those models to chains."));
                 settings.add(new Setting("PTGLgraphComputation_I_defaultModel", 'I', "1", "The model to use if multiple models exist in the PDB file."));
+                settings.add(new Setting("PTGLgraphComputation_B_always_skip_models", 'B', "true", "Whether models should be skipped for all methods."));
                 settings.add(new Setting("PTGLgraphComputation_S_ligAACode", 'S', "J", "The amino acid code used to mark a ligand residue."));
                 settings.add(new Setting("PTGLgraphComputation_I_lig_min_atoms", 'I', "1", "The minimum number of atoms a ligand needs to consist of to count as an SSE."));
                 settings.add(new Setting("PTGLgraphComputation_I_lig_max_atoms", 'I', "-1", "The maximum number of atoms a ligand has to consist of to count as an SSE. Set to <0 for unlimited."));
@@ -201,6 +211,7 @@ class Section {
                 settings.add(new Setting("PTGLgraphComputation_I_lig_atom_radius", 'I', "30", "The atom radius of ligand atoms in 10th part Angstroem (setting 30 here means 3 A)"));
                 settings.add(new Setting("PTGLgraphComputation_I_max_contacts_per_type", 'I', "1", "The maximum number of contacts of a certain type that is counted for a residue pair. Set it to something very large if you don't want any limit (Integer.MAX_VALUE comes to mind). "
                         + "The PTGL uses a setting of 1 (so if a pair has 3 B/B contacts and 2 C/B contacts, it is is counted as 1 B/B and 1 C/B.)"));
+                settings.add(new Setting("PTGLgraphComputation_transitive_contacts", 'B', "true", "Whether contacts transitive by ligands should be considered for the contact calculation, and subsequently in the complex graphs."));
                 settings.add(new Setting("PTGLgraphComputation_B_forceBackboneContacts", 'B', "false", "Whether all amino acids of a protein graph should be connected sequentially, from N to C terminus, with contacts of type backbone."));
                 break;
                 
@@ -370,10 +381,17 @@ class Section {
                 settings.add(new Setting("PTGLgraphComputation_I_number_of_graphlets", 'I', "30", "The length of the graphlet vector in the database (the PostgreSQL SQL array). This is the number of graphlets used to compute similarity."));
                 settings.add(new Setting("PTGLgraphComputation_B_write_chains_file", 'B', "false", "Whether to write a chains file containing all chain names of the currently handled PDB file. Can be used by GraphletAnalyzer later to construct graph file names for all chains."));
                 break;
-                
+
             case "Deprecated":
                 settings.add(new Setting("PTGLgraphComputation_B_no_chain_break_info", 'B', "false", "[DEPRECATED] Whether to suppress chain break info while parsing DSSP file (handy for some DSSP files for CIF data)."));
                 settings.add(new Setting("PTGLgraphComputation_B_split_dsspfile_warning", 'B', "false", "[DEPRECATED] Whether to show a warning about splitting the DSSP file when multiple models are detected in a PDB file."));
+				break;
+
+            case "Random tree generation":
+                settings.add(new Setting("PTGLgraphComputation_B_generate_random_binary_tree", 'B', "false", "Whether to generate a random binary tree."));
+                settings.add(new Setting("PTGLgraphComputation_B_tree_rooted", 'B', "true", "Whether the generated tree should be rooted or not."));
+                settings.add(new Setting("PTGLgraphComputation_I_tree_number_leafs", 'I', "4", "How many leafs the tree should contain."));
+                settings.add(new Setting("PTGLgraphComputation_S_leaf_labels", 'S', "", "Comma-seperated labels for the leaves. Must exacly match the number of PTGLgraphComputation_I_tree_number_leafs. Will use IDs from 0..n if empty."));
                 break;
                 
             case "Debug":
@@ -435,4 +453,21 @@ class Section {
         
         return formattedString;
     }
+<<<<<<< HEAD
 }
+=======
+    
+    
+    /**
+     * Returns each setting with its value in an own line.
+     * @return 
+     */
+    String asShortString() {
+        String shortString = "";
+        for (Setting tmpSetting : settings) {
+            shortString += tmpSetting.asKeyValueString() + "\n";
+        }
+        return shortString;
+    }
+}
+>>>>>>> c7e6b0b126e09b02a6f5c67a037a74c9267cfb21

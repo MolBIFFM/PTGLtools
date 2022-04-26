@@ -80,6 +80,7 @@ public class Settings {
         sections.add(new Section("Folding Graph (FG)", "User"));
         sections.add(new Section("Complex Graph (CG)", "User"));
         sections.add(new Section("Structure visualization", "User"));
+        sections.add(new Section("Assembly prediction (AP)", "User"));
         
         // ADVANCED SECTIONS
         sections.add(new Section("Prints / Error handling", "Advanced"));
@@ -100,7 +101,8 @@ public class Settings {
         sections.add(new Section("DB: representative chains", "Advanced"));
         sections.add(new Section("Image settings", "Advanced"));
         sections.add(new Section("Output settings", "Advanced"));
-        sections.add(new Section("DB: similarity search", "Advanced"));        
+        sections.add(new Section("DB: similarity search", "Advanced"));
+        sections.add(new Section("Random tree generation", "Advanced"));
         
         // DEVELOPER SECTIONS
         sections.add(new Section("Deprecated", "Developer"));
@@ -210,9 +212,15 @@ public class Settings {
 
         // header
         formattedString += "##### PTGLgraphComputation SETTINGS #####\n\n";
+<<<<<<< HEAD
         formattedString += "# This file contains the settings for PTGLtools' PTGLgraphComputation as key-value pairs per line.\n"
                 + "# The character after 'PTGLgraphComputation' indicates which data type is expected: "
                 + "B(oolean), S(tring), I(nteger) or F(loat)\n";
+=======
+        formattedString += "# This file contains the settings for PTGLtools's PTGLgraphComputation as key-value pairs per line.\n"
+                + "The character after 'PTGLgraphComputation' indicates which data type is expected: "
+                + "B(oolean), S(tring), L(ist) I(nteger) or F(loat)\n";
+>>>>>>> c7e6b0b126e09b02a6f5c67a037a74c9267cfb21
         formattedString += "# The file is structured in sections which either belong to user, advanced or developer settings.\n\n";
         
         // sections
@@ -229,6 +237,20 @@ public class Settings {
         }
         
         return formattedString;
+    }
+    
+    
+    /**
+     * Returns a short header and each setting with its value in an own line.
+     * @return 
+     */
+    static public String asShortString() {
+        String shortString = "";
+        for (int i = 0; i < sections.size(); i++) {
+            shortString += sections.get(i).asShortString() + "\n";
+        }
+        shortString = shortString.trim();
+        return shortString;
     }
     
     
@@ -323,6 +345,17 @@ public class Settings {
             System.exit(1);
             return(false);      // never reached
         }
+    }
+    
+    
+    /**
+     * Tries to extract the value of the setting 'key' as a list and return it.
+     * Always expects comma-seperated strings as value.
+     * @param key the name of the setting
+     * @return the value of the setting as array of String
+     */
+    public static String[] getList(String key) {
+        return get(key).split(",");
     }
     
     

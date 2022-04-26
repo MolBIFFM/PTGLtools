@@ -88,6 +88,7 @@ public class ComplexGraph extends UAdjListGraph {
     private BigDecimal minimumMultiplicativeLengthNormalizedEdgeWeight;  // the smallest normalized edge weight: used for the lucid normalized edge weights
 
     public Map<Vertex, String> proteinNodeMap;
+    private Map<Vertex, String> labelNodeMap;  // for now, used for labels in interactive assembly prediction and output newick string
     public Map<Vertex, String> molMap;  // contains for each vertex (= protein chain) the corresponding molecule name
     public Map<Vertex, Integer> chainLengthMap;  // used for the GML file output
     public Map<Vertex, String> chainTypeMap;
@@ -146,6 +147,7 @@ public class ComplexGraph extends UAdjListGraph {
         chainNamesInEdge = createEdgeMap();
         
         proteinNodeMap = createVertexMap();
+        labelNodeMap = createVertexMap();
         molMap = createVertexMap();
         chainLengthMap = createVertexMap();
         chainTypeMap = createVertexMap();
@@ -246,6 +248,10 @@ public class ComplexGraph extends UAdjListGraph {
      */
     private void createVertices(List<Chain> chains) {
         Vertex v;
+        int curNum = 0;
+        String labelListAsString = Settings.get("PTGLgraphComputation_S_assembly_prediction_leaf_labels");
+        String[] labelList = (labelListAsString.length() == 0 ? new String[0] : labelListAsString.split(","));  // split would return [""] for empty String so care for that
+        
         for(Integer i = 0; i < chains.size(); i++) {
             Chain tmpChain = chains.get(i);
             for (Integer j = 0; j < allChains.size(); j++) {    // loop through chains to find matches
@@ -257,6 +263,7 @@ public class ComplexGraph extends UAdjListGraph {
                         v = createVertex();
              
                         proteinNodeMap.put(v, tmpChain.getPdbChainID());
+                        labelNodeMap.put(v, labelList.length > curNum ? labelList[curNum] : tmpChain.getPdbChainID());
                         molMap.put(v, FileParser.getMetaInfo(pdbid, tmpChain.getPdbChainID()).getMolName());  // get the mol name from the ProtMetaInfo
                         chainLengthMap.put(v, tmpChain.getAllAAResidues().size());
                         chainTypeMap.put(v, allChains.get(j).getMoleculeType());
@@ -281,6 +288,7 @@ public class ComplexGraph extends UAdjListGraph {
                                 }
                             }
                         }
+                        curNum++;
                     }
                 }
             } 
@@ -815,12 +823,21 @@ public class ComplexGraph extends UAdjListGraph {
         if (!silent) {
             System.out.println("  Computing assembly prediction based on different edge weight types...");
         }
+        String[] desiredWeightTypes = Settings.getList("PTGLgraphComputation_L_AP_weight_types");
         for (EdgeWeightType weightType : EdgeWeightType.values()) {
-            System.out.println("   " + weightType.name);
+            if (! Arrays.stream(desiredWeightTypes).anyMatch(weightType.shortName::equals)) {
+                continue;
+            }
+            System.out.println("    " + weightType.name);
             AgglomerativeClustering clustering = 
-                    new AgglomerativeClustering(getEdgesAsArray(), vertexMapToVertexIdMap(chainLengthMap), weightType);
+                    new AgglomerativeClustering(getEdgesAsArray(), vertexMapToVertexIdMap(chainLengthMap), weightType, vertexMapToVertexIdMap(labelNodeMap));
             ClusteringResult clusteringResult = clustering.chainLengthClustering();
-            System.out.println("    " + clusteringResult.toNewickString(vertexMapToVertexIdMap(proteinNodeMap)));
+            System.out.println("      " + clusteringResult.toNewickString(vertexMapToVertexIdMap(labelNodeMap)));
+            
+            //System.out.println("      Large Interface Score: " + clusteringResult.getScore().toString());
+            for (String line : clusteringResult.getScoreLines()) {
+                System.out.println("      Large Interface Score for " + line);
+            }
         }
     }
     

@@ -969,7 +969,7 @@ public class IO {
      * @param content of the file
      * @param path of the file
      * @param overwrite whether to overwrite if file already exists
-     * @return 
+     * @return whether it worked
      */
     public static Boolean writeStringToFile(String content, String path, Boolean overwrite) {
 

@@ -6,7 +6,7 @@
 #   patch: fixes, small changes
 #   no version change: fix typos, changes to comments, debug prints, small changes to non-result output, changes within git branch
 # -> only increment with commit / push / merge not while programming
-version = "1.1.0"  # TODO version of this template, change this to 1.0.0 for a new script or 2.0.0 if you upgrade another script to this template's architecture  
+version = "1.2.0" 
 
 
 ########### built-in imports ###########
@@ -20,17 +20,17 @@ import pathlib
 import shutil
 import re
 import time
+import fnmatch
 
 
 ########### functions ###########
 
 # Add new subscripts here
-programs = ['toLegacyPDB.py', 'toMmCIF.py', 'dsspcmbi', 'postProcessDssp.py', 'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py', 'getAttributeDataFromGml.py', 'evalEdgesWeights.py', 'changeEdgeNames.py', 'sumEdgeWeights.py', 'plotSnapshots.py', 'PyMolHeatmapVisualisation.py']
+programs = ['toLegacyPDB.py', 'toMmCIF.py', 'dsspcmbi', 'postProcessDssp.py', 'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py', 'getAttributeDataFromGml.py', 'evalEdgesWeights.py', 'changeEdgeNames.py', 'sumEdgeWeights.py', 'plotSnapshots.py', 'compareContactPartnersOfResidues.py', 'calculateChanges.py', 'heatmapVisualisation.py', 'plotResResContactChanges.py']
 
 default_path_graCom = os.path.dirname(__file__)
 parts = default_path_graCom.split('/PTGLdynamics')
 default_path_graCom = parts[0] + '/PTGLgraphComputation/dist/PTGLgraphComputation.jar'
-
 
 def check_file_writable(fp):
     """Checks if the given filepath is writable"""
@@ -185,13 +185,14 @@ cl_parser.add_argument('-H',
                        '--headerfile',
                        metavar = 'headerfile',
                        default = '',
-                       help = 'to integrate a header in your mmCif files specify the path of your header file.')
+                       help = 'to integrate a header in your mmcif files containing 3D structural data specify the path of your header file.')
                        
 cl_parser.add_argument('-C',
                        '--compoundfile',
                        metavar = 'compoundfile',
                        default = '',
-                       help = 'to integrate a header in your pdb files containing 3D structural data specify the path of your header file.')                       
+                       help = 'to integrate a header in your pdb files containing 3D structural data specify the path of your header file.')                         
+
 
 cl_parser.add_argument('-a',
                        '--applications',
@@ -220,31 +221,31 @@ cl_parser.add_argument('--PTGLgraphComputation-args',
                        metavar = 'PTGLgraphComputation-args',
                        type = str,
                        default = '',
-                       help = 'a string with the PTGLgraphComputation arguments you want to use and its values to execute PTGLgraphComputation in different ways using PTGLgraphComputations command line arguments. Insert arguments like this: -a="<arguments and their inputs>" ')
+                       help = 'a string with the PTGLgraphComputation arguments you want to use and its values to execute PTGLgraphComputation in different ways using PTGLgraphComputations command line arguments. Insert arguments like this: --PTGLgraphComputation-args="<arguments and their inputs>" ')
 
 cl_parser.add_argument('--toLegacyPDB-args',
                        metavar = 'toLegacyPDB-arguments',
                        type = str,
                        default = '',
-                       help = 'a string with the arguments for toLegacyPDB you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: -b="<arguments and their inputs>" ')
+                       help = 'a string with the arguments for toLegacyPDB you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: --toLegacyPDB-args="<arguments and their inputs>" ')
 
 cl_parser.add_argument('--dsspcmbi-args',
                        metavar = 'dsspcmbi-arguments',
                        type = str,
                        default = '',
-                       help = 'a string with the arguments for dsspcmbi you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: -e="<arguments and their inputs>" ')
+                       help = 'a string with the arguments for dsspcmbi you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: --dsspcmbi-args="<arguments and their inputs>" ')
 
 cl_parser.add_argument('--postProcessDssp-args',
                        metavar = 'postProcessDssp-arguments',
                        type = str,
                        default = '',
-                       help = 'a string with the arguments for postProcessDssp you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: -f="<arguments and their inputs>" ')
+                       help = 'a string with the arguments for postProcessDssp you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: --postProcessDssp-args="<arguments and their inputs>" ')
 
 cl_parser.add_argument('--gmlCompareEdgeWeightsAndSubsets-args',
                        metavar = 'gmlCompareEdgeWeightsAndSubsets-args',
                        type = str,
                        default = '',
-                       help = 'a string with the arguments for gmlCompareEdgeWeightsAndSubsets you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: -g="<arguments and their inputs>" ')
+                       help = 'a string with the arguments for gmlCompareEdgeWeightsAndSubsets you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: --gmlCompareEdgeWeightsAndSubsets-args="<arguments and their inputs>" ')
 
 cl_parser.add_argument('-j',
                        '--different-dssp-folders',
@@ -254,7 +255,7 @@ cl_parser.add_argument('-j',
 cl_parser.add_argument('-I',
                        '--toMmCIF',
                        action='store_true',
-                       help = 'converts non legacy PDB files to mmCIF format.')
+                       help = 'converts pseudo legacy PDB files to mmCIF format.')
                        
 cl_parser.add_argument('--toMmCIF-args',
                        type = str,
@@ -264,34 +265,51 @@ cl_parser.add_argument('--toMmCIF-args',
 cl_parser.add_argument('--getAttributeDataFromGml-args',
                        metavar = 'getAttributeDataFromGml-args',
                        default = 'numAllResResContacts -c',
-                       help = 'a string with the arguments for getAttributeDataFromGml you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: -t="<arguments and their inputs>". Put the positional attribute argument first, followed by optional arguments. Default attribute argument is numAllResResContacts. ')
+                       help = 'a string with the arguments for getAttributeDataFromGml you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: --getAttributeDataFromGml-args="<arguments and their inputs>". Put the positional attribute argument first, followed by optional arguments. Default attribute argument is numAllResResContacts. ')
                        
 cl_parser.add_argument('--evalEdgesWeights-args',
                        metavar = 'evalEdgesWeights-args',
                        default = '',   
-                       help = 'a string with the arguments for evalEdgesWeights you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: -z="<arguments and their inputs>". For default are two csv files in your output folder created, all_edge_values.csv and edges_weights.csv. If the second file name is altered, changeEdgeNames.py has to be executed manually on that file.')
+                       help = 'a string with the arguments for evalEdgesWeights you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: --evalEdgesWeights-args="<arguments and their inputs>". For default are two csv files in your output folder created, all_edge_values.csv and edges_weights.csv. If the second file name is altered, changeEdgeNames.py has to be executed manually on that file.')
                        
 cl_parser.add_argument('--changeEdgeNames-args',
                        metavar = 'changeEdgeNames-args',
                        default = '',   
-                       help = 'a string with the arguments for changeEdgeNames you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: -y="<arguments and their inputs>". Using the files from the inputfolder as default. Executing the script alone needs at least all positional arguments, only one csv at a time can be executed.')
+                       help = 'a string with the arguments for changeEdgeNames you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: --changeEdgeNames-args="<arguments and their inputs>". Using the files from the inputfolder as default. Executing the script alone needs at least all positional arguments, only one csv at a time can be executed.')
                        
 cl_parser.add_argument('--sumEdgeWeights-args',
                        metavar = 'sumEdgeWeights-args',
                        default = '',   
-                       help = 'a string with the arguments for sumEdgeWeights you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: -x="<arguments and their inputs>".')
+                       help = 'a string with the arguments for sumEdgeWeights you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: --sumEdgeWeights-args="<arguments and their inputs>".')
 
 cl_parser.add_argument('--plotSnapshots-args',
                        metavar = 'plotSnapshots-args',
                        default = '',   
-                       help = 'a string with the arguments for plotSnapshots you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: -n="<arguments and their inputs>".')
+                       help = 'a string with the arguments for plotSnapshots you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: --plotSnapshots-args="<arguments and their inputs>".')
                        
-cl_parser.add_argument('--pyMolHeatmapVisualisation-args',
-                       metavar = 'pyMolHeatmapVisualisation-arguments',
+cl_parser.add_argument('--heatmapVisualisation-args',
+                       metavar = 'heatmapVisualisation-arguments',
                        type = str,
                        default = '',
-                       help = 'a string with the arguments for createPymolScript you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: --createPymolScript-args="<arguments and their inputs>", including the positional arguments.')                       
+                       help = 'a string with the arguments for heatmapVisualisation.py you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: --heatmapVisualisation-args="<arguments and their inputs>", including the positional arguments.')   
 
+cl_parser.add_argument('--compareContactPartnersOfResidues-args',
+                       metavar = 'compareContactPartnersOfResidues-args',
+                       default = '',   
+                       help = 'a string with the arguments for compareContactPartnersOfResidues.py you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: --compareContactPartnersOfResidues-args="<arguments and their inputs>".')
+                       
+cl_parser.add_argument('--calculateChanges-args',
+                       metavar = 'calculateChanges-arguments',
+                       type = str,
+                       default = '',
+                       help = 'a string with the arguments for calculateChanges.py you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: --calculateChanges-args="<arguments and their inputs>", including the positional arguments.')
+
+cl_parser.add_argument('--plotResResContactChanges-args',
+                       metavar = 'plotResResContactChanges-arguments',
+                       type = str,
+                       default = '',
+                       help = 'a string with the arguments for plotResResContactChanges.py you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: --plotResResContactChanges-args="<arguments and their inputs>", including the positional arguments.')                      
+                                                                                
 args = cl_parser.parse_args()
 
 ########### check arguments ###########
@@ -309,7 +327,7 @@ if (args.outputfile != ""):
     if(check_file_writable(args.outputfile)):
         output_file = open(args.outputfile, "w")
     else:
-        logging.error("Specified output file '%s' is not writable. Exiting now.", args.outputfile)
+        log("Specified output file '%s' is not writable. Exiting now." + args.outputfile, 'e')
         sys.exit(1)
 
 # input directory
@@ -324,27 +342,27 @@ if (args.headerfile != ""):
         header_mmcif = os.path.abspath(args.headerfile)
         cmd_header_mmcif = ' --headerfile ' + header_mmcif
     else:
-        logging.error("Specified header file '%s' is not readable. Continuing without header file. PTGLgraphComputation will not be working properly though.", args.headerfile)
+        log("Specified header file '%s' is not readable. Continuing without header file. PTGLgraphComputation will not be working properly though." + args.headerfile, 'e')
         header_mmcif = ''
         cmd_header_mmcif = ''
 else:
     header_mmcif = ''
     cmd_header_mmcif = ''
     if (args.toMmCIF):
-        logging.error("No header file was specified. PTGLgraphComputation will not be working properly.") 
-    
+        log("No header file was specified. PTGLgraphComputation will not be working properly.", 'w') 
+
 # compoundfile directory
 if (args.compoundfile != ""):
     if(os.access(args.compoundfile, os.R_OK)):
         header = os.path.abspath(args.compoundfile)
         cmd_header = ' -c ' + header
     else:
-        logging.error("Specified header file '%s' is not readable. Continuing without header file.", args.compoundfile)
+        log("Specified header file '%s' is not readable. Continuing without header file." + args.compoundfile, 'e')
         header = ''
         cmd_header = ''
 else:
     header = ''
-    cmd_header = ''    
+    cmd_header = ''         
 
 # list of applications
 program_list = []
@@ -353,7 +371,7 @@ if (args.applications != []):
         if program in programs:            
             program_list.append(program)
         else:
-            logging.error("Specified program '%s' is not part of the ptglDynamics pipeline. Continuing without it.", program)
+            log("Specified program '%s' is not part of the ptglDynamics pipeline. Continuing without it." + program, 'e')
 else:
     program_list = list(programs)
     
@@ -403,14 +421,23 @@ add_sumEdgeWeights_args = check_arguments_args(args.sumEdgeWeights_args)
 # plotSnapshots arguments
 add_plotSnapshots_args = check_arguments_args(args.plotSnapshots_args)
 
-# createPymolScript arguments
-add_pyMolHeatmapVisualisation_args = check_arguments_args(args.pyMolHeatmapVisualisation_args)
+# heatmapVisualisation arguments
+add_heatmapVisualisation_args = check_arguments_args(args.heatmapVisualisation_args)
+
+# compareContactPartnersOfResidues arguments
+add_compareContactPartnersOfResidues_args = check_arguments_args(args.compareContactPartnersOfResidues_args)
+
+# calculateChanges arguments
+add_calculateChanges_args = check_arguments_args(args.calculateChanges_args)
+
+# plotResResContactChanges arguments
+add_plotResResContactChanges_args = check_arguments_args(args.plotResResContactChanges_args)
     
 # different dssp folders
 if (args.different_dssp_folders):
-    dir_names = {'toLegacyPDB.py':'legacyPDB', 'toMmCIF.py':'mmCIF', 'dsspcmbi':'oldDssp', 'postProcessDssp.py':'newDssp', 'PTGLgraphComputation':'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py': 'gml', 'getAttributeDataFromGml.py': 'csv', 'evalEdgesWeights.py':'csv', 'changeEdgeNames.py':'csv', 'sumEdgeWeights.py':'pdf', 'plotSnapshots.py':'pdf', 'PyMolHeatmapVisualisation.py':'PyMOL'}
+    dir_names = {'toLegacyPDB.py':'legacyPDB', 'toMmCIF.py':'mmCIF', 'dsspcmbi':'oldDssp', 'postProcessDssp.py':'newDssp', 'PTGLgraphComputation':'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py': 'gml', 'getAttributeDataFromGml.py': 'csv', 'evalEdgesWeights.py':'csv', 'changeEdgeNames.py':'csv', 'sumEdgeWeights.py':'pdf', 'plotSnapshots.py':'pdf', 'heatmapVisualisation.py':'py', 'compareContactPartnersOfResidues.py':'csv', 'calculateChanges.py':'csv', 'plotResResContactChanges.py':'pdf' }
 else:
-    dir_names = {'toLegacyPDB.py':'legacyPDB', 'toMmCIF.py':'mmCIF', 'dsspcmbi':'dssp', 'postProcessDssp.py':'dssp', 'PTGLgraphComputation':'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py': 'csv', 'getAttributeDataFromGml.py': 'csv', 'evalEdgesWeights.py':'csv', 'changeEdgeNames.py':'csv', 'sumEdgeWeights.py':'pdf', 'plotSnapshots.py':'pdf', 'PyMolHeatmapVisualisation.py':'PyMOL'}
+    dir_names = {'toLegacyPDB.py':'legacyPDB', 'toMmCIF.py':'mmCIF', 'dsspcmbi':'dssp', 'postProcessDssp.py':'dssp', 'PTGLgraphComputation':'PTGLgraphComputation', 'gmlCompareEdgeWeightsAndSubsets.py': 'csv', 'getAttributeDataFromGml.py': 'csv', 'evalEdgesWeights.py':'csv', 'changeEdgeNames.py':'csv', 'sumEdgeWeights.py':'pdf', 'plotSnapshots.py':'pdf', 'heatmapVisualisation.py':'py', 'compareContactPartnersOfResidues.py':'csv', 'calculateChanges.py':'csv', 'plotResResContactChanges.py':'pdf'}
 
 ########### vamos ###########
 
@@ -443,6 +470,11 @@ getAttributeDataFromGml_dir = input_dir
 evalEdgesWeights_dir = input_dir
 changeEdgeNames_dir = input_dir
 compareSubsets_dir = input_dir
+contactResRes_dir = original_output_dir
+comparedResRes_dir = input_dir
+input_dir_csv_files = input_dir
+changes_dir = input_dir
+num_res_in_chain_dir = input_dir
 
 work_dir = get_working_dir(input_dir)
 list_work_dir = []
@@ -667,7 +699,7 @@ for elem in program_list:
                 try:
                     shutil.copy(file, input_dir_evalEdges + file)
                 except shutil.SameFileError:
-                        log("Source and destination represents the same file.", 'i')
+                    log("Source and destination represents the same file.", 'i')
                         
         if (len(os.listdir(input_dir_evalEdges)) != 0):
              
@@ -776,76 +808,215 @@ for elem in program_list:
             os.chdir(work_dir)
 
         log('plotSnapshots computations are done.', 'i')
-        
+    
+    elif (elem == 'compareContactPartnersOfResidues.py'):
+        if (add_compareContactPartnersOfResidues_args == ''):
 
-    elif (elem == 'PyMolHeatmapVisualisation.py'):      
-        if (add_pyMolHeatmapVisualisation_args == ''):
-            # get pseudo pdb / cif and dssp file
+            os.chdir(out_dir)
+            input_dir_csv_files = new_directory('files_for_GraCom_computation_res_res_contacts') + '/'
+            os.chdir(input_dir)         
+
             files_dir = get_working_dir(file_dir)
             list_file_dir = os.listdir(files_dir)
             list_file_dir = sorted_nicely(list_file_dir)
-        
-            cif_or_pdb_file = ''
+            # Check whether .pdb or.cif files exist.
+            file_ending = ''
             for file in list_file_dir:
                 if file.endswith('.cif'):
-                    cif_or_pdb_file = os.path.abspath(file)
-                    break
-                                          
-            if (cif_or_pdb_file == ''):
+                    file_ending = '.cif'  
+                    try:                 
+                        shutil.copy(file, input_dir_csv_files + file)
+                    except shutil.SameFileError:
+                        log("Source and destination represents the same file.", 'i')
+                    
+            if (file_ending == '') and cmd_header_mmcif != '':
+                file_ending = '.pdb'
                 list_input_dir = os.listdir(input_dir)
-                list_input_dir = sorted_nicely(list_file_dir)
+                list_input_dir = sorted_nicely(list_file_dir)	
                 for file in list_input_dir:
-                    if file.endswith('.pdb'):
-                        cif_or_pdb_file = os.path.abspath(file)
-                        break
+                    if file.endswith(file_ending):
+                        try:
+                            shutil.copy(file, input_dir_csv_files + file)
+                        except shutil.SameFileError:
+                            log("Source and destination represents the same file.", 'i')
+            
+            elif (file_ending == '') and (cmd_header_mmcif == ''):
+                log("No header file given to create mmcif files out of pseudo pdb files. Can not compute further output, exiting.", 'e')
+                exit()
+                
+            if (file_ending == ''):
+                log("No files found to compute csv files with contact partners of a residue. Exiting.", 'e')
+                exit()
+
+            # Generate mmCIF files if needed for PTGLgraphComputation.
+            if (file_ending == '.pdb'):
+                createMmCifs = cmd_start + 'toMmCIF.py -i ' + input_dir_csv_files + ' -p ' + input_dir_csv_files + cmd_header_mmcif
+                os.chdir(input_dir_csv_files)
+                os.system(createMmCifs)
+
+            work_dir = get_working_dir(input_dir_csv_files)        
+            list_work_dir = os.listdir(work_dir)
+            list_work_dir = sorted_nicely(list_work_dir)
+            
+            if(args.sub_dir_structure):
+                os.chdir(out_dir)
+                contactResRes_dir = new_directory('res_res_contacts') + '/'
+
+            # Create csv files with inter- and intrachain contacts with PTGLgraphComputation.
+            for cif in list_work_dir:
+                if (cif.endswith(".cif")):
+                    cif_id = pathlib.Path(cif).stem
+                    dssp = dssp_dir + pathlib.Path(cif).stem + '.dssp'
+                    PTGLgraphComputation = 'java -jar ' + default_path_graCom + ' ' + cif_id + ' -p ' + work_dir + cif + ' -d ' + dssp + ' -o ' + contactResRes_dir + ' -I -G --set "PTGLgraphComputation_B_csv_contacts_intra_inter" "True" --set "PTGLgraphComputation_B_calc_draw_graphs" "False"'
+                    log(PTGLgraphComputation,'d') 
+                    os.chdir(contactResRes_dir)
+                    os.system(PTGLgraphComputation)
+                    os.chdir(work_dir)
                     
-            base = os.path.basename(cif_or_pdb_file)
-            name = os.path.splitext(base)[0]
-            dssp_path = dssp_dir + name + '.dssp'
-            dssp_file = ''
-            if os.path.exists(dssp_path):
-                dssp_file = dssp_path
-            else:                
-                dssp_file = ''
+            contactResRes_dir = os.path.abspath(contactResRes_dir) + '/'
+            log("Residue-residue contacts for each timestep computed and saved in csv file.", 'i')
 
-            create_csv_string = ''
-            if cif_or_pdb_file.endswith('.cif') and dssp_file != '':
-                create_csv_string = ' --pdb-or-cif-file ' + cif_or_pdb_file + ' --dssp-file ' + dssp_file
-            elif cif_or_pdb_file.endswith('.pdb') and dssp_file != '' and cmd_header_mmcif != '':
-                create_csv_string = ' --pdb-or-cif-file ' + cif_or_pdb_file + ' --dssp-file ' + dssp_file + cmd_header_mmcif
+            # get files of two timesteps.
+            work_dir = get_working_dir(contactResRes_dir)
+            list_work_dir = os.listdir(work_dir)
+            list_work_dir = sorted_nicely(list_work_dir)
+            previous_file = ''
+            for file in list_work_dir:
+                if file.startswith('contacts') and file.endswith('.csv'):
+                    if previous_file != '':
+                        compareContacts = 'python3 ' + plotting_dir + elem + ' ' + os.path.abspath(previous_file) + ' ' + os.path.abspath(file) + ' -p ' + out_dir
+                        log(compareContacts, 'd')
+                        os.chdir(out_dir)
+                        os.system(compareContacts)
+                        os.chdir(work_dir)
+                    previous_file = file
+            
+            comparedResRes_dir = os.path.abspath(out_dir) + '/'
+            os.remove(comparedResRes_dir + "residues_contacts")
+            
+        elif (add_compareContactPartnersOfResidues_args != ''):
 
-            file = ''
-            if cif_or_pdb_file.endswith('.cif'):
-                file = cif_or_pdb_file
+            log('compareContactPartnersOfresidues.py computations done.', 'i')
+
+    elif (elem == 'calculateChanges.py'):
+        work_dir_1 = get_working_dir(comparedResRes_dir)
+        work_dir_2 = get_working_dir(compareSubsets_dir)
+        if (add_calculateChanges_args == ''): 
+            
+            # create csv file with number of residues in each chain.          
+            work_dir = get_working_dir(input_dir_csv_files)
+            list_work_dir = os.listdir(work_dir)
+            list_work_dir = sorted_nicely(list_work_dir)
+            cif_file = ''
+            for file in list_work_dir:
+                if file.endswith('.cif'):
+                    cif_file = file
+                    break
+
+            if cif_file != '':
+                cif_id = pathlib.Path(cif_file).stem
+                dssp = dssp_dir + pathlib.Path(cif_file).stem + '.dssp'
+                createCsvFile = 'java -jar ' + default_path_graCom + ' ' + cif_id + ' -p ' + work_dir + cif_file + ' -d ' + dssp + ' -o ' + out_dir + ' -I --set "PTGLgraphComputation_B_csv_number_residues_chains" "true" --set "PTGLgraphComputation_B_debug_only_parse" "true"' 
+
+                log(createCsvFile,'d') 
+                os.chdir(out_dir)
+                os.system(createCsvFile)
+                os.chdir(work_dir_1)
+                
+                num_res_in_chain_dir = os.path.abspath(out_dir) + '/'
             else:
-                files_dir = get_working_dir(file_dir)
-                list_files_dir = os.listdir(files_dir)
-                list_files_dir = sorted_nicely(list_files_dir)
-                for file_output in list_files_dir:
-                    if file_output.endswith('.pdb'):
-                        file = os.path.abspath(file_output)
-                        break
-
-            work_dir = get_working_dir(compareSubsets_dir)
-            log(work_dir, 'd')
+                log("No cif file found, can´t compute csv file with number of residues in each chain.", 'e')
+                
+            # Calculate changes.         
+            changes_res_res = 'python3 ' + plotting_dir + elem + ' ' + work_dir_1 + ' ' + '"(res, res)"' + ' -p ' + out_dir
+            changes_chain_CG = 'python3 ' + plotting_dir + elem + ' ' + work_dir_2 + ' ' + '"(chain, CG)"' + ' -p ' + out_dir
+            changes_chain_res = 'python3 ' + plotting_dir + elem + ' ' + work_dir_1 + ' ' + '"(chain, res)"' + ' -p ' + out_dir
+            log(changes_res_res, 'd')
+            log(changes_chain_CG, 'd')
+            log(changes_chain_res, 'd')
+            os.chdir(out_dir)
+            os.system(changes_res_res)
+            os.system(changes_chain_CG)
+            os.system(changes_chain_res)
+            os.chdir(work_dir_1)
             
-            createPymolScript = 'python3 ' + plotting_dir + elem + ' ' + work_dir + ' ' + file + ' -p ' + out_dir + create_csv_string
-            log(createPymolScript, 'd')
-            os.chdir(out_dir) 
-            os.system(createPymolScript)
-            os.chdir(work_dir)
-                    
-        elif (add_pyMolHeatmapVisualisation_args != ''):
-            createPymolScript = 'python3 ' + plotting_dir + elem + ' ' + add_pyMolHeatmapVisualisation_args
-            log(createPymolScript, 'd')
-            os.chdir(out_dir) 
-            os.system(createPymolScript)
-            os.chdir(work_dir)
-
-        log('PyMolHeatmapVisualisation computations are done.', 'i')
+            changes_dir = os.path.abspath(out_dir) + '/'
             
+        elif (add_calculateChanges_args != ''):
+            calculateChanges = 'python3' + plotting_dir + elem + ' ' + add_calculateChanges_args
+            log(calculateChanges, 'd')
+            os.chdir(out_dir)
+            os.system(calculateChanges)
+            os.chdir(work_dir_1)
+
+                
+    elif (elem == 'heatmapVisualisation.py'):
+        # Creates the heatmap visualisation on residue level based on inter- and intrachain residue-residue contacts.
+        if (add_heatmapVisualisation_args == ''):
+            work_dir = get_working_dir(file_dir)
+            list_work_dir = os.listdir(work_dir)
+            list_work_dir = sorted_nicely(list_work_dir)
+            pdb_file = ''
+            for file in list_work_dir:
+                if file.endswith('.cif') or file.endswith('.pdb'):
+                    pdb_file = file
+                    break
         
-           
+            pdb_file = os.path.abspath(pdb_file)
+            
+            if pdb_file == '':           
+                log("No pdb file found. Can´t compute heatmap visualisation.", 'e')
+                exit()
+                
+            work_dir = get_working_dir(changes_dir)
+            list_work_dir = os.listdir(work_dir)               
+            pattern = "changes_in_percent_each_res_based_on_res_*.csv"
+            matching = fnmatch.filter(list_work_dir, pattern)
+            changes_file = work_dir + matching[0]
+                
+            if os.path.isfile(changes_file):
+                heatmapVisualisation = 'python3 ' + plotting_dir + elem + ' ' + pdb_file + ' ' + changes_file + ' -p ' + out_dir
+                os.chdir(out_dir)
+                os.system(heatmapVisualisation)
+                os.chdir(work_dir)
+            else:
+                log("No files containing the changes for each chain based on residue-residue contacts found. Can´t compute heatmap visualisation.", 'e')                                       
+                    
+        elif (add_heatmapVisualisation_args != ''):
+            createPymolScript = 'python3 ' + plotting_dir + elem + ' ' + add_heatmapVisualisation_args
+
+            log(createPymolScript, 'd')
+            os.chdir(out_dir) 
+            os.system(createPymolScript)
+            os.chdir(work_dir)
+
+        log('heatmapVisualisation computations are done.', 'i')
+
+    elif (elem == 'plotResResContactChanges.py'):
+        if (add_plotResResContactChanges_args == ''):
+            work_dir = get_working_dir(changes_dir)
+            list_work_dir = os.listdir(work_dir)
+            pattern = "changes_each_res_based_on_res_*.csv"
+            matching = fnmatch.filter(list_work_dir, pattern)
+            changes_file = work_dir + matching[0]
+                 
+            if os.path.isfile(changes_file):
+                plots = 'python3 ' + plotting_dir + elem + ' ' + changes_file + ' -p ' + out_dir
+                os.chdir(out_dir)
+                os.system(plots)
+                os.chdir(work_dir)
+            else:
+                log("No files containing the changes for each chain based on residue-residue contacts found. Can´t create plots.", 'e')                                       
+                    
+        elif (add_plotResResContactChanges_args != ''):
+            plots = 'python3 ' + plotting_dir + elem + ' ' + add_plotResResContactChanges_args
+            log(plots, 'd')
+            os.chdir(out_dir) 
+            os.system(plots)
+            os.chdir(work_dir)
+
+        log('plotResResContactChanges computations are done.', 'i') 
+       
 
 log("-- %s seconds ---"% (time.time()- _start_time), 'i')
 log("All done, exiting ptglDynamics.", 'i')

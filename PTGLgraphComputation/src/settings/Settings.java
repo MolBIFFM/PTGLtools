@@ -212,15 +212,9 @@ public class Settings {
 
         // header
         formattedString += "##### PTGLgraphComputation SETTINGS #####\n\n";
-<<<<<<< HEAD
-        formattedString += "# This file contains the settings for PTGLtools' PTGLgraphComputation as key-value pairs per line.\n"
-                + "# The character after 'PTGLgraphComputation' indicates which data type is expected: "
-                + "B(oolean), S(tring), I(nteger) or F(loat)\n";
-=======
         formattedString += "# This file contains the settings for PTGLtools's PTGLgraphComputation as key-value pairs per line.\n"
-                + "The character after 'PTGLgraphComputation' indicates which data type is expected: "
-                + "B(oolean), S(tring), L(ist) I(nteger) or F(loat)\n";
->>>>>>> c7e6b0b126e09b02a6f5c67a037a74c9267cfb21
+                + "# The character after 'PTGLgraphComputation' indicates which data type is expected: "
+                + "B(oolean), S(tring), L(ist), I(nteger) or F(loat)\n";
         formattedString += "# The file is structured in sections which either belong to user, advanced or developer settings.\n\n";
         
         // sections

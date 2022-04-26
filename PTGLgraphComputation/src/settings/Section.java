@@ -452,11 +452,7 @@ class Section {
         }
         
         return formattedString;
-    }
-<<<<<<< HEAD
-}
-=======
-    
+    }    
     
     /**
      * Returns each setting with its value in an own line.
@@ -470,4 +466,3 @@ class Section {
         return shortString;
     }
 }
->>>>>>> c7e6b0b126e09b02a6f5c67a037a74c9267cfb21

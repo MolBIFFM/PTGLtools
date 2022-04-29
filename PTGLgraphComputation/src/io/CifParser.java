@@ -1336,7 +1336,7 @@ class CifParser {
             case "HELX_RH_PI_P": return "I";
             case "HELX_LH_PP_P": 
                 if (Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 1){
-                    DP.getInstance().d("Inside a left-handed helix at " + chainID + "-" + molNumPDB + "-" + iCode + " (chainID-molNumPDB-iCode). Those get ignored at the moment, returning ' '.");
+                    DP.getInstance().d("Inside a left-handed polyproline helix at " + chainID + "-" + molNumPDB + "-" + iCode + " (chainID-molNumPDB-iCode). Those get ignored at the moment, returning ' '.");
                 }
                 return " ";  // disregard left-hand helices for now
             case "STRN": return "E";

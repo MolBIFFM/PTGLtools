@@ -385,7 +385,7 @@ class Section {
             case "Deprecated":
                 settings.add(new Setting("PTGLgraphComputation_B_no_chain_break_info", 'B', "false", "[DEPRECATED] Whether to suppress chain break info while parsing DSSP file (handy for some DSSP files for CIF data)."));
                 settings.add(new Setting("PTGLgraphComputation_B_split_dsspfile_warning", 'B', "false", "[DEPRECATED] Whether to show a warning about splitting the DSSP file when multiple models are detected in a PDB file."));
-	break;
+                break;
 
             case "Random tree generation":
                 settings.add(new Setting("PTGLgraphComputation_B_generate_random_binary_tree", 'B', "false", "Whether to generate a random binary tree."));

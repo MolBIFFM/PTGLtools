@@ -720,9 +720,7 @@ public class ContactMatrix {
         
         Integer spatRelCode;  // see SpatRel for definition. Is assigned in the end to both matrix entries (i,j and j,i)
         SSE sseA, sseB;
-        Residue resA, resB;
         Molecule molA, molB;
-        resA = resB = null;
         
         // following only used for dd method, but we cannot move it into if above sadly...
         Integer sumMax, sumMin, difMax, difMin, tmp;
@@ -850,7 +848,7 @@ public class ContactMatrix {
                                     }
 
                                     if (Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 4) {
-                                        System.out.println("[DEBUG LV 4] Res " + resA.getDsspNum() + " + " + resB.getDsspNum());
+                                        System.out.println("[DEBUG LV 4] Res " + molA.toString() + " + " + molB.toString());
                                         System.out.println("  Sum: " + tmp);
                                     }
 
@@ -883,7 +881,7 @@ public class ContactMatrix {
                                 System.out.println("  sumMax: " + sumMax);
                                 System.out.println("  sumMin: " + sumMin);
                                 System.out.println("  difMax: " + difMax);
-                                System.out.println("  sumMax: " + difMin);
+                                System.out.println("  difMax: " + difMin);
                                 System.out.println("  Double difference: " + doubleDifference);
                             }
 
@@ -941,7 +939,7 @@ public class ContactMatrix {
 
                             // ----- end of DD interpretations -----
                         } else {
-                            // use vector mode (WIP: unconfirmed results)
+                            // use vector mode
                             spatRelCode = sseA.angleBetweenThisAnd(sseB);
                         }
                     }

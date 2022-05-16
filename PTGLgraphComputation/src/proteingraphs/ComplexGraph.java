@@ -199,7 +199,7 @@ public class ComplexGraph extends UAdjListGraph {
                 }
             }
         }
-        
+
         createVertices(preprocessedChains);
         createHomologueChainsMatrix(preprocessedChains);
         
@@ -271,11 +271,16 @@ public class ComplexGraph extends UAdjListGraph {
 
                         molIDs.add(FileParser.getMetaInfo(pdbid, tmpChain.getPdbChainID()).getMolName());
                         
-                        int chainLength = (Settings.getBoolean("PTGLgraphComputation_B_CG_ignore_ligands") ? 
-                                tmpChain.getAllAAResidues().size() : 
-                                tmpChain.getAllAAResidues().size() + tmpChain.getAllLigandResidues().size());
+                        int chainLength = (Settings.getBoolean("PTGLgraphComputation_B_CG_ignore_ligands") ?
+                                tmpChain.getAllAAResidues().size() :
+                                tmpChain.getAllAAResidues().size() + tmpChain.getAllLigandResidues().size()) +
+                                tmpChain.getAllRnaResidues().size(); // MZ: solves the problem
+
+                        java.lang.System.out.println("ALLLigandRES " + tmpChain.getAllLigandResidues().size()); //MZ
+
+                        java.lang.System.out.println(chainLength + " " + tmpChain.getPdbChainID()); // MZ
                         
-                        mapChainIdToLength.put(tmpChain.getPdbChainID(), chainLength);
+                        mapChainIdToLength.put(tmpChain.getPdbChainID(), chainLength); // MZ: length gets put into dict
 
                         // get AA sequence string for each chainName
                         for(Residue resi : tmpChain.getAllAAResidues()) {

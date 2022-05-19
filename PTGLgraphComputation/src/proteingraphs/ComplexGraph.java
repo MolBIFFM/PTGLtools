@@ -265,22 +265,24 @@ public class ComplexGraph extends UAdjListGraph {
                         proteinNodeMap.put(v, tmpChain.getPdbChainID());
                         labelNodeMap.put(v, labelList.length > curNum ? labelList[curNum] : tmpChain.getPdbChainID());
                         molMap.put(v, FileParser.getMetaInfo(pdbid, tmpChain.getPdbChainID()).getMolName());  // get the mol name from the ProtMetaInfo
-                        chainLengthMap.put(v, tmpChain.getAllAAResidues().size());
+                        if(includeRna && allChains.get(j).getMoleculeType().contains("polyribonucleotide")){
+                            chainLengthMap.put(v, tmpChain.getAllAAResidues().size() + tmpChain.getAllRnaResidues().size());
+                        }else{
+                            chainLengthMap.put(v, tmpChain.getAllAAResidues().size());
+                        }
                         chainTypeMap.put(v, allChains.get(j).getMoleculeType());
                         mapVertexIdVertex.put(Integer.parseInt(v.toString()), v);
 
                         molIDs.add(FileParser.getMetaInfo(pdbid, tmpChain.getPdbChainID()).getMolName());
                         
-                        int chainLength = (Settings.getBoolean("PTGLgraphComputation_B_CG_ignore_ligands") ?
-                                tmpChain.getAllAAResidues().size() :
-                                tmpChain.getAllAAResidues().size() + tmpChain.getAllLigandResidues().size()) +
-                                tmpChain.getAllRnaResidues().size(); // MZ: solves the problem
-
-                        java.lang.System.out.println("ALLLigandRES " + tmpChain.getAllLigandResidues().size()); //MZ
-
-                        java.lang.System.out.println(chainLength + " " + tmpChain.getPdbChainID()); // MZ
+                        int chainLength = (Settings.getBoolean("PTGLgraphComputation_B_CG_ignore_ligands") ?    // added extra case becuase RNA is not inculded in allAAresidues anymore
+                                ((includeRna) ? tmpChain.getAllAAResidues().size() + tmpChain.getAllRnaResidues().size() :
+                                        tmpChain.getAllAAResidues().size()) : ((includeRna) ?
+                                tmpChain.getAllAAResidues().size() + tmpChain.getAllRnaResidues().size() +
+                                        tmpChain.getAllLigandResidues().size() : tmpChain.getAllAAResidues().size() +
+                                tmpChain.getAllLigandResidues().size()));
                         
-                        mapChainIdToLength.put(tmpChain.getPdbChainID(), chainLength); // MZ: length gets put into dict
+                        mapChainIdToLength.put(tmpChain.getPdbChainID(), chainLength);
 
                         // get AA sequence string for each chainName
                         for(Residue resi : tmpChain.getAllAAResidues()) {

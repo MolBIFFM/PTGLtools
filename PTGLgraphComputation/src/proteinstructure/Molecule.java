@@ -284,6 +284,12 @@ abstract public class Molecule {
             curDist = a.distToPoint(centroidCoordinates[0], centroidCoordinates[1], centroidCoordinates[2]);
             if (curDist > maxDist) { maxDist = curDist; }
         }
+        
+        if (Settings.getInteger("PTGLgraphComputation_I_debug_level") >= 3) {
+            System.out.println("[DEBUG LV 3] " + this.toString());
+            System.out.println("    [DEBUG LV 3] centroid sphere radius: " + maxDist);
+        }
+        
         this.centroidSphereRadius = maxDist;
     }
     

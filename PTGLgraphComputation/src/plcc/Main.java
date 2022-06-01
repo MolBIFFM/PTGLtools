@@ -3333,20 +3333,22 @@ public class Main {
             DBManager.closeConnection();
         }
         
-        // Output the applied settings as file
-        //   Do this here in the end so that we can be sure that not settings is changed afterwards
-        String appliedSettingsHeader = "# This file contains the final settings that were applied as a short version.\n"
-                + "# Each section is divided by a blank line.\n"
-                + "# You can use this file to reproduce the run by giving it as parameter to --settingsfile.\n\n";
-        String appliedSettingsFilePath = output_dir + fs + pdbid + "__applied_settings.txt";
-        if (io.IO.writeStringToFile(appliedSettingsHeader + Settings.asShortString(), appliedSettingsFilePath, true)) {
-            if (! silent) {
-                System.out.println("Wrote all applied settings to " + appliedSettingsFilePath + ". "
-                    + "With this file you can later reconstruct which settings were used for the run and reproduce it.");
+        if (! Settings.getBoolean("PTGLgraphComputation_B_clustermode")) {
+            // Output the applied settings as file
+            //   Do this here in the end so that we can be sure that no setting is changed afterwards
+            String appliedSettingsHeader = "# This file contains the final settings that were applied as a short version.\n"
+                    + "# Each section is divided by a blank line.\n"
+                    + "# You can use this file to reproduce the run by giving it as parameter to --settingsfile.\n\n";
+            String appliedSettingsFilePath = output_dir + fs + pdbid + "__applied_settings.txt";
+            if (io.IO.writeStringToFile(appliedSettingsHeader + Settings.asShortString(), appliedSettingsFilePath, true)) {
+                if (! silent) {
+                    System.out.println("Wrote all applied settings to " + appliedSettingsFilePath + ". "
+                        + "With this file you can later reconstruct which settings were used for the run and reproduce it.");
+                }
+            } else {
+                DP.getInstance().w("Main", "Could not create the file holding the applied settings under " + appliedSettingsFilePath + ". "
+                        + "You may not be able to reconstruct the applied settings later or reproduce the results.");
             }
-        } else {
-            DP.getInstance().w("Main", "Could not create the file holding the applied settings under " + appliedSettingsFilePath + ". "
-                    + "You may not be able to reconstruct the applied settings later or reproduce the results.");
         }
         
         if(! silent) {

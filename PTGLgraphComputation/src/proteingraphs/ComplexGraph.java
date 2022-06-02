@@ -274,15 +274,16 @@ public class ComplexGraph extends UAdjListGraph {
                         mapVertexIdVertex.put(Integer.parseInt(v.toString()), v);
 
                         molIDs.add(FileParser.getMetaInfo(pdbid, tmpChain.getPdbChainID()).getMolName());
+
+                        int tmpLenght = tmpChain.getAllAAResidues().size();
+                        if(! Settings.getBoolean("PTGLgraphComputation_B_CG_ignore_ligands")){  // add extra case becuase RNA is not inculded in allAAresidues
+                            tmpLenght += tmpChain.getAllLigandResidues().size();
+                        }
+                        if(includeRna){
+                            tmpLenght += tmpChain.getAllRnaResidues().size();
+                        }
                         
-                        int chainLength = (Settings.getBoolean("PTGLgraphComputation_B_CG_ignore_ligands") ?    // added extra case becuase RNA is not inculded in allAAresidues anymore
-                                ((includeRna) ? tmpChain.getAllAAResidues().size() + tmpChain.getAllRnaResidues().size() :
-                                        tmpChain.getAllAAResidues().size()) : ((includeRna) ?
-                                tmpChain.getAllAAResidues().size() + tmpChain.getAllRnaResidues().size() +
-                                        tmpChain.getAllLigandResidues().size() : tmpChain.getAllAAResidues().size() +
-                                tmpChain.getAllLigandResidues().size()));
-                        
-                        mapChainIdToLength.put(tmpChain.getPdbChainID(), chainLength);
+                        mapChainIdToLength.put(tmpChain.getPdbChainID(), tmpLenght);
 
                         // get AA sequence string for each chainName
                         for(Residue resi : tmpChain.getAllAAResidues()) {

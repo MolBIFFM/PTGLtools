@@ -73,25 +73,22 @@ def read_contact_file_in(file):
     for line in csv_lines[1:]:
         if line != '':
             columns = line.split(',')
-            if columns[0] != '' and columns[4] !='' and columns[2] not in excluded_chains and columns[6] not in excluded_chains:
+            if columns[0] != '' and columns[4] !='':
                 key_1 = (columns[0], columns[2], columns[3])
                 key_2 = (columns[4], columns[6], columns[7])
-                if str(key_1) in excluded_residues or str(key_2) in excluded_residues:
-                    pass
+                value_1 = matches.get(key_1)
+                if value_1 == None: 
+                    matches[key_1] = {(columns[4], columns[6], columns[7])}
                 else:
-                    value_1 = matches.get(key_1)
-                    if value_1 == None: 
-                        matches[key_1] = {(columns[4], columns[6], columns[7])}
-                    else:
-                        value_1.update([(columns[4], columns[6], columns[7])])
-                        matches[key_1] = value_1
-                                    
-                    value_2 = matches.get(key_2)
-                    if value_2 == None:                        
-                        matches[key_2] = {(columns[0], columns[2], columns[3])}
-                    else:
-                        value_2.update([(columns[0], columns[2], columns[3])])
-                        matches[key_2] = value_2     
+                    value_1.update([(columns[4], columns[6], columns[7])])
+                    matches[key_1] = value_1
+                                
+                value_2 = matches.get(key_2)
+                if value_2 == None:                        
+                    matches[key_2] = {(columns[0], columns[2], columns[3])}
+                else:
+                    value_2.update([(columns[0], columns[2], columns[3])])
+                    matches[key_2] = value_2     
                 
         else:
             break

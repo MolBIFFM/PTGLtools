@@ -5385,7 +5385,7 @@ public class Main {
                     Integer chainBMaxSeqNeighborAADist = chainB.getMaxSeqNeighborAADist();
                                        
                     // decide which chain as 2 (used for skip in loop 1.1), atm just take longer chain as 2
-                    if (chainA.getAllAAResidues().size() > chainB.getAllAAResidues().size()) {
+                    if (chainA.getLength(false) > chainB.getLength(false)) {
                         outerLoopChainAAs.addAll(AAResiduesB);
                         innerLoopChainAAs.addAll(AAResiduesA);
                         innerChainMaxSeqNeighborAADist = chainBMaxSeqNeighborAADist;

@@ -146,7 +146,14 @@ public class Chain implements java.io.Serializable {
         Integer chainLength = this.getAllRnaResidues().size() + this.getAllAAResidues().size() + this.getAllLigandResidues().size();
         return chainLength;
     }
-    
+
+    public Integer getLength(boolean includeLigands){
+        Integer chainLength = this.getAllAAResidues().size() + this.getAllRnaResidues().size();
+        if (includeLigands){
+            chainLength += this.getAllLigandResidues().size();
+        }
+        return chainLength;
+    }
     
     /**
      * Retrieves (and calculates if called 1st time) the maximum sequence neighbor distance between amino acids.

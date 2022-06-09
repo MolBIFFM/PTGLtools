@@ -265,25 +265,15 @@ public class ComplexGraph extends UAdjListGraph {
                         proteinNodeMap.put(v, tmpChain.getPdbChainID());
                         labelNodeMap.put(v, labelList.length > curNum ? labelList[curNum] : tmpChain.getPdbChainID());
                         molMap.put(v, FileParser.getMetaInfo(pdbid, tmpChain.getPdbChainID()).getMolName());  // get the mol name from the ProtMetaInfo
-                        if(includeRna && allChains.get(j).getMoleculeType().contains("polyribonucleotide")){
-                            chainLengthMap.put(v, tmpChain.getAllAAResidues().size() + tmpChain.getAllRnaResidues().size());
-                        }else{
-                            chainLengthMap.put(v, tmpChain.getAllAAResidues().size());
-                        }
+                        chainLengthMap.put(v, tmpChain.getLength(false));
+
                         chainTypeMap.put(v, allChains.get(j).getMoleculeType());
                         mapVertexIdVertex.put(Integer.parseInt(v.toString()), v);
 
                         molIDs.add(FileParser.getMetaInfo(pdbid, tmpChain.getPdbChainID()).getMolName());
 
-                        int tmpLenght = tmpChain.getAllAAResidues().size();
-                        if(! Settings.getBoolean("PTGLgraphComputation_B_CG_ignore_ligands")){  // add extra case becuase RNA is not inculded in allAAresidues
-                            tmpLenght += tmpChain.getAllLigandResidues().size();
-                        }
-                        if(includeRna){
-                            tmpLenght += tmpChain.getAllRnaResidues().size();
-                        }
-                        
-                        mapChainIdToLength.put(tmpChain.getPdbChainID(), tmpLenght);
+                        int tmpLength = tmpChain.getLength(! Settings.getBoolean("PTGLgraphComputation_B_CG_ignore_ligands"));
+                        mapChainIdToLength.put(tmpChain.getPdbChainID(), tmpLength);
 
                         // get AA sequence string for each chainName
                         for(Residue resi : tmpChain.getAllAAResidues()) {

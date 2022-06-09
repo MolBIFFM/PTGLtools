@@ -1181,7 +1181,7 @@ SITE     4 AC1 15 HOH A 621  HOH A 622  HOH A 623
         }
 
         // This should never be reached.
-        System.out.println("WARNING: getLigFormula(): No formula found for hetero group " + ligName3 + ".");        
+        DP.getInstance().w("WARNING: getLigFormula(): No formula found for hetero group " + ligName3 + ".");     
         return("");
     }
 

@@ -976,6 +976,7 @@ for elem in program_list:
                 
             if os.path.isfile(changes_file):
                 heatmapVisualisation = 'python3 ' + plotting_dir + elem + ' ' + pdb_file + ' ' + changes_file + ' -p ' + out_dir
+                log('exec_string ' + heatmapVisualisation, 'd')
                 os.chdir(out_dir)
                 os.system(heatmapVisualisation)
                 os.chdir(work_dir)
@@ -984,6 +985,7 @@ for elem in program_list:
                     
         elif (add_heatmapVisualisation_args != ''):
             createPymolScript = 'python3 ' + plotting_dir + elem + ' ' + add_heatmapVisualisation_args
+            log('exec_string ' + createPymolScript, 'd')
 
             log(createPymolScript, 'd')
             os.chdir(out_dir) 

@@ -265,7 +265,7 @@ public class ComplexGraph extends UAdjListGraph {
                         proteinNodeMap.put(v, tmpChain.getPdbChainID());
                         labelNodeMap.put(v, labelList.length > curNum ? labelList[curNum] : tmpChain.getPdbChainID());
                         molMap.put(v, FileParser.getMetaInfo(pdbid, tmpChain.getPdbChainID()).getMolName());  // get the mol name from the ProtMetaInfo
-                        chainLengthMap.put(v, tmpChain.getLength(false));
+                        chainLengthMap.put(v, tmpChain.getLength(! Settings.getBoolean("PTGLgraphComputation_B_CG_ignore_ligands")));
 
                         chainTypeMap.put(v, allChains.get(j).getMoleculeType());
                         mapVertexIdVertex.put(Integer.parseInt(v.toString()), v);

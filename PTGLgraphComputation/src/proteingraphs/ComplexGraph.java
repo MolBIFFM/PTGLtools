@@ -100,6 +100,9 @@ public class ComplexGraph extends UAdjListGraph {
     private ArrayList<String> contactInfo;
 
     private Integer[][] numChainInteractions;
+    private Integer[][] numChainInteractionsCTL;
+    private ArrayList<Integer> chainIDList;
+    private BigDecimal settingFactor;
     private HashMap<String, Integer> mapChainIdToLength;  // used for the normalized edge weights
     private Integer[][] homologueChains;
     private final Set<String> molIDs;  // Contains the mol IDs for all chains. Used to get number of mol IDs (= size)
@@ -334,26 +337,83 @@ public class ComplexGraph extends UAdjListGraph {
      */
     private void calculateNumChainInteractions(List<MolContactInfo> resContacts) {
         numChainInteractions = new Integer[numberChains][numberChains];
+        numChainInteractionsCTL = new Integer[numberChains][numberChains];
+        ArrayList<Integer> chainIDList = new ArrayList<>();
+        Integer roundedCTL;
+        
         for(Integer i = 0; i < resContacts.size(); i++){             
             ComplexGraph.Vertex chainA = getVertexFromChain(resContacts.get(i).getMolA().getChainID());
             ComplexGraph.Vertex chainB = getVertexFromChain(resContacts.get(i).getMolB().getChainID());
                       
             Integer chainAint = Integer.parseInt(chainA.toString());
             Integer chainBint = Integer.parseInt(chainB.toString());
-                       
+            
+            if(!chainIDList.contains(chainAint)){
+                chainIDList.add(chainAint);
+            }
+            if(!chainIDList.contains(chainBint)){
+                chainIDList.add(chainBint);
+            }
+            
             // We only want interchain contacts
             if (!chainA.equals(chainB)){
-                if(numChainInteractions[chainAint][chainBint] == null){
-                    numChainInteractions[chainAint][chainBint] = 1;
-                    numChainInteractions[chainBint][chainAint] = 1;
-                } else {
-                    numChainInteractions[chainAint][chainBint]++;
-                    numChainInteractions[chainBint][chainAint]++;
+                if(! Settings.getBoolean("PTGLgraphComputation_CTL")){
+                    if(numChainInteractions[chainAint][chainBint] == null){
+                        numChainInteractions[chainAint][chainBint] = 1;
+                        numChainInteractions[chainBint][chainAint] = 1;
+                    } else {
+                        numChainInteractions[chainAint][chainBint]++;
+                        numChainInteractions[chainBint][chainAint]++;
+                    }
+                }
+                else{
+                    if(resContacts.get(i).getNumContactsCTL().equals(resContacts.get(i).getNumContactsTotal())){
+                        if(numChainInteractionsCTL[chainAint][chainBint] == null){
+                            numChainInteractionsCTL[chainAint][chainBint] = 1;
+                            numChainInteractionsCTL[chainBint][chainAint] = 1;
+                        } else {
+                            numChainInteractionsCTL[chainAint][chainBint]++;
+                            numChainInteractionsCTL[chainBint][chainAint]++;
+                        }
+                    }
+                    else{
+                        if(numChainInteractions[chainAint][chainBint] == null){
+                            numChainInteractions[chainAint][chainBint] = 1;
+                            numChainInteractions[chainBint][chainAint] = 1;
+                        } else {
+                            numChainInteractions[chainAint][chainBint]++;
+                            numChainInteractions[chainBint][chainAint]++;
+                        }
+                    }
                 }
             }
-        }
+            
+            if(i == resContacts.size()-1){
+                if(Settings.getBoolean("PTGLgraphComputation_CTL")){
+                    for(Integer k = 0; k < numberChains; k++){
+                        for(Integer l = 0; l < numberChains; l++){
+                            //weight and round CTL 
+                            Integer mergeChainA = chainIDList.get(k);
+                            Integer mergeChainB = chainIDList.get(l);
+                            if (!mergeChainA.equals(mergeChainB)){
+                                if(numChainInteractionsCTL[mergeChainA][mergeChainB] == null){
+                                    roundedCTL = 0;
+                                } else{
+                                    roundedCTL = (int) Math.round(Settings.getFloat("PTGLgraphComputation_CTL_edge_weight")*numChainInteractionsCTL[mergeChainA][mergeChainB]);
+                                }
+                                
+                                if(numChainInteractions[mergeChainA][mergeChainB] == null){
+                                    numChainInteractions[mergeChainA][mergeChainB] = roundedCTL;
+                                } else{
+                                    numChainInteractions[mergeChainA][mergeChainB] = numChainInteractions[mergeChainA][mergeChainB] + roundedCTL;
+                                }
+                            }   
+                        }
+                    }
+                }
+            }
+        }      
     }
-    
     
     /**
      * Creates edges and if required contact info for csv.
@@ -374,6 +434,11 @@ public class ComplexGraph extends UAdjListGraph {
                         + ". Resulting graphs may differ from default setting '1' where all "
                         + "edges are drawn.");
             }
+        }
+        
+        //get CTL Setting factor
+        if(Settings.getBoolean("PTGLgraphComputation_CTL")){
+            settingFactor = BigDecimal.valueOf(Settings.getFloat("PTGLgraphComputation_CTL_edge_weight"));
         }
         
         // create edges for all contacts
@@ -477,7 +542,12 @@ public class ComplexGraph extends UAdjListGraph {
                     // We don't have an edge yet, but need one, so create an edge
                     ComplexGraph.Edge e1 = createEdge(chainA, chainB);
                     chainNamesInEdge.put(e1, chainPair);
-                    mapWeightNamesToMapEdgeValues.get(EdgeWeightType.ABSOLUTE_WEIGHT).put(e1, BigDecimal.ONE); // rather weird: 1 is added here, therefore the first contact is skipped later. We will have to change this and sum up the others in the end, (which of them depending on the graph type)
+                    if(Settings.getBoolean("PTGLgraphComputation_CTL") && (resContacts.get(i).getNumContactsCTL().equals(resContacts.get(i).getNumContactsTotal()))){
+                      mapWeightNamesToMapEdgeValues.get(EdgeWeightType.ABSOLUTE_WEIGHT).put(e1, settingFactor); // rather weird: 1 is added here, therefore the first contact is skipped later. We will have to change this and sum up the others in the end, (which of them depending on the graph type)
+                    }
+                    else{
+                    mapWeightNamesToMapEdgeValues.get(EdgeWeightType.ABSOLUTE_WEIGHT).put(e1, BigDecimal.ONE); // rather weird: 1 is added here, therefore the first contact is skipped later. We will have to change this and sum up the others in the end, (which of them depending on the graph type)    
+                    }
                     numHelixHelixInteractionsMap.put(e1, 0);
                     numHelixStrandInteractionsMap.put(e1, 0);
                     numHelixCoilInteractionsMap.put(e1, 0);
@@ -628,7 +698,13 @@ public class ComplexGraph extends UAdjListGraph {
                 }
                 else{
                     // We already have an edge, just adjust values
-                    mapWeightNamesToMapEdgeValues.get(EdgeWeightType.ABSOLUTE_WEIGHT).put(getEdge(chainA, chainB), mapWeightNamesToMapEdgeValues.get(EdgeWeightType.ABSOLUTE_WEIGHT).get(getEdge(chainA, chainB)).add(BigDecimal.ONE));
+                    if(Settings.getBoolean("PTGLgraphComputation_CTL") && (resContacts.get(i).getNumContactsCTL().equals(resContacts.get(i).getNumContactsTotal()))){
+                      mapWeightNamesToMapEdgeValues.get(EdgeWeightType.ABSOLUTE_WEIGHT).put(getEdge(chainA, chainB), mapWeightNamesToMapEdgeValues.get(EdgeWeightType.ABSOLUTE_WEIGHT).get(getEdge(chainA, chainB)).add(settingFactor)); 
+                    }
+                    else{
+                    mapWeightNamesToMapEdgeValues.get(EdgeWeightType.ABSOLUTE_WEIGHT).put(getEdge(chainA, chainB), mapWeightNamesToMapEdgeValues.get(EdgeWeightType.ABSOLUTE_WEIGHT).get(getEdge(chainA, chainB)).add(BigDecimal.ONE)); 
+                    }
+
                     if (resContacts.get(i).getMolA().getSSE()!=null){
                         // first residue of contact belongs to valid PTGL SSE, i.e., is NOT a coil
                         int firstSSE = resContacts.get(i).getMolA().getSSE().getSSETypeInt();

@@ -211,7 +211,9 @@ class Section {
                 settings.add(new Setting("PTGLgraphComputation_I_lig_atom_radius", 'I', "30", "The atom radius of ligand atoms in 10th part Angstroem (setting 30 here means 3 A)"));
                 settings.add(new Setting("PTGLgraphComputation_I_max_contacts_per_type", 'I', "1", "The maximum number of contacts of a certain type that is counted for a residue pair. Set it to something very large if you don't want any limit (Integer.MAX_VALUE comes to mind). "
                         + "The PTGL uses a setting of 1 (so if a pair has 3 B/B contacts and 2 C/B contacts, it is is counted as 1 B/B and 1 C/B.)"));
-                settings.add(new Setting("PTGLgraphComputation_transitive_contacts", 'B', "false", "Whether contacts transitive by ligands should be considered for the contact calculation, and subsequently in the complex graphs."));
+                settings.add(new Setting("PTGLgraphComputation_CTL", 'B', "true", "Whether contacts transitive by ligands should be considered for the contact calculation, and subsequently in the complex graphs."));
+                settings.add(new Setting("PTGLgraphComputation_CTL_range", 'I', "500", "The additive distance of ligand-protein contacts considered for contacts transitive by ligands in 100th part Angstroem (setting 500 here means 5 A)."));
+                settings.add(new Setting("PTGLgraphComputation_CTL_edge_weight", 'F', "1.0", "The linear factor to weight contacts transitive by ligands (setting 1.0 here means factorisation by 1)."));
                 settings.add(new Setting("PTGLgraphComputation_B_forceBackboneContacts", 'B', "false", "Whether all amino acids of a protein graph should be connected sequentially, from N to C terminus, with contacts of type backbone."));
                 break;
                 

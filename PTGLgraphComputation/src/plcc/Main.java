@@ -5184,9 +5184,9 @@ public class Main {
         Molecule mol1, mol2;
         HashMap<Atom,ArrayList<Atom>> ligandToProteinAtomContacts = new HashMap<Atom,ArrayList<Atom>>();
         HashMap<Molecule[],MolContactInfo> resMciMapping = new HashMap<Molecule[],MolContactInfo>();
-        HashMap<Integer,Integer> ligsizes = new HashMap<Integer,Integer>();
-        HashMap<Integer,Integer> ctldistribution = new HashMap<Integer,Integer>();
-        HashMap<Integer,Integer> ligcontactdistribution = new HashMap<Integer,Integer>();
+        HashMap<Integer,Integer> ligandSizes = new HashMap<Integer,Integer>();
+        HashMap<Integer,Integer> ctlPerLigand = new HashMap<Integer,Integer>();
+        HashMap<Integer,Integer> atomContactsPerLigand = new HashMap<Integer,Integer>();
         
         // variables for statistics
         long numResContactsChecked, numResContactsPossible, numResContactsImpossible, chainSkippedRes, seqNeighSkippedResIntraChain, seqNeighSkippedResInterChain;
@@ -5272,9 +5272,9 @@ public class Main {
             if (Settings.getBoolean("PTGLgraphComputation_B_write_lig_geolig")) {
                 for (int i = 0; i < ligResiduesA.size(); i++) {
                     mol1 = ligResiduesA.get(i);
-                    ligsizes.put(mol1.getDsspNum(),mol1.atoms.size());
-                    ctldistribution.put(mol1.getDsspNum(),0);
-                    ligcontactdistribution.put(mol1.getDsspNum(),0);
+                    ligandSizes.put(mol1.getDsspNum(),mol1.atoms.size());
+                    ctlPerLigand.put(mol1.getDsspNum(),0);
+                    atomContactsPerLigand.put(mol1.getDsspNum(),0);
                     
                     // 2.1)
                     // here we have to start at j = 0 b/c it is another list!
@@ -5608,12 +5608,12 @@ public class Main {
                 currentDssp = currentLigandMol.getDsspNum();
                 //Calculation of number of CTLs per ligand
                 ctlCalculation = (ligandToProteinAtomContacts.get(currentLig).size()*(ligandToProteinAtomContacts.get(currentLig).size()-1))/2;
-                newCTLCount = ctldistribution.get(currentDssp) + ctlCalculation;
-                ctldistribution.put(currentDssp,newCTLCount);
+                newCTLCount = ctlPerLigand.get(currentDssp) + ctlCalculation;
+                ctlPerLigand.put(currentDssp,newCTLCount);
                 //Calculation of number of atom contacts per ligand
                 ligCalculation = ligandToProteinAtomContacts.get(currentLig).size();
-                newligCount = ligcontactdistribution.get(currentDssp) + ligCalculation;
-                ligcontactdistribution.put(currentDssp,newligCount);
+                newligCount = atomContactsPerLigand.get(currentDssp) + ligCalculation;
+                atomContactsPerLigand.put(currentDssp,newligCount);
             }
             
             for(ArrayList<Atom> currentTransitiveAtomList : ligandToProteinAtomContacts.values()){
@@ -5734,9 +5734,9 @@ public class Main {
             if(Settings.getBoolean("PTGLgraphComputation_CTL")){
                 System.out.println("  Interchain contacts transitive by ligands found: " + counterInterchainCTL);
                 System.out.println("  Intrachain contacts transitive by ligands found: " + counterIntrachainCTL);
-                System.out.println("  Amount of atoms per ligand (DSSP Number):" + ligsizes);
-                System.out.println("  Amount of CTL per ligand (DSSP Number):" + ctldistribution);
-                System.out.println("  Amount of ligand contacts per ligand (DSSP Number):" + ligcontactdistribution);
+                System.out.println("  Amount of atoms per ligand (DSSP Number):" + ligandSizes);
+                System.out.println("  Amount of CTL per ligand (DSSP Number):" + ctlPerLigand);
+                System.out.println("  Amount of ligand contacts per ligand (DSSP Number):" + atomContactsPerLigand);
             }
         }
 

@@ -1821,6 +1821,9 @@ public class ComplexGraph extends UAdjListGraph {
         LinkedHashMap<String, String> graphAttributes = new LinkedHashMap<>();
         graphAttributes.put(TextTools.formatAsCaseStyle(Arrays.asList("creator"), snakeCase), "\"PTGLgraphComputation\"");
         graphAttributes.put(TextTools.formatAsCaseStyle(Arrays.asList("version"), snakeCase), "\"" + Settings.getVersion() + "\"");
+        if (FileParser.getWhichSseInfo().equals("author")){
+            graphAttributes.put(TextTools.formatAsCaseStyle(Arrays.asList("SseNote \"Created with author classification of SSEs. Results can't be compared to graphs of other proteins!\""), snakeCase), "");
+        }
         graphAttributes.put(TextTools.formatAsCaseStyle(Arrays.asList("ignore", "ligands"), snakeCase), (Settings.getBoolean("PTGLgraphComputation_B_CG_ignore_ligands") ? "1" : "0"));  // whether ligands were ignored
         
         // documentation of edge weight types

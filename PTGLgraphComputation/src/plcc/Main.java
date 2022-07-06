@@ -105,6 +105,7 @@ import tools.XMLContentHandlerPDBRepresentatives;
 import tools.XMLErrorHandlerJAX;
 import tools.XMLParserJAX;
 import settings.Settings;
+import java.nio.file.Files;
 
 /**
  * This is the Main class of plcc.
@@ -5183,6 +5184,9 @@ public class Main {
         Molecule mol1, mol2;
         HashMap<Atom,ArrayList<Atom>> ligandToProteinAtomContacts = new HashMap<Atom,ArrayList<Atom>>();
         HashMap<Molecule[],MolContactInfo> resMciMapping = new HashMap<Molecule[],MolContactInfo>();
+        HashMap<Integer,Integer> ligandSizes = new HashMap<Integer,Integer>();
+        HashMap<Integer,Integer> ctlPerLigand = new HashMap<Integer,Integer>();
+        HashMap<Integer,Integer> atomContactsPerLigand = new HashMap<Integer,Integer>();
         
         // variables for statistics
         long numResContactsChecked, numResContactsPossible, numResContactsImpossible, chainSkippedRes, seqNeighSkippedResIntraChain, seqNeighSkippedResInterChain;
@@ -5268,7 +5272,10 @@ public class Main {
             if (Settings.getBoolean("PTGLgraphComputation_B_write_lig_geolig")) {
                 for (int i = 0; i < ligResiduesA.size(); i++) {
                     mol1 = ligResiduesA.get(i);
-                                       
+                    ligandSizes.put(mol1.getDsspNum(),mol1.atoms.size());
+                    ctlPerLigand.put(mol1.getDsspNum(),0);
+                    atomContactsPerLigand.put(mol1.getDsspNum(),0);
+                    
                     // 2.1)
                     // here we have to start at j = 0 b/c it is another list!
                     for (int j = 0; j < AAResiduesA.size(); j++) {
@@ -5385,7 +5392,7 @@ public class Main {
                     Integer chainBMaxSeqNeighborAADist = chainB.getMaxSeqNeighborAADist();
                                        
                     // decide which chain as 2 (used for skip in loop 1.1), atm just take longer chain as 2
-                    if (chainA.getAllAAResidues().size() > chainB.getAllAAResidues().size()) {
+                    if (chainA.getLength(false) > chainB.getLength(false)) {
                         outerLoopChainAAs.addAll(AAResiduesB);
                         innerLoopChainAAs.addAll(AAResiduesA);
                         innerChainMaxSeqNeighborAADist = chainBMaxSeqNeighborAADist;
@@ -5578,8 +5585,14 @@ public class Main {
         //
         Integer counterInterchainCTL = 0;
         Integer counterIntrachainCTL = 0;
-
-        if (Settings.getBoolean("PTGLgraphComputation_transitive_contacts")){
+        Integer ctlCalculation = 0;
+        Integer newCTLCount = 0;
+        Integer ligCalculation = 0;
+        Integer newligCount = 0;
+        Integer currentDssp = null;
+        Molecule currentLigandMol = null;
+        
+        if (Settings.getBoolean("PTGLgraphComputation_CTL")){
             // Iteration over all connections of each ligand atom
             MolContactInfo currentMci = null;
             Molecule resAOld = null;
@@ -5589,6 +5602,19 @@ public class Main {
             Atom atomA;
             Atom atomB;
             
+            //CTL distribution statistical analysis
+            for(Atom currentLig : ligandToProteinAtomContacts.keySet()){
+                currentLigandMol = currentLig.getMolecule();
+                currentDssp = currentLigandMol.getDsspNum();
+                //Calculation of number of CTLs per ligand
+                ctlCalculation = (ligandToProteinAtomContacts.get(currentLig).size()*(ligandToProteinAtomContacts.get(currentLig).size()-1))/2;
+                newCTLCount = ctlPerLigand.get(currentDssp) + ctlCalculation;
+                ctlPerLigand.put(currentDssp,newCTLCount);
+                //Calculation of number of atom contacts per ligand
+                ligCalculation = ligandToProteinAtomContacts.get(currentLig).size();
+                newligCount = atomContactsPerLigand.get(currentDssp) + ligCalculation;
+                atomContactsPerLigand.put(currentDssp,newligCount);
+            }
             
             for(ArrayList<Atom> currentTransitiveAtomList : ligandToProteinAtomContacts.values()){
                 // Check all keys to evaluate contacts
@@ -5705,9 +5731,12 @@ public class Main {
             System.out.println("  Skipped " + chainChainSkipped + " chain-chain contacts (and " + chainSkippedRes + " otherwise checked residue contacts) of " + maxChainChainContactsPossible + " maximal contacts due to chain sphere check.");
             System.out.println("  Skipped " + seqNeighSkippedResIntraChain + " intra chain and " + seqNeighSkippedResInterChain + " inter chain residue contacts due to sequence neighbor skip.");
             System.out.println("  Checked " + numResContactsChecked + " contacts for " + numberResTotal + " residues: " + numResContactsPossible + " possible, " + contactInfo.size() + " found, " + numResContactsImpossible + " impossible (collison spheres check).");
-            if(Settings.getBoolean("PTGLgraphComputation_transitive_contacts")){
+            if(Settings.getBoolean("PTGLgraphComputation_CTL")){
                 System.out.println("  Interchain contacts transitive by ligands found: " + counterInterchainCTL);
                 System.out.println("  Intrachain contacts transitive by ligands found: " + counterIntrachainCTL);
+                System.out.println("  Amount of atoms per ligand (DSSP Number):" + ligandSizes);
+                System.out.println("  Amount of CTL per ligand (DSSP Number):" + ctlPerLigand);
+                System.out.println("  Amount of ligand contacts per ligand (DSSP Number):" + atomContactsPerLigand);
             }
         }
 
@@ -6532,8 +6561,8 @@ public class Main {
                 //System.out.println("        " + y);
 
                 dist = x.distToAtom(y);
-                
-                if(x.atomContactTo(y)) {
+
+                if((x.atomContactTo(y)) && (dist<=(Settings.getInteger("PTGLgraphComputation_CTL_range")/10))) {
                     //add atom y to mapped list of ligand atom x
                     ArrayList<Atom> atomMapList = ligandToProteinAtomContacts.get(x);
                     

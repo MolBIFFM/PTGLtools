@@ -309,7 +309,12 @@ cl_parser.add_argument('--plotResResContactChanges-args',
                        type = str,
                        default = '',
                        help = 'a string with the arguments for plotResResContactChanges.py you want to use and its values to execute the script in different ways using your command line arguments. Insert arguments like this: --plotResResContactChanges-args="<arguments and their inputs>", including the positional arguments.')                      
-                                                                                
+                             
+cl_parser.add_argument('--gml-dir',
+                       metavar = '<gml directory>',
+                       default = '',
+                       help = 'Specify a path to the gml files from the run of PTGLgraphComputation. Not required if you run the pipeline all at once.')
+
 args = cl_parser.parse_args()
 
 ########### check arguments ###########
@@ -381,6 +386,9 @@ if (args.toMmCIF):
 else:
     if 'toMmCIF.py' in program_list:
         program_list.remove('toMmCIF.py')
+
+if "compareContactPartnersOfResidues.py" in program_list:
+    log("[IMPORTANT HINT] compareContactPartnersOfResidues.py will be executed. Please make sure that in ~/PTGLgraphComputation_settings.txt you either set to true PTGLgraphComputation_B_csv_contacts_inter or PTGLgraphComputation_B_csv_contacts_intra_inter", "w")
 
 
 # dssp directory
@@ -465,7 +473,8 @@ else:
     dssp_dir = os.path.abspath(dssp_input_dir) + '/'
 
 PTGLgraphComputation_dir = input_dir
-gml_dir = input_dir
+gml_dir = args.gml_dir if args.gml_dir != "" else input_dir
+log(f"gml_dir: {gml_dir}", "d")
 getAttributeDataFromGml_dir = input_dir
 evalEdgesWeights_dir = input_dir
 changeEdgeNames_dir = input_dir
@@ -867,7 +876,7 @@ for elem in program_list:
                 if (cif.endswith(".cif")):
                     cif_id = pathlib.Path(cif).stem
                     dssp = dssp_dir + pathlib.Path(cif).stem + '.dssp'
-                    PTGLgraphComputation = 'java -jar ' + default_path_graCom + ' ' + cif_id + ' -p ' + work_dir + cif + ' -d ' + dssp + ' -o ' + contactResRes_dir + ' -I -G --set "PTGLgraphComputation_B_csv_contacts_intra_inter" "True" --set "PTGLgraphComputation_B_calc_draw_graphs" "False"'
+                    PTGLgraphComputation = 'java -jar ' + default_path_graCom + ' ' + cif_id + ' -p ' + work_dir + cif + ' -o ' + contactResRes_dir + ' -I -G --set "PTGLgraphComputation_B_calc_draw_graphs" "False"'
                     log(PTGLgraphComputation,'d') 
                     os.chdir(contactResRes_dir)
                     os.system(PTGLgraphComputation)
@@ -943,7 +952,7 @@ for elem in program_list:
             changes_dir = os.path.abspath(out_dir) + '/'
             
         elif (add_calculateChanges_args != ''):
-            calculateChanges = 'python3' + plotting_dir + elem + ' ' + add_calculateChanges_args
+            calculateChanges = 'python3 ' + plotting_dir + elem + ' ' + add_calculateChanges_args
             log(calculateChanges, 'd')
             os.chdir(out_dir)
             os.system(calculateChanges)

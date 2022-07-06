@@ -7,7 +7,7 @@
 #   patch: fixes, small changes
 #   no version change: fix typos, changes to comments, debug prints, small changes to non-result output, changes within git branch
 # -> only increment with commit / push / merge not while programming
-version = "1.0.0"  
+version = "1.0.1"  
 
 
 ########### built-in imports ###########
@@ -94,7 +94,9 @@ def divide_by_chainlength(changes, csv_file):
         if chain != '':
             columns = chain.split(',')
             if (len(columns) == 2):
-                changes[columns[0]] = int(changes.get(columns[0])) / int(columns[1])  
+                log(f"chain: {columns[0]}, length: {columns[1]}", "d")
+                if columns[0] in changes.keys():
+                    changes[columns[0]] = int(changes.get(columns[0])) / int(columns[1])  
                     
     return changes   
             
@@ -164,7 +166,7 @@ cl_parser.add_argument('--exclude-chains',
                        type = str,
                        nargs = '+',
                        default = [],
-                       help='Specify chains that should not be considered in calculation and coloring. Only used in (chain, CG) calculation.')  
+                       help='Specify chains that should not be considered in calculation and coloring.')  
                        
 cl_parser.add_argument('--exclude-edges',
                        type = str,
@@ -175,7 +177,7 @@ cl_parser.add_argument('--exclude-edges',
 cl_parser.add_argument('--divide-by-chainlength',
                        metavar = 'path',
                        default = '',
-                       help = 'specify a path to a "number_of_residues_in_each_chain" csv file to divide the change of each chain by its chain length. Only used in (chain, CG).')                       
+                       help = 'specify a path to a "number_of_residues_in_each_chain" csv file to divide the change of each chain by its chain length. Only used in (chain, CG) and (chain, res).')                       
 
 cl_parser.add_argument('-p',
                        '--outputdirectory',
@@ -211,6 +213,7 @@ output_dir = check_dir_args(args.outputdirectory)
 exclude_chains = args.exclude_chains
 exclude_edges = args.exclude_edges
 divide_chainlength = check_input_files(args.divide_by_chainlength)
+log(f"Filepath of file for lengths of chains: '{divide_chainlength}'", "d")
 
 if (args.first_timestep >= args.last_timestep):
     log("The given first frame number is greater than the number given as the last timestep.",'e')
@@ -253,7 +256,11 @@ if based_on == 'res':
         
         for line in csv_lines[1:]:
             if line != '':
-                columns = line.split(',')
+                columns = line.split(',')  # ["('<Residue ID>'|'<Chain ID>'|'<iCode>')", <# contact changes>]
+
+                if columns[0].split('|')[1].replace("'",'') in exclude_chains:
+                    continue
+
                 old_value = changes.get(columns[0])
                 if (old_value == None):
                     changes[columns[0]] = int(columns[1])
@@ -267,13 +274,16 @@ if based_on == 'res':
     elif calculate == 'chain':
         changes_chains = {}
         for key in changes:
-            parts = key.replace("(", "").replace(")", "").replace("'", "").split("|")
+            parts = key.replace("(", "").replace(")", "").replace("'", "").split("|")  # [PDB ID, chain ID, iCode ...]
             value = changes.get(key)
 
-            if parts[1] in changes_chains:
-                changes_chains[parts[1]] = changes_chains.get(parts[1]) + value
+            if parts[1] in exclude_chains:
+                pass
             else:
-                changes_chains[parts[1]] = value
+                if parts[1] in changes_chains:
+                    changes_chains[parts[1]] = changes_chains.get(parts[1]) + value
+                else:
+                    changes_chains[parts[1]] = value
                 
         changes = changes_chains
 
@@ -319,7 +329,6 @@ if calculation == '(chain, CG)':
         # Exclude chains from calculation
         if (node_1 in exclude_chains) or (node_2 in exclude_chains):
             pass
-        
         else:
             old_value_node_1 = changes.get(node_1)
             old_value_node_2 = changes.get(node_2)
@@ -333,12 +342,13 @@ if calculation == '(chain, CG)':
             changes[node_1] = new_value_node_1
             changes[node_2] = new_value_node_2
             
-    # Divide by chainlength
-    if(divide_chainlength != ''):
-        changes_divided = divide_by_chainlength(changes, divide_chainlength)
-        changes = changes_divided        
+# Divide by chainlength
+if(divide_chainlength != '' and calculate == 'chain'):
+    log(f"changes: {changes}, chainLength: {divide_chainlength}", "d")
+    changes_divided = divide_by_chainlength(changes, divide_chainlength)
+    changes = changes_divided        
 
-    log("Changes for each chain: " + str(changes), 'i')
+log("Changes for each chain: " + str(changes), 'i')
   
 # Create output csv file.
 with open(output_dir + '/' + 'changes_each_' + calculate + '_based_on_' + based_on + '_frame' + str(args.first_timestep) + '_to_frame' + str(args.last_timestep) + '.csv','w') as changes_out:

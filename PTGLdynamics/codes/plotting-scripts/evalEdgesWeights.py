@@ -7,7 +7,7 @@
 #   patch: fixes, small changes
 #   no version change: fix typos, changes to comments, debug prints, small changes to non-result output, changes within git branch
 # -> only increment with commit / push / merge not while programming
-version = "1.0.0"  
+version = "1.0.1"  
 
 ########### built-in imports ###########
 
@@ -20,6 +20,7 @@ import math
 import copy
 import decimal
 import time
+import re
 
 
 
@@ -83,6 +84,20 @@ def check_dir_args(argument):
             sys.exit(1)
     else:
         return os.getcwd()
+
+def sorted_nicely( l ):
+    """ Sorts the given iterable in the way that is expected.
+    creates a list for each file consisting of the different int and string parts of the name
+    afterwards the file list is sorted considering those changed names only
+ 
+    Required arguments:
+    l -- The iterable to be sorted.
+    
+ 
+    """
+    convert = lambda text: int(text) if text.isdigit() else text
+    alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
+    return sorted(l, key = alphanum_key)
 
 ########### configure logger ###########
 
@@ -187,8 +202,10 @@ counter = 0
 edge_list = [] # stores edges as: [source, target, min, max, edge_values_sum -> calculate mean later, [edge_values] -> calculate median later]
 
 work_dir = get_working_dir(input_dir)
+list_work_dir = os.listdir(work_dir)
+list_work_dir = sorted_nicely(list_work_dir)
 
-for csv in os.listdir(work_dir):
+for csv in list_work_dir:
     
     if(csv.endswith(".csv") == False):
         continue

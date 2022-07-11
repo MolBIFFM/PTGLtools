@@ -212,6 +212,7 @@ with open(gml_file, "r") as g:
            labelline = line.split('"')
            id_label_dict[new_key] = labelline[1]
            node_section = False
+log (id_label_dict, "d")
                 
                 
 # csv file with chainnames automatically generated, get input from gml-files

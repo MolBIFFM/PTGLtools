@@ -167,6 +167,8 @@ output_dir = check_dir_args(args.output_dir)
 exclude_chains_coloring = args.exclude_coloring
 exclude_calculation_chains = args.exclude_calculation_chains
 
+log(f"Excluded chains from calcutation: {exclude_calculation_chains}", "d")
+
 ########### vamos ###########
 
 changes_one, header_one =  read_in_file(file_one) 
@@ -182,6 +184,10 @@ log("Changes calculated for the second file :" + str(changes_two), 'i')
 changes = changes_one
 
 for key in changes_two:
+    chainID = key.split("|")[1].replace("'", "")
+    #log(chainID, "d")
+    if chainID in exclude_calculation_chains:
+        continue
     old_value = changes.get(key)
     if old_value != None:
         new_value = int(old_value) - int(changes_two[key])
@@ -200,7 +206,7 @@ for key in changes:
 
 comp_datasets.close()
 
-all_changes = set(changes.values())
+all_changes = [int(v) for v in set(changes.values())]
 value_max = int(max(all_changes))
 value_min = int(min(all_changes))
 change = value_max - value_min

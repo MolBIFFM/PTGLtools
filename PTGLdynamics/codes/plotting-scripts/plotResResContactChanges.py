@@ -254,12 +254,13 @@ for key in changes_1:
         while counter_parts < parts:                      
             plt.figure(figure_count) 
             figure_count +=1
+            plt.gca().xaxis.grid(True)
             plt.xlabel("residues in " + str(key_nq) + " part " + str(counter_parts + 1) + " of " + str(parts), fontsize=4)
             plt.ylabel("sum of changes over all time steps")                   
             plt.xticks(rotation=90, fontsize=3)
-            plt.plot(x[counter_parts],y[counter_parts], '.', color="royalblue", alpha=0.75, label="NoQ") 
+            plt.plot(x[counter_parts],y[counter_parts], '-o', color="royalblue", alpha=0.65, label="NoQ", linewidth=1) 
             if file_two != '':
-                plt.plot(x[counter_parts],z[counter_parts],'.', color="red", alpha=0.75, label="Qox")   
+                plt.plot(x[counter_parts],z[counter_parts],'-o', color="red", alpha=0.65, label="Qox", linewidth=1)   
             plt.legend(loc="upper left", fontsize=6, framealpha=0.25)
             plt.suptitle('Inter- and intrachain contacts in ' + str(key_nq) + " part " + str(counter_parts + 1) + " of " + str(parts))
             pp.savefig()

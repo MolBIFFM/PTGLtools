@@ -278,7 +278,7 @@ for i in range(len(csv)): # [file]
         plt.yscale('log')
     """
     
-    plt.xlabel("timestep")
+    plt.xlabel("time step")
     plt.ylabel("edge weight")
 
     if(y_axis_range !=[]):
@@ -312,7 +312,7 @@ for i in range(len(all_keys)):
 
     plt.figure(fig_count)
     fig_count +=1
-    plt.xlabel("timestep")
+    plt.xlabel("time step")
     plt.ylabel("edge weight")
     for j in range(len(edge_keys)):
 

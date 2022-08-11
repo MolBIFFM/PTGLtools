@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.IntStream;
 import java.util.Scanner;
+import java.util.Random; 
 import static java.util.stream.Collectors.toList;
 import proteingraphs.ComplexGraphEdgeWeightTypes.EdgeWeightType;
 import proteingraphs.ComplexGraphEdgeWeightTypes;
@@ -30,11 +31,13 @@ import settings.Settings;
  */
 public class AgglomerativeClustering {
     private final static String CLASS_TAG = "CG";
+    //private final static long SEED = 42;
     
     private ArrayList<Edge> edges;
     private final Map<Integer, Integer> chainLengths;
     private final EdgeWeightType weightType;
     private final Map<Integer, String> labelMap;
+    private final Random random; 
     private int curStepNum;
     
     class Edge implements Comparable<Edge> {
@@ -138,6 +141,7 @@ public class AgglomerativeClustering {
         this.chainLengths = new HashMap<>(chainLengths);  // Shallow copy to not change chain lengths outside of this class
         this.weightType = weightType;
         this.labelMap = labelMap;
+        this.random = new Random();
     }
     
     
@@ -166,9 +170,12 @@ public class AgglomerativeClustering {
         
         if (Settings.getInteger("PTGLgraphComputation_I_debug_level") > 2) {
             System.out.println("[DEBUG LV 3] Sorted edge list from step " + curStepNum);
+            System.out.println("[DEBUG LV 3] Assembly type: " + 
+                                Settings.getInteger("PTGLgraphComputation_B_type_assembly_prediction"));
             edges.forEach(edge -> {
                 System.out.println("  " + edge.toString());
             });
+            
         }
         
         if (Settings.getInteger("PTGLgraphComputation_I_debug_level") > 1) {
@@ -176,7 +183,12 @@ public class AgglomerativeClustering {
         }
         
         // choose edge to merge: greedy or interactive
-        int mergeEdgeIndex = (Settings.getBoolean("PTGLgraphComputation_B_interactive_assembly_prediction") ? getEdgeIndexFromUser(6, clusteringResult) : 0);
+        int mergeEdgeIndex;
+        switch(Settings.getInteger("PTGLgraphComputation_B_type_assembly_prediction")){
+            case(1): mergeEdgeIndex = getEdgeIndexFromUser(6, clusteringResult); break;
+            case(2): mergeEdgeIndex = getEdgeIndexRandom(); break;
+            default: mergeEdgeIndex = 0; break;
+        }
         
         // add vertices of edges to merges of cluster result
         Edge curEdge = edges.get(mergeEdgeIndex);
@@ -252,6 +264,31 @@ public class AgglomerativeClustering {
         return edgeIndex;
     }
     
+    private int getEdgeIndexRandom(){
+        BigDecimal summed = new BigDecimal(0);
+        for (Edge edge: edges){
+            summed = summed.add(edge.normalizedWeight);
+        }
+        
+        int edgeIndex = 0; 
+        // generate a random BigDecimal in a range: max * random
+        BigDecimal choice = summed.multiply(new BigDecimal(random.nextDouble()));
+        
+        summed = edges.get(0).normalizedWeight;
+        // do binary search
+        while(summed.compareTo(choice) < 0){
+            summed = summed.add(edges.get(edgeIndex).normalizedWeight);
+            edgeIndex++;
+        }
+        
+        if (Settings.getInteger("PTGLgraphComputation_I_debug_level") > 2) {
+            System.out.println("[DEBUG LV 3] Summed Weight: " + summed.toString());
+            System.out.println("[DEBUG LV 3] Chosen Weight: " + choice.toString());
+            System.out.println("[DEBUG LV 3] Chosen Index: " + edgeIndex);
+        }
+        return edgeIndex; 
+    }
+    
     
     /**
      * Return a formatted string representation of the current edge list.
@@ -274,9 +311,10 @@ public class AgglomerativeClustering {
     /**
      * Tests agglomerative clustering implementation.
      */
-    public static void main() {
+    public static void main(String[] args) {
         System.out.println("CLUSTERING TEST");
         Settings.set("PTGLgraphComputation_I_debug_level", "3");
+        Settings.set("PTGLgraphComputation_B_type_assembly_prediction", "2");
         
         // Example 1
         //   Additive length normalization merges

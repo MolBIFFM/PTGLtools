@@ -28,16 +28,16 @@ import settings.Settings;
 /**
  *
  * @author jnw
+ * modified by Christian Ickes
  */
 public class AgglomerativeClustering {
     private final static String CLASS_TAG = "CG";
-    //private final static long SEED = 42;
+    private static final Random RANDOM = new Random(); 
     
     private ArrayList<Edge> edges;
     private final Map<Integer, Integer> chainLengths;
     private final EdgeWeightType weightType;
     private final Map<Integer, String> labelMap;
-    private final Random random; 
     private int curStepNum;
     
     class Edge implements Comparable<Edge> {
@@ -116,16 +116,25 @@ public class AgglomerativeClustering {
     }
     
     /**
+     * Creates a new instance of the clustering to copy it completly. 
+     * @param aggloClust
+     * @return complete new instance 
+     */
+    public static AgglomerativeClustering newInstance(AgglomerativeClustering aggloClust){
+        return new AgglomerativeClustering(aggloClust);
+    }
+    
+    /**
      * Constructor of an agglomerative clustering.Class cannot be static so that it can hold instances of nested class Edge.
      * @param edgeList Array of [vertex ID 1, vertex ID 2, edge weight]
      * @param chainLengths
      * @param weightType
      * @param labelMap
-     */
+     */   
     public AgglomerativeClustering(int[][] edgeList, Map<Integer, Integer> chainLengths, EdgeWeightType weightType, Map<Integer, String> labelMap) {
-        curStepNum = 0;
+        this.curStepNum = 0;
         
-        edges = new ArrayList<>();
+        this.edges = new ArrayList<>();
         for (int[] edge : edgeList) {
             if (edge.length < 3) {
                 DP.getInstance().e(CLASS_TAG, "Got an edge without two particpating vertices. Skipping edge and trying to go on. "
@@ -141,13 +150,23 @@ public class AgglomerativeClustering {
         this.chainLengths = new HashMap<>(chainLengths);  // Shallow copy to not change chain lengths outside of this class
         this.weightType = weightType;
         this.labelMap = labelMap;
-        this.random = new Random();
     }
     
-    
     /**
-     * 
-     * @return 
+     * Used to create copy by newInstance
+     * @param aggloClust 
+     */
+    public AgglomerativeClustering(AgglomerativeClustering aggloClust){
+        this.edges = new ArrayList<>(aggloClust.edges);
+        this.chainLengths = new HashMap<>(aggloClust.chainLengths);
+        this.weightType = aggloClust.weightType;
+        this.labelMap = new HashMap<>(aggloClust.labelMap);
+        this.curStepNum = 0;
+    }
+            
+    /**
+     * Performs a hirachical clustering algorithm on the given complex graph. 
+     * @return Clustered Tree
      */
     public ClusteringResult chainLengthClustering() {
         ClusteringResult clusteringResult = new ClusteringResult(true);
@@ -186,7 +205,7 @@ public class AgglomerativeClustering {
         int mergeEdgeIndex;
         switch(Settings.getInteger("PTGLgraphComputation_B_type_assembly_prediction")){
             case(1): mergeEdgeIndex = getEdgeIndexFromUser(6, clusteringResult); break;
-            case(2): mergeEdgeIndex = getEdgeIndexRandom(); break;
+            case(2): mergeEdgeIndex = getEdgeIndexStochastic(); break;
             default: mergeEdgeIndex = 0; break;
         }
         
@@ -264,7 +283,12 @@ public class AgglomerativeClustering {
         return edgeIndex;
     }
     
-    private int getEdgeIndexRandom(){
+    /**
+     * Chooses an Edge by performing a roulett algorithm.
+     * Probabilities are equal to edge weights. 
+     * @return index of choosen edge in array. 
+     */
+    private int getEdgeIndexStochastic(){
         BigDecimal summed = new BigDecimal(0);
         for (Edge edge: edges){
             summed = summed.add(edge.normalizedWeight);
@@ -272,7 +296,7 @@ public class AgglomerativeClustering {
         
         int edgeIndex = 0; 
         // generate a random BigDecimal in a range: max * random
-        BigDecimal choice = summed.multiply(new BigDecimal(random.nextDouble()));
+        BigDecimal choice = summed.multiply(new BigDecimal(RANDOM.nextDouble()));
         
         summed = edges.get(0).normalizedWeight;
         // do binary search
@@ -378,16 +402,14 @@ public class AgglomerativeClustering {
 
         AgglomerativeClustering clustering = new AgglomerativeClustering(edgeList, chainLengths, EdgeWeightType.ADDITIVE_LENGTH_NORMALIZATION, labelMap);
         
-        ClusteringResult cr = clustering.chainLengthClustering();
+        ClusteringResult cr = clustering.chainLengthClustering();        
         
         System.out.println(cr.toNewickString());
         
         clustering = new AgglomerativeClustering(edgeList, chainLengths, EdgeWeightType.MULTIPLICATIVE_LENGTH_NORMALIZATION, labelMap);
-        
         clustering.chainLengthClustering();
         
         clustering = new AgglomerativeClustering(edgeList, chainLengths, EdgeWeightType.ABSOLUTE_WEIGHT, labelMap);
-        
         clustering.chainLengthClustering();
         
         System.out.println("FINISHED CLUSTERING TEST AND EXITING");

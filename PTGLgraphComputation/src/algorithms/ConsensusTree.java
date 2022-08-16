@@ -9,22 +9,20 @@ import datastructures.ClusteringResult;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Stack;
 import proteingraphs.ComplexGraphEdgeWeightTypes;
 import settings.Settings;
 
 /**
- *
+ * Computes a consensus tree using bootstrapping based on several agglomerative clusters. 
+ * Agglomerative clusters should be created using stochastic approach. 
  * @author christian
  */
 public class ConsensusTree {
     
     private final ArrayList<ClusteringResult> results;
-    private final Map<Integer, ArrayList<String>> computedEdges;
     
     public ConsensusTree(AgglomerativeClustering aggloClust, int iterations){
         this.results = new ArrayList<>();
-        this.computedEdges = new HashMap<>();
         
         for (int i = 0; i < iterations; i++){
             this.results.add(clustering(aggloClust));

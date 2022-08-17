@@ -203,7 +203,7 @@ public class AgglomerativeClustering {
         
         // choose edge to merge: greedy or interactive
         int mergeEdgeIndex;
-        switch(Settings.getInteger("PTGLgraphComputation_B_type_assembly_prediction")){
+        switch(Settings.getInteger("PTGLgraphComputation_I_type_assembly_prediction")){
             case(1): mergeEdgeIndex = getEdgeIndexFromUser(6, clusteringResult); break;
             case(2): mergeEdgeIndex = getEdgeIndexStochastic(); break;
             default: mergeEdgeIndex = 0; break;

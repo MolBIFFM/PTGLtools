@@ -6,9 +6,14 @@ package algorithms;
 
 import java.util.ArrayList;
 import datastructures.ClusteringResult;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import javax.xml.stream.XMLOutputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamWriter;
 import proteingraphs.ComplexGraphEdgeWeightTypes;
 import settings.Settings;
 
@@ -20,14 +25,17 @@ import settings.Settings;
 public class ConsensusTree {
     
     private final ArrayList<ClusteringResult> results;
+    private final ArrayList<Map<String, Integer>> resultsEdgeCounts;
+    private final Map<String, Integer> edgeCount;
     
     public ConsensusTree(AgglomerativeClustering aggloClust, int iterations){
         this.results = new ArrayList<>();
+        this.resultsEdgeCounts = new ArrayList<>();
+        this.edgeCount = new HashMap<>();
         
         for (int i = 0; i < iterations; i++){
             this.results.add(clustering(aggloClust));
-        }
-        
+        }   
     }
     
     private ClusteringResult clustering(AgglomerativeClustering aggloClust){
@@ -103,21 +111,20 @@ public class ConsensusTree {
     }
     
     private Map<String, Integer> countEdgesFromNewick(String newick){
-        Map<String, Integer> edgeCount = new HashMap<>();
+        Map<String, Integer> localEdgeCount = new HashMap<>();
         ArrayList<String> edges = new ArrayList<>();
         
         // 1 since outer bracket isn't describing an edge
         newEdge(newick, 1, edges);
         
         for(String edge: edges){
-            edgeCount.put(edge, 1);
+            localEdgeCount.put(edge, 1);
         }
         
-        return edgeCount;
+        return localEdgeCount;
     }
     
-    private Map<String, Integer> countEdges(ArrayList<Map<String, Integer>> resultEdgeCounts){
-        Map<String, Integer> edgeCount = new HashMap<>();
+    private void countEdges(){
         for (ClusteringResult result: results){
             Map<String, Integer> count = countEdgesFromNewick(result.toNewickString());
             
@@ -127,21 +134,18 @@ public class ConsensusTree {
             }
             
             // store counted edge for one ClusteringResult to reduce computations
-            resultEdgeCounts.add(count);
+            resultsEdgeCounts.add(count);
         }
-        
-        return edgeCount;
     }
     
     public ClusteringResult computeConsensus(){
-        ArrayList<Map<String, Integer>> resultEdgeCounts = new ArrayList<>();
-        Map<String, Integer> edgeCount = countEdges(resultEdgeCounts);  
+        countEdges();
         ClusteringResult consensus = null;
         int repValue = -1; 
         
         // evaluate
         for (int i=0; i < results.size(); i++){
-            Map<String, Integer> resCount = resultEdgeCounts.get(i);
+            Map<String, Integer> resCount = resultsEdgeCounts.get(i);
             int resRepValue = 0; 
             for (String key: resCount.keySet()){
                 resRepValue += edgeCount.get(key);    
@@ -159,6 +163,76 @@ public class ConsensusTree {
         }
 
         return consensus; 
+    }
+    
+    public void writeStatistics(String indicator){
+        XMLOutputFactory xof = XMLOutputFactory.newInstance();
+        XMLStreamWriter xsw = null;
+        String sep = System.getProperty("file.separator");
+                
+        String savepath = Settings.get("PTGLgraphComputation_S_output_dir") + sep + indicator+"_clustStats.xml";
+        try{
+            xsw = xof.createXMLStreamWriter(new FileWriter(savepath));
+            xsw.writeStartDocument();
+            
+            // 1) write edgeCount
+            xsw.writeCharacters("\n");
+            xsw.writeStartElement("count_table");
+            xsw.writeCharacters("\n");
+            
+            for(String key: edgeCount.keySet()){
+                xsw.writeCharacters("\t");
+                xsw.writeStartElement("entry");
+                xsw.writeAttribute("name", key);
+                xsw.writeAttribute("bootstrap", Integer.toString(edgeCount.get(key)));
+                xsw.writeEndElement();
+                xsw.writeCharacters("\n");
+            }
+            xsw.writeEndElement();
+            xsw.writeCharacters("\n");
+            
+            // 2) write resulting trees and edge list
+            xsw.writeStartElement("clustering_results");
+            xsw.writeAttribute("number", Integer.toString(results.size()));
+            xsw.writeCharacters("\n");
+            for(int i = 0; i < results.size(); i++){
+                xsw.writeCharacters("\t");
+                xsw.writeStartElement("result");
+                xsw.writeAttribute("index", Integer.toString(i));
+                xsw.writeAttribute("newick", results.get(i).toNewickString());
+                xsw.writeCharacters("\n\t\t");
+                xsw.writeStartElement("edge_list");
+                for(String key: resultsEdgeCounts.get(i).keySet()){
+                    xsw.writeCharacters("\n\t\t\t");
+                    xsw.writeStartElement("entry");
+                    xsw.writeAttribute("name", key);
+                    xsw.writeAttribute("bootstrap", Integer.toString(edgeCount.get(key)));
+                    xsw.writeEndElement();
+                }
+                xsw.writeCharacters("\n\t\t");
+                xsw.writeEndElement();
+                xsw.writeCharacters("\n\t");
+                xsw.writeEndElement();
+                xsw.writeCharacters("\n");
+            }
+            
+            xsw.writeEndDocument();
+        
+        }
+        catch (IOException | XMLStreamException e){
+                System.err.println("Unable to write clustering statistics: " + e.getMessage());
+        }
+        finally{
+            try{
+                if (xsw != null){
+                        xsw.close();
+                }
+            }
+            catch (XMLStreamException e){
+                    System.err.println("Unable to close clustering statistics: " + e.getMessage());
+            }
+        }
+       
     }
     
     // Test
@@ -197,8 +271,9 @@ public class ConsensusTree {
         }
         
         AgglomerativeClustering clustering = new AgglomerativeClustering(edgeList, chainLengths, ComplexGraphEdgeWeightTypes.EdgeWeightType.ADDITIVE_LENGTH_NORMALIZATION, labelMap);
-        ConsensusTree ct = new ConsensusTree(clustering, 1);
+        ConsensusTree ct = new ConsensusTree(clustering, 2);
         ClusteringResult cr = ct.computeConsensus();
+        ct.writeStatistics("test");
         System.out.println(cr.toNewickString());
     }    
 }

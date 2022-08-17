@@ -903,9 +903,11 @@ public class ComplexGraph extends UAdjListGraph {
             
             
             ClusteringResult clusteringResult;
-            if(Settings.getInteger("PTGLgraphComputation_B_type_assembly_prediction") == 2){
-                ConsensusTree consensus = new ConsensusTree(clustering, 1000);
+            if(Settings.getInteger("PTGLgraphComputation_I_type_assembly_prediction") == 2){
+                int iterations = Settings.getInteger("PTGLgraphComputation_I_stochastic_iterations");
+                ConsensusTree consensus = new ConsensusTree(clustering, iterations);
                 clusteringResult = consensus.computeConsensus();
+                consensus.writeStatistics(this.pdbid+"_"+weightType.toString());
             }
             else{
                 clusteringResult = clustering.chainLengthClustering();

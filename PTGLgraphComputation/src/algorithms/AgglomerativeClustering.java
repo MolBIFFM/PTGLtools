@@ -190,7 +190,7 @@ public class AgglomerativeClustering {
         if (Settings.getInteger("PTGLgraphComputation_I_debug_level") > 2) {
             System.out.println("[DEBUG LV 3] Sorted edge list from step " + curStepNum);
             System.out.println("[DEBUG LV 3] Assembly type: " + 
-                                Settings.getInteger("PTGLgraphComputation_B_type_assembly_prediction"));
+                                Settings.getInteger("PTGLgraphComputation_I_type_assembly_prediction"));
             edges.forEach(edge -> {
                 System.out.println("  " + edge.toString());
             });
@@ -338,7 +338,7 @@ public class AgglomerativeClustering {
     public static void main(String[] args) {
         System.out.println("CLUSTERING TEST");
         Settings.set("PTGLgraphComputation_I_debug_level", "3");
-        Settings.set("PTGLgraphComputation_B_type_assembly_prediction", "2");
+        Settings.set("PTGLgraphComputation_I_type_assembly_prediction", "2");
         
         // Example 1
         //   Additive length normalization merges

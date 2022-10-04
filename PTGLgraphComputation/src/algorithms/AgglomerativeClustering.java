@@ -206,6 +206,7 @@ public class AgglomerativeClustering {
         switch(Settings.getInteger("PTGLgraphComputation_I_type_assembly_prediction")){
             case(1): mergeEdgeIndex = getEdgeIndexFromUser(6, clusteringResult); break;
             case(2): mergeEdgeIndex = getEdgeIndexStochastic(); break;
+            case(3): mergeEdgeIndex = getEdgeIndexRandom(); break;
             default: mergeEdgeIndex = 0; break;
         }
         
@@ -313,6 +314,13 @@ public class AgglomerativeClustering {
         return edgeIndex; 
     }
     
+    /**
+     * Chooses an edge by equal probability. 
+     * @return index in edge list
+     */
+    private int getEdgeIndexRandom(){
+        return RANDOM.nextInt(edges.size());
+    }
     
     /**
      * Return a formatted string representation of the current edge list.

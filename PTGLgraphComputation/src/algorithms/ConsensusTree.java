@@ -18,21 +18,30 @@ import proteingraphs.ComplexGraphEdgeWeightTypes;
 import settings.Settings;
 
 /**
- * Computes a consensus tree using bootstrapping based on several agglomerative clusters. 
- * Agglomerative clusters should be created using stochastic approach. 
+ * Computes a consensus tree using multiple stochastic clusterings. 
+ * Agglomerative clusters should be created using stochastic approach 
+ * (PTGLgraphComputation_I_type_assembly_prediction set to 2)
  * @author christian
  */
 public class ConsensusTree {
     
     private final ArrayList<ClusteringResult> results;
-    private final ArrayList<Map<String, Integer>> resultsEdgeCounts;
-    private final Map<String, Integer> edgeCount;
+    private final ArrayList<Map<String, Integer>> resultsCladeCount;
+    private final Map<String, Integer> cladeSupport;
     private final Map<Integer, String> labelMap;
     
+    /**
+     * Constructor for the ConsensusTree - starts clustering directly. 
+     * @param aggloClust AgglomerativeClustering - be sure to select the stochastic clustering
+     * @param iterations Number of trees which should be generated
+     * @param labelMap Labelmapping used for Newick-strings (to retain biological labels)
+     */
     public ConsensusTree(AgglomerativeClustering aggloClust, int iterations, Map<Integer, String> labelMap){
         this.results = new ArrayList<>();
-        this.resultsEdgeCounts = new ArrayList<>();
-        this.edgeCount = new HashMap<>();
+        
+        //stores individual clade support for XML file
+        this.resultsCladeCount = new ArrayList<>(); 
+        this.cladeSupport = new HashMap<>();
         this.labelMap = labelMap;
         
         for (int i = 0; i < iterations; i++){
@@ -40,12 +49,22 @@ public class ConsensusTree {
         }   
     }
     
+    /**
+     * Generates several clusterings based on copies of the given one. 
+     * @param aggloClust clustering procedure - used as parameter to not store it separatly
+     * @return ClusteringResults
+     */
     private ClusteringResult clustering(AgglomerativeClustering aggloClust){
         AgglomerativeClustering cluster = AgglomerativeClustering.newInstance(aggloClust);
         return cluster.chainLengthClustering();
     }
     
-    private void addNewEdgeNode(String vertex, ArrayList<ArrayList<String>> subvertices){
+    /**
+     * Procedure to add nodes to a clade by creating a new ArrayList.
+     * @param vertex Vertix which should be added
+     * @param subvertices List of vertices belonging to a clade.
+     */
+    private void addNodeToClade(String vertex, ArrayList<ArrayList<String>> subvertices){
         if(vertex.length() > 0){
             ArrayList<String> temp = new ArrayList<>();
             temp.add(vertex);
@@ -53,7 +72,18 @@ public class ConsensusTree {
         }
     }
     
-    private ArrayList<String> newEdge(String newick, int position, ArrayList<String> edges){
+    /**
+     * Extracts clades from a newick string using recursion. Each clade will 
+     * be sorted lexicographically. (each part of the split, as also each subgroup itself)
+     * 
+     * Method should work for non-binary trees - NOT TESTED JET
+     * 
+     * @param newick Newick string which should be parsed
+     * @param position Position where to start (used for new clades)
+     * @param clades List of clades which will be filled. 
+     * @return Nodes which belong to the calculated clade.
+     */
+    private ArrayList<String> newClade(String newick, int position, ArrayList<String> clades){
         ArrayList<ArrayList<String>> subvertices = new ArrayList<>(); 
         String vertex = new String();
         int lastSign = 0;
@@ -63,17 +93,17 @@ public class ConsensusTree {
             
             // needs to be outside of switch to interrupt the for loop
             if (act == ')' && lastSign == 0){
-                addNewEdgeNode(vertex, subvertices);
+                addNodeToClade(vertex, subvertices);
                 break;
             }
           
             if (lastSign == 0){
                 switch(act){
-                    case '(':   subvertices.add(newEdge(newick, i+1, edges));
+                    case '(':   subvertices.add(newClade(newick, i+1, clades));
                                 lastSign++;
                     case ';':   break;
                 
-                    case ',':   addNewEdgeNode(vertex, subvertices);
+                    case ',':   addNodeToClade(vertex, subvertices);
                                 vertex = new String();
                                 break;
                     
@@ -93,64 +123,80 @@ public class ConsensusTree {
             }
         }
         
-        ArrayList<String> edgeVertices = new ArrayList<>();
+        ArrayList<String> cladeVertices = new ArrayList<>();
         ArrayList<String> vertices = new ArrayList<>();
         for (ArrayList<String> list: subvertices){
             Collections.sort(list);
-            edgeVertices.add(String.join(",", list));
+            cladeVertices.add(String.join(",", list));
             vertices.addAll(list);
         }
         
-        Collections.sort(edgeVertices);
-        String edge = String.join("-", edgeVertices);
+        // each ArrayList in cladeVertices descripes one subset 
+        Collections.sort(cladeVertices);
+        String clade = String.join("-", cladeVertices);
         
         if (Settings.getInteger("PTGLgraphComputation_I_debug_level") > 2){
-            System.out.println("[DEBUG LV 3] Edge: " + edge);
+            System.out.println("[DEBUG LV 3] Edge: " + clade);
         }
         
-        edges.add(edge);
+        clades.add(clade);
         return vertices;
     }
     
-    private Map<String, Integer> countEdgesFromNewick(String newick){
+    /**
+     * Counts the clades within a newick string.
+     * Only tested for binary trees. 
+     * @param newick newick-string of a tree
+     * @return HashMap of clade counts (keys = clades as string)
+     */
+    private Map<String, Integer> countCladesFromNewick(String newick){
         Map<String, Integer> localEdgeCount = new HashMap<>();
-        ArrayList<String> edges = new ArrayList<>();
+        ArrayList<String> clades = new ArrayList<>();
         
-        // 1 since outer bracket isn't describing an edge
-        newEdge(newick, 1, edges);
+        // staring recursion 1 since outer bracket is already considered at this point
+        newClade(newick, 1, clades);
         
-        for(String edge: edges){
-            localEdgeCount.put(edge, 1);
+        for(String clade: clades){
+            // each clade will just be seen ones - no need for checking collisions
+            localEdgeCount.put(clade, 1); 
         }
         
         return localEdgeCount;
     }
     
-    private void countEdges(){
+    /**
+     * Starts counting clades from generated clusterings.
+     * Fills cladeSupport and resultsCladeCount with the appropriate values.
+     */
+    private void countClades(){
         for (ClusteringResult result: results){
-            Map<String, Integer> count = countEdgesFromNewick(result.toNewickString(labelMap));
+            Map<String, Integer> count = countCladesFromNewick(result.toNewickString(labelMap));
             
             // combining counted hashmaps
             for(String key: count.keySet()){
-                edgeCount.merge(key, count.get(key), (oldVal, newVal) -> oldVal+newVal);
+                cladeSupport.merge(key, count.get(key), (oldVal, newVal) -> oldVal+newVal);
             }
             
             // store counted edge for one ClusteringResult to reduce computations
-            resultsEdgeCounts.add(count);
+            resultsCladeCount.add(count);
         }
     }
     
+    /**
+     * Calculates consensus tree based on Clade Support (CS) 
+     * @return ClusteringResult from consensus
+     */
     public ClusteringResult computeConsensus(){
-        countEdges();
+        countClades();
         ClusteringResult consensus = null;
         int repValue = -1; 
         
         // evaluate
         for (int i=0; i < results.size(); i++){
-            Map<String, Integer> resCount = resultsEdgeCounts.get(i);
+            Map<String, Integer> resCount = resultsCladeCount.get(i);
             int resRepValue = 0; 
             for (String key: resCount.keySet()){
-                resRepValue += edgeCount.get(key);    
+                resRepValue += cladeSupport.get(key);    
             }
             
             if (resRepValue > repValue){
@@ -167,6 +213,13 @@ public class ConsensusTree {
         return consensus; 
     }
     
+    /**
+     * Creates XML-files to store statistics in the output directory.
+     * Consensus needs to be calculated first, otherwise the file will be empty. 
+     * Includes whole CS-map of the whole forest, as also each clustering result
+     * in particular. 
+     * @param indicator filename extension (e.g. edge-weight type)
+     */
     public void writeStatistics(String indicator){
         XMLOutputFactory xof = XMLOutputFactory.newInstance();
         XMLStreamWriter xsw = null;
@@ -183,11 +236,11 @@ public class ConsensusTree {
             xsw.writeStartElement("count_table");
             xsw.writeCharacters("\n");
             
-            for(String key: edgeCount.keySet()){
+            for(String key: cladeSupport.keySet()){
                 xsw.writeCharacters("\t\t ");
                 xsw.writeStartElement("entry");
                 xsw.writeAttribute("name", key);
-                xsw.writeAttribute("bootstrap", Integer.toString(edgeCount.get(key)));
+                xsw.writeAttribute("clade_support", Integer.toString(cladeSupport.get(key)));
                 xsw.writeEndElement();
                 xsw.writeCharacters("\n");
             }
@@ -203,14 +256,15 @@ public class ConsensusTree {
                 xsw.writeCharacters("\t");
                 xsw.writeStartElement("result");
                 xsw.writeAttribute("index", Integer.toString(i));
-                xsw.writeAttribute("newick", results.get(i).toNewickString(labelMap));
+                xsw.writeCharacters("\n");
+                results.get(i).writeXMLPresentation(labelMap, xsw);        
                 xsw.writeCharacters("\n\t\t\t");
                 xsw.writeStartElement("edge_list");
-                for(String key: resultsEdgeCounts.get(i).keySet()){
+                for(String key: resultsCladeCount.get(i).keySet()){
                     xsw.writeCharacters("\n\t\t\t\t");
                     xsw.writeStartElement("entry");
                     xsw.writeAttribute("name", key);
-                    xsw.writeAttribute("bootstrap", Integer.toString(edgeCount.get(key)));
+                    xsw.writeAttribute("clade_support", Integer.toString(cladeSupport.get(key)));
                     xsw.writeEndElement();
                 }
                 xsw.writeCharacters("\n\t\t\t");
@@ -244,7 +298,7 @@ public class ConsensusTree {
     // Test
     public static void main(String args[]){
         Settings.set("PTGLgraphComputation_I_debug_level", "3");
-        Settings.set("PTGLgraphComputation_I_type_assembly_prediction", "2");
+        Settings.set("PTGLgraphComputation_I_type_assembly_prediction", "3");
         
         int[][] edgeList = {
             {0, 1, 5},
@@ -277,7 +331,7 @@ public class ConsensusTree {
         }
         
         AgglomerativeClustering clustering = new AgglomerativeClustering(edgeList, chainLengths, ComplexGraphEdgeWeightTypes.EdgeWeightType.ADDITIVE_LENGTH_NORMALIZATION, labelMap);
-        ConsensusTree ct = new ConsensusTree(clustering, 2, labelMap);
+        ConsensusTree ct = new ConsensusTree(clustering, 1, labelMap);
         ClusteringResult cr = ct.computeConsensus();
         ct.writeStatistics("test");
         System.out.println(cr.toNewickString());

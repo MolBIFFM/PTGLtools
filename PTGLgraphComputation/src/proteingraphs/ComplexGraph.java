@@ -9,6 +9,7 @@
 package proteingraphs;
 
 import algorithms.AgglomerativeClustering;
+import algorithms.ConsensusTree;
 import datastructures.ClusteringResult;
 import graphdrawing.PageLayout;
 import graphdrawing.DrawTools;
@@ -19,11 +20,9 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.RenderingHints;
 import java.awt.geom.Arc2D;
-import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.AffineTransform;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -39,21 +38,17 @@ import org.apache.batik.svggen.SVGGraphics2D;
 import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
 import io.DBManager;
-import io.FileParser;
 import io.IO;
 import io.FileParser;
 import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
-import java.math.MathContext;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import settings.Settings;
 import proteinstructure.Chain;
 import proteinstructure.Molecule;
@@ -905,7 +900,19 @@ public class ComplexGraph extends UAdjListGraph {
             System.out.println("    " + weightType.name);
             AgglomerativeClustering clustering = 
                     new AgglomerativeClustering(getEdgesAsArray(), vertexMapToVertexIdMap(chainLengthMap), weightType, vertexMapToVertexIdMap(labelNodeMap));
-            ClusteringResult clusteringResult = clustering.chainLengthClustering();
+            
+            
+            ClusteringResult clusteringResult;
+            if(Settings.getInteger("PTGLgraphComputation_I_type_assembly_prediction") == 2){
+                int iterations = Settings.getInteger("PTGLgraphComputation_I_stochastic_iterations");
+                ConsensusTree consensus = new ConsensusTree(clustering, iterations);
+                clusteringResult = consensus.computeConsensus();
+                consensus.writeStatistics(this.pdbid+"_"+weightType.toString());
+            }
+            else{
+                clusteringResult = clustering.chainLengthClustering();
+            }
+            
             System.out.println("      " + clusteringResult.toNewickString(vertexMapToVertexIdMap(labelNodeMap)));
             
             //System.out.println("      Large Interface Score: " + clusteringResult.getScore().toString());

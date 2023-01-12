@@ -14,9 +14,11 @@ import io.FileParser;
 import java.util.ArrayList;
 import java.util.Arrays;
 import io.IO;
+import java.util.HashMap;
 import settings.Settings;
 import tools.DP;
 import plcc.Main;
+
 
 /**
  * Represents a protein chain in a PDB file.
@@ -33,10 +35,40 @@ public class Chain implements java.io.Serializable {
     private String modelID = null;
     private Model model = null;                                                                                                                                                                                                                             // the Model of this Chain
     private ArrayList<String> homologues = null;     // a list of homologous chains (defined by PDB COMPND)
+    private Integer atomNumber = 0;
     private final Integer[] chainCentroid = new Integer[3];  // X-/Y-/Z-coordinates as 10th of Angström of the center of all non-H atoms
     private Integer radiusFromCentroid = null;         // distance from center to farthest non-H atom. -1 if no protein-atoms
+    private final Double[] centerOfMass = new Double[3];            // X-/Y-/Z-coordinates of the center of mass for the chain
+    private String radiusOfGyrationMethod = null;  // The method which was used to calculate the radius of gyration
+    private Double chainRadiusOfGyration = null;   // radius of gyration for this chain
     private Integer maxSeqNeighborAADist = null;    // largest distance between sequential residue neighbors excluding ligands (center to center)
     private String moleculeType = null;             // type of molecules that make up the chain, i.e. RNA or Residue
+    
+    // Atomic weights of common elements. Values taken from IUPAC 2021 (see https://doi.org/10.1515/pac-2019-0603)
+    // The abridged values are taken without considering the uncertainty
+    // Here the symbol is listed and the atomic weight
+    public static HashMap<String,Double> AtomWeights = new HashMap<String, Double>(){{
+       put("H",1.0080);
+       put("C",12.011);
+       put("N",14.007);
+       put("O",15.999);
+       put("F",18.998);
+       put("Na",22.990);
+       put("Mg",24.305);
+       put("P",30.974);
+       put("S",32.06);
+       put("Cl",35.45);
+       put("K",39.098);
+       put("Ca",40.078);
+       put("Cr",51.996);
+       put("Mn",54.938);
+       put("Fe",55.845);
+       put("Co",58.933);
+       put("Ni",58.693);
+       put("Cu",63.546);
+       put("Zn",65.38);
+       put("W",183.84);
+    }};
     
     // constructor
     public Chain(String ci) { pdbChainID = ci; molecules = new ArrayList<>();}
@@ -77,6 +109,20 @@ public class Chain implements java.io.Serializable {
             this.computeChainCentroidAndRadius();
         }
         return(radiusFromCentroid);
+    }
+    
+    
+        /**
+     * Retrieves (and computes if called 1st time) the radius of gyration of the chain.
+     * @param method
+     * @return 
+     */
+    public Double getChainRadiusOfGyration(String method) {
+        if (chainRadiusOfGyration == null || !radiusOfGyrationMethod.equals(method)) {
+            this.computeChainRadiusOfGyration(method);
+            radiusOfGyrationMethod = method;
+        }
+        return(chainRadiusOfGyration); 
     }
     
         
@@ -154,6 +200,7 @@ public class Chain implements java.io.Serializable {
         }
         return chainLength;
     }
+    
     
     /**
      * Retrieves (and calculates if called 1st time) the maximum sequence neighbor distance between amino acids.
@@ -306,24 +353,23 @@ public class Chain implements java.io.Serializable {
         // compute center
         Integer[] tmpCenter = new Integer[3];
         tmpCenter[0] = tmpCenter[1] = tmpCenter[2] = 0;
-        int tmpAtomNumber = 0;
         for (Molecule mol : molecules) {
             for (Atom a : mol.getAtoms()) {
                 tmpCenter[0] += a.getCoordX();
                 tmpCenter[1] += a.getCoordY();
                 tmpCenter[2] += a.getCoordZ();
-                tmpAtomNumber += 1;
+                atomNumber += 1;
             }
         }
         
         // there could be the case that only RNA/DNA atoms are in a chain
         // in this case radius is set to -1
         
-        if (tmpAtomNumber > 0) {
+        if (atomNumber > 0) {
         
-            chainCentroid[0] = (int) (Math.round((double) tmpCenter[0] / tmpAtomNumber));
-            chainCentroid[1] = (int) (Math.round((double) tmpCenter[1] / tmpAtomNumber));
-            chainCentroid[2] = (int) (Math.round((double) tmpCenter[2] / tmpAtomNumber));
+            chainCentroid[0] = (int) (Math.round((double) tmpCenter[0] / atomNumber));
+            chainCentroid[1] = (int) (Math.round((double) tmpCenter[1] / atomNumber));
+            chainCentroid[2] = (int) (Math.round((double) tmpCenter[2] / atomNumber));
 
             if (Settings.getInteger("PTGLgraphComputation_I_debug_level") > 0) {
                 System.out.println("[DEBUG] Center of chain " + pdbChainID + " is at " + Arrays.toString(chainCentroid));
@@ -353,6 +399,99 @@ public class Chain implements java.io.Serializable {
             radiusFromCentroid = -1;
         }        
     }
+   
+    /**
+     * Computes the center of mass and the radius of gyration for this chain.
+     * Added by FJG
+     */
+    private void computeChainRadiusOfGyration(String method) {
+        // should there be something for testing if it is part of the polypeptide chain or of the ligand? Is it done already?
+        
+        // The radius of gyration can be calculated with mass weighting or according to the geometrical center
+        // I also tried a method from an official PyMOL script
+        if ("mass".equals(method)) {
+            // compute center of mass and the total mass
+            Double[] tmpCenter = new Double[3];
+            tmpCenter[0] = tmpCenter[1] = tmpCenter[2] = 0.0;
+            Double tmpSumAtomWeights = 0.0;
+            for (Molecule mol : molecules) {
+                for (Atom a : mol.getAtoms()) {
+                    tmpCenter[0] += a.getCoordX()*AtomWeights.get(a.getChemSym());
+                    tmpCenter[1] += a.getCoordY()*AtomWeights.get(a.getChemSym());
+                    tmpCenter[2] += a.getCoordZ()*AtomWeights.get(a.getChemSym());
+                    tmpSumAtomWeights += AtomWeights.get(a.getChemSym());
+                }
+            }
+
+            // there could be the case that only RNA/DNA atoms are in a chain
+            // in this case radius is set to -1
+
+            if (tmpSumAtomWeights > 0) {
+
+                centerOfMass[0] =  tmpCenter[0] / tmpSumAtomWeights;
+                centerOfMass[1] =  tmpCenter[1] / tmpSumAtomWeights;
+                centerOfMass[2] =  tmpCenter[2] / tmpSumAtomWeights;
+
+
+                if (Settings.getInteger("PTGLgraphComputation_I_debug_level") > 0) {
+                    System.out.println("[DEBUG] Center of mass of chain " + pdbChainID + " is at " + Arrays.toString(centerOfMass));
+                }
+
+                // compute the radius of gyration
+                Double tmpGyradius;
+                tmpGyradius = 0.0;
+                for (Molecule mol : molecules) {
+                    for (Atom a : mol.getAtoms()) {
+                        tmpGyradius +=  AtomWeights.get(a.getChemSym())*Math.pow(Math.sqrt(Math.pow((a.getCoordX()-centerOfMass[0]),2) + Math.pow((a.getCoordY()-centerOfMass[1]),2) + Math.pow((a.getCoordZ()-centerOfMass[2]),2)), 2);
+                    }
+                }
+                
+                chainRadiusOfGyration = Math.sqrt(tmpGyradius / tmpSumAtomWeights);
+                
+                
+            } else {
+                DP.getInstance().w("Chain " + pdbChainID + " seems not to hold protein atoms. No center can be detected.", 2);
+                chainRadiusOfGyration = -1.0;
+            }
+            
+        } else if("geometric".equals(method)) {
+                
+            // we can use the chain centroid.  
+            if (radiusFromCentroid == null) {
+                this.computeChainCentroidAndRadius();
+            }
+
+            // there could be the case that only RNA/DNA atoms are in a chain
+            // in this case radius is set to -1
+
+            if (Settings.getInteger("PTGLgraphComputation_I_debug_level") > 0) {
+                System.out.println("[DEBUG] Center of geometry of chain " + pdbChainID + " is at " + Arrays.toString(chainCentroid));
+            }
+                
+             
+            if (atomNumber > 0) {
+                // compute the radius of gyration
+                Double tmpGyradius = 0.0;
+                for (Molecule mol : molecules) {
+                    for (Atom a : mol.getAtoms()) {
+                        tmpGyradius +=  Math.pow(Math.sqrt(Math.pow((a.getCoordX()-chainCentroid[0]),2) + Math.pow((a.getCoordY()-chainCentroid[1]),2) + Math.pow((a.getCoordZ()-chainCentroid[2]),2)), 2);
+                    }
+                }
+                
+                chainRadiusOfGyration = Math.sqrt(tmpGyradius / atomNumber);
+
+            } else {
+                DP.getInstance().w("Chain " + pdbChainID + " seems not to hold protein atoms. No center can be detected.", 2);
+                chainRadiusOfGyration = -1.0;
+            }
+                
+        } 
+
+        System.out.println("Rg = " + chainRadiusOfGyration);
+      
+                
+    }
+    
     
     /**
      * This function determines whether we need to look at the residues to check for contacts between
@@ -410,4 +549,6 @@ public class Chain implements java.io.Serializable {
         }
         return false;
     }
+
+
 }

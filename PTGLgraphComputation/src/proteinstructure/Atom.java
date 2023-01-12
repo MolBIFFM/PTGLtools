@@ -38,6 +38,9 @@ public class Atom implements java.io.Serializable {
     private Integer coordX = null;              // 3D coordinate X from pdb file, converted to 10th part Angstroem
     private Integer coordY = null;
     private Integer coordZ = null;
+    private Float ocoordX = null;              // 3D coordinate X from pdb file, original
+    private Float ocoordY = null;
+    private Float ocoordZ = null;
     private Integer pdbLineNum = null;
     private Chain chain = null;
     private String altLoc = null;
@@ -80,7 +83,15 @@ public class Atom implements java.io.Serializable {
      */
     public Integer distToAtom(Atom a) {
         Integer di;
-        di = distToPoint(a.getCoordX(), a.getCoordY(), a.getCoordZ());
+        Integer deltaOriginal;
+        Integer deltaRounded;
+        //di = distToPoint(a.getCoordX(), a.getCoordY(), a.getCoordZ());
+        // fjg: use the original coordinates at least to calculate the distance and then round it
+        di = distToPointFloat(a.getoCoordX(), a.getoCoordY(), a.getoCoordZ());
+        deltaOriginal = di;
+        deltaRounded = distToPoint(a.getCoordX(), a.getCoordY(), a.getCoordZ());
+        if((deltaRounded == 20 && deltaOriginal == 19) || (deltaRounded == 19 && deltaOriginal == 20)) {
+            System.out.println("Distance between atoms: " + deltaOriginal + " " + deltaRounded);};
         
         if(Settings.getBoolean("PTGLgraphComputation_B_contact_debug_dysfunct")) {
             if(this.isCalphaAtom() && a.isCalphaAtom()) {
@@ -100,6 +111,29 @@ public class Atom implements java.io.Serializable {
      * @return the euclidian distance, rounded to an int
      */
     public Integer distToPoint(int dx, int dy, int dz) {
+        Double dd = 0.0;
+        Integer di;
+        
+        dd += (coordX - dx) * (coordX - dx);
+        dd += (coordY - dy) * (coordY - dy);
+        dd += (coordZ - dz) * (coordZ - dz);
+
+        // di = (int)Math.sqrt(dd);
+        // jnw: lets round instead of truncate the result
+        di = (int)Math.round(Math.sqrt(dd));
+        
+        return(di);
+    }
+    
+        
+    /**
+     * Returns the distance from this atom to a point in 3D.
+     * @param dx X coordinate as 10th of Angström in float
+     * @param dy Y coordinate as 10th of Angström in float
+     * @param dz Z coordinate as 10th of Angström in float
+     * @return the euclidian distance, rounded to an int
+     */
+    public Integer distToPointFloat(float dx, float dy, float dz) {
         Double dd = 0.0;
         Integer di;
         
@@ -435,6 +469,9 @@ public class Atom implements java.io.Serializable {
     public Integer getCoordX() { return(coordX); }
     public Integer getCoordY() { return(coordY); }
     public Integer getCoordZ() { return(coordZ); }
+    public Float getoCoordX() { return(ocoordX); }
+    public Float getoCoordY() { return(ocoordY); }
+    public Float getoCoordZ() { return(ocoordZ); }
     public Integer getPdbLineNum() { return(pdbLineNum); }
     public Molecule getMolecule() { return(molecule); }
     public Integer getPdbResNum() { return(pdbResNum); }
@@ -451,6 +488,9 @@ public class Atom implements java.io.Serializable {
     public void setCoordX(Integer i) { coordX = i; }
     public void setCoordY(Integer i) { coordY = i; }
     public void setCoordZ(Integer i) { coordZ = i; }
+    public void setoCoordX(Float i) { ocoordX = i; }
+    public void setoCoordY(Float i) { ocoordY = i; }
+    public void setoCoordZ(Float i) { ocoordZ = i; }
     public void setPdbLineNum(Integer i) { pdbLineNum = i; }
     public void setMolecule(Molecule m) { molecule = m; }
     public void setPdbResNum(Integer i) { pdbResNum = i; }

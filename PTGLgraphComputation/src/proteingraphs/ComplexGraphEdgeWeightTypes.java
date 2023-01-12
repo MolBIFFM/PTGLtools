@@ -29,7 +29,11 @@ public final class ComplexGraphEdgeWeightTypes {
         LUCID_MULTIPLICATIVE_NORMALIZATION,
         SQRT_ADDITIVE_LENGTH_NORMALIZATION,
         LOG_ADDITIVE_LENGTH_NORMALIZATION,
-        MIN_LENGTH_NORMALIZATION;
+        MIN_LENGTH_NORMALIZATION,
+        MULTIPLICATIVE_INDIVIDUAL_NORMALIZATION,
+        ADDITIVE_INDIVIDUAL_NORMALIZATION,
+        ADDITIVE_GYRATION_NORMALIZATION,
+        ADDITIVE_GYRATION_INDIVIDUAL_NORMALIZATION;
         
         public String name;
         static {
@@ -40,6 +44,10 @@ public final class ComplexGraphEdgeWeightTypes {
             SQRT_ADDITIVE_LENGTH_NORMALIZATION.name = "square root additive length normalization";
             LOG_ADDITIVE_LENGTH_NORMALIZATION.name = "log additive length normalization";
             MIN_LENGTH_NORMALIZATION.name = "minimum length normalization";
+            MULTIPLICATIVE_INDIVIDUAL_NORMALIZATION.name="multiplicative individual normalization";
+            ADDITIVE_INDIVIDUAL_NORMALIZATION.name="additive individual normalization";
+            ADDITIVE_GYRATION_NORMALIZATION.name="additive gyration normalization";
+            ADDITIVE_GYRATION_INDIVIDUAL_NORMALIZATION.name="additive gyration individual normalization";
         }
         
         public String shortName;
@@ -51,6 +59,10 @@ public final class ComplexGraphEdgeWeightTypes {
             SQRT_ADDITIVE_LENGTH_NORMALIZATION.shortName = "sqrt";
             LOG_ADDITIVE_LENGTH_NORMALIZATION.shortName = "logAdd";
             MIN_LENGTH_NORMALIZATION.shortName = "min";
+            MULTIPLICATIVE_INDIVIDUAL_NORMALIZATION.shortName = "multInd";
+            ADDITIVE_INDIVIDUAL_NORMALIZATION.shortName = "addInd";
+            ADDITIVE_GYRATION_NORMALIZATION.shortName = "addGyr";
+            ADDITIVE_GYRATION_INDIVIDUAL_NORMALIZATION.shortName = "addGyrInd";
         }
         
         public String description;
@@ -62,6 +74,10 @@ public final class ComplexGraphEdgeWeightTypes {
             SQRT_ADDITIVE_LENGTH_NORMALIZATION.description = ABSOLUTE_WEIGHT.name + " / sqrt(length chain 1 * chain 2)";
             LOG_ADDITIVE_LENGTH_NORMALIZATION.description = ABSOLUTE_WEIGHT.name + " / log(length chain 1 + chain 2)";
             MIN_LENGTH_NORMALIZATION.description = ABSOLUTE_WEIGHT.name + " / min(length chain 1, length chain 2)";
+            MULTIPLICATIVE_INDIVIDUAL_NORMALIZATION.description = "(" + ABSOLUTE_WEIGHT.name + " / (length chain 1)" + ") * (" + ABSOLUTE_WEIGHT.name + " / (length chain 2))";
+            ADDITIVE_INDIVIDUAL_NORMALIZATION.description = "(" + ABSOLUTE_WEIGHT.name + " / (length chain 1)" + ") + (" + ABSOLUTE_WEIGHT.name + " / (length chain 2))";
+            ADDITIVE_GYRATION_NORMALIZATION.description = ABSOLUTE_WEIGHT.name + " / (radius of gyration chain 1 + radius of gyration chain 2)";
+            ADDITIVE_GYRATION_INDIVIDUAL_NORMALIZATION.description = "(" + ABSOLUTE_WEIGHT.name + " / (radius of gyration chain 1)" + ") + (" + ABSOLUTE_WEIGHT.name + " / (radius of gyration chain 2))";
         }
     }
     
@@ -88,25 +104,53 @@ public final class ComplexGraphEdgeWeightTypes {
     public static BigDecimal computeMinAdditiveLengthNormlization(BigDecimal numResContacts, int lengthChainA, int lengthChainB) {
         return numResContacts.divide(BigDecimal.valueOf(Math.min(lengthChainA, lengthChainB)), PRECISION, RoundingMode.HALF_UP);
     }
+    
+    public static BigDecimal computeIndividualMultiplicativeLengthNormlization(BigDecimal numResContacts, int lengthChainA, int lengthChainB) {
+        return (numResContacts.divide(BigDecimal.valueOf(lengthChainA), PRECISION, RoundingMode.HALF_UP)).multiply(numResContacts.divide(BigDecimal.valueOf(lengthChainB), PRECISION, RoundingMode.HALF_UP));
+    }
+    
+    public static BigDecimal computeIndividualAdditiveLengthNormlization(BigDecimal numResContacts, int lengthChainA, int lengthChainB) {
+        return (numResContacts.divide(BigDecimal.valueOf(lengthChainA), PRECISION, RoundingMode.HALF_UP)).add(numResContacts.divide(BigDecimal.valueOf(lengthChainB), PRECISION, RoundingMode.HALF_UP));
+    }
+    
+    public static BigDecimal computeAdditiveGyrationNormlization(BigDecimal numResContacts, double gyradiusChainA, double gyradiusChainB) {
+        return numResContacts.divide(BigDecimal.valueOf(gyradiusChainA).add(BigDecimal.valueOf(gyradiusChainB)), PRECISION, RoundingMode.HALF_UP);
+    }
+    
+    public static BigDecimal computeIndividualAdditiveGyrationNormlization(BigDecimal numResContacts, double gyradiusChainA, double gyradiusChainB) {
+        return (numResContacts.divide(BigDecimal.valueOf(gyradiusChainA), PRECISION, RoundingMode.HALF_UP)).add(numResContacts.divide(BigDecimal.valueOf(gyradiusChainB), PRECISION, RoundingMode.HALF_UP));
+    }
    
-    public static BigDecimal computeLengthNormalization(int numResContacts, int lengthChainA, int lengthChainB, EdgeWeightType weightType) {
+    public static BigDecimal computeLengthNormalization(int numResContacts, double lengthChainA, double lengthChainB, EdgeWeightType weightType) {
         BigDecimal normalizedWeight;
         switch (weightType) {
                 case ADDITIVE_LENGTH_NORMALIZATION:
-                    normalizedWeight = computeAdditiveLengthNormlization(BigDecimal.valueOf(numResContacts), lengthChainA, lengthChainB);
+                    normalizedWeight = computeAdditiveLengthNormlization(BigDecimal.valueOf(numResContacts), (int)lengthChainA, (int)lengthChainB);
                     break;
                 case MULTIPLICATIVE_LENGTH_NORMALIZATION:
-                    normalizedWeight = computeMultiplicativeLengthNormlization(BigDecimal.valueOf(numResContacts), lengthChainA, lengthChainB);
+                    normalizedWeight = computeMultiplicativeLengthNormlization(BigDecimal.valueOf(numResContacts), (int)lengthChainA, (int)lengthChainB);
                     break;
                 case SQRT_ADDITIVE_LENGTH_NORMALIZATION:
-                    normalizedWeight = computeSqrtAdditiveLengthNormlization(BigDecimal.valueOf(numResContacts), lengthChainA, lengthChainB);
+                    normalizedWeight = computeSqrtAdditiveLengthNormlization(BigDecimal.valueOf(numResContacts), (int)lengthChainA, (int)lengthChainB);
                     break;
                 case LOG_ADDITIVE_LENGTH_NORMALIZATION:
-                    normalizedWeight = computeLogAdditiveLengthNormlization(BigDecimal.valueOf(numResContacts), lengthChainA, lengthChainB);
+                    normalizedWeight = computeLogAdditiveLengthNormlization(BigDecimal.valueOf(numResContacts), (int)lengthChainA, (int)lengthChainB);
                     break;
                 case MIN_LENGTH_NORMALIZATION:
-                    normalizedWeight = computeMinAdditiveLengthNormlization(BigDecimal.valueOf(numResContacts), lengthChainA, lengthChainB);
+                    normalizedWeight = computeMinAdditiveLengthNormlization(BigDecimal.valueOf(numResContacts), (int)lengthChainA, (int)lengthChainB);
                     break;
+                case MULTIPLICATIVE_INDIVIDUAL_NORMALIZATION:
+                    normalizedWeight = computeIndividualMultiplicativeLengthNormlization(BigDecimal.valueOf(numResContacts), (int)lengthChainA, (int)lengthChainB);
+                    break;
+                case ADDITIVE_INDIVIDUAL_NORMALIZATION:
+                    normalizedWeight = computeIndividualAdditiveLengthNormlization(BigDecimal.valueOf(numResContacts), (int)lengthChainA, (int)lengthChainB);
+                    break;
+                case ADDITIVE_GYRATION_NORMALIZATION:
+                    normalizedWeight = computeAdditiveGyrationNormlization(BigDecimal.valueOf(numResContacts), lengthChainA, lengthChainB);
+                    break;    
+                case ADDITIVE_GYRATION_INDIVIDUAL_NORMALIZATION:
+                    normalizedWeight = computeIndividualAdditiveGyrationNormlization(BigDecimal.valueOf(numResContacts), lengthChainA, lengthChainB);
+                    break;    
                 case ABSOLUTE_WEIGHT:
                 default:
                     normalizedWeight = BigDecimal.valueOf(numResContacts);

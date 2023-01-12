@@ -76,7 +76,7 @@ public class ClusteringResult {
     }
     
     
-    private void updateScores(int absoluteWeight, int chainLengthA, int chainLengthB, int numberLeafs) {
+    private void updateScores(int absoluteWeight, double chainLengthA, double chainLengthB, int numberLeafs) {
         for (EdgeWeightType weightType : EdgeWeightType.values()) {
             BigDecimal prevValue = consecutiveLargeInterfaceScores.get(weightType);
             consecutiveLargeInterfaceScores.put(weightType, prevValue.add(

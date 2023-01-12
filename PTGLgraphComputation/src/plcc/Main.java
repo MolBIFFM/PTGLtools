@@ -6431,7 +6431,7 @@ public class Main {
                 //System.out.println("        " + x);
                 //System.out.println("        " + y);
 
-                dist = x.distToAtom(y);
+                //dist = x.distToAtom(y); // fjg2022: is dist used here at all? Can it be deleted? For now I commented it out.
                 
                 if(x.atomContactTo(y)) {
                     //change MCI

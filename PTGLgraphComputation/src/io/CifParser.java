@@ -91,6 +91,7 @@ class CifParser {
 
     // - variables per (atom) line -
     private static Integer atomSerialNumber, coordX, coordY, coordZ, molNumPDB, entityID;
+    private static Float ocoordX, ocoordY, ocoordZ;
     private static String atomRecordName, atomName, chainID, altChainID, chemSym, altLoc, iCode, molNamePDB;
     private static Double oCoordX, oCoordY, oCoordZ;            // the original coordinates in Angstroem (coordX are 10th part Angstroem)
     private static Float oCoordXf, oCoordYf, oCoordZf;
@@ -818,9 +819,11 @@ class CifParser {
         if (Settings.getBoolean("PTGLgraphComputation_B_round_coordinates")) {
             oCoordXf = Float.valueOf(lineData[colHeaderPosMap.get("Cartn_x")]) * 10;
             coordX = Math.round(oCoordXf);
+            ocoordX = oCoordXf;
         } else {
             oCoordX = Double.valueOf(lineData[colHeaderPosMap.get("Cartn_x")]) * 10.0;
             coordX = oCoordX.intValue();
+            ocoordX = oCoordX.floatValue();
          }
 
 
@@ -828,18 +831,22 @@ class CifParser {
         if (Settings.getBoolean("PTGLgraphComputation_B_round_coordinates")) {
             oCoordYf = Float.valueOf(lineData[colHeaderPosMap.get("Cartn_y")]) * 10;
             coordY = Math.round(oCoordYf);
+            ocoordY = oCoordYf;
         } else {
             oCoordY = Double.valueOf(lineData[colHeaderPosMap.get("Cartn_y")]) * 10.0;
             coordY = oCoordY.intValue();
+            ocoordY = oCoordY.floatValue();
         }
 
         // coordZ
         if (Settings.getBoolean("PTGLgraphComputation_B_round_coordinates")) {
             oCoordZf = Float.valueOf(lineData[colHeaderPosMap.get("Cartn_z")]) * 10;
             coordZ = Math.round(oCoordZf);
+            ocoordZ = oCoordZf;
         } else {
             oCoordZ = Double.valueOf(lineData[colHeaderPosMap.get("Cartn_z")]) * 10.0;
-            coordZ = oCoordZ.intValue();            
+            coordZ = oCoordZ.intValue(); 
+            ocoordZ = oCoordZ.floatValue();
         }
 
         // chemical symbol
@@ -1080,6 +1087,9 @@ class CifParser {
         a.setCoordX(coordX);
         a.setCoordY(coordY);
         a.setCoordZ(coordZ);
+        a.setoCoordX(ocoordX);
+        a.setoCoordY(ocoordY);
+        a.setoCoordZ(ocoordZ);
         a.setChemSym(chemSym);
         if((Settings.getBoolean("PTGLgraphComputation_B_handle_hydrogen_atoms_from_reduce") && chemSym.trim().equals("H"))) {
             a.setDsspResNum(null);

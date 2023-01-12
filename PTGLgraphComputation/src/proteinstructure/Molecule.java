@@ -668,9 +668,9 @@ abstract public class Molecule {
             return(false);
         }
 
-        Integer justToBeSure = 4;   // Setting this to 0 shouldn't change the number of contacts found (but all harm it could do is to increase the runtime a tiny bit). Verified: has no influence. Should be removed in future release.
+        Integer justToBeSure = 0;   // Setting this to 0 shouldn't change the number of contacts found (but all harm it could do is to increase the runtime a tiny bit). Verified: has no influence. Should be removed in future release. Comment fjg2022: the unit is 0.01 nm - so 4 means 0.04 nm, which is basically nothing and thus might have almost no influence. As I understand it correctly it is just a preselection step to speed up the following detailed contact calculation. For this purpuse the chosen parameters are very good and this variable could be deleted.
         Integer maxDistForContact = this.getCenterSphereRadius() + r.getCenterSphereRadius() +  this.getAtomRadius() + r.getAtomRadius() + justToBeSure;        //maxDistForContact: area in which overlapping is possible
-        
+        //DP.getInstance().w(" !!!! DISTANCES !!!! " + dist + ", " + maxDistForContact + ", " + this.getCenterSphereRadius() + ", " + r.getCenterSphereRadius() + ", " + this.getAtomRadius() + ", " + r.getAtomRadius() + ", " + justToBeSure);
         if(dist > (maxDistForContact)) {
             return(false);
         }

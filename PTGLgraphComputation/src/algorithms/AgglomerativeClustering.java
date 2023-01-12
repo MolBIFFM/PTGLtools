@@ -29,6 +29,7 @@ import settings.Settings;
  *
  * @author jnw
  * modified by Christian Ickes
+ * modified by Florian Gisdon
  */
 public class AgglomerativeClustering {
     private final static String CLASS_TAG = "CG";
@@ -55,7 +56,7 @@ public class AgglomerativeClustering {
             this.normalizedWeight = normalizedWeight;            
         }
         
-        public Edge mergeEdgeIntoThis(Edge otherEdge, int lengthChainA, int lengthChainB) {
+        public Edge mergeEdgeIntoThis(Edge otherEdge, double lengthChainA, double lengthChainB) {
             if (this.normalizationType != otherEdge.normalizationType) {
                 DP.getInstance().e(CLASS_TAG, "Cannot merge edges of different normalization. Returning first edge and trying to got on. "
                         + "Please report this bug to the developers.");

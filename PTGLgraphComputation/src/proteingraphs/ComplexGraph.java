@@ -5,6 +5,7 @@
  *
  * @author Marcus Kessler
  * modified by TS
+ * modified by fjg
  */
 package proteingraphs;
 
@@ -99,6 +100,7 @@ public class ComplexGraph extends UAdjListGraph {
     private ArrayList<Integer> chainIDList;
     private BigDecimal settingFactor;
     private HashMap<String, Integer> mapChainIdToLength;  // used for the normalized edge weights
+    private HashMap<String, Double> mapChainIdToGyradius;  // used for the normalized edge weights
     private Integer[][] homologueChains;
     private final Set<String> molIDs;  // Contains the mol IDs for all chains. Used to get number of mol IDs (= size)
     private final String[] chainResAASeq;
@@ -154,6 +156,7 @@ public class ComplexGraph extends UAdjListGraph {
         numSSEContacts = new HashMap<>();
         numSSEContactChainNames = new HashMap<>();
         mapChainIdToLength = new HashMap<>();
+	mapChainIdToGyradius = new HashMap<>();
         
 
         neglectedEdges = 0;
@@ -272,6 +275,8 @@ public class ComplexGraph extends UAdjListGraph {
 
                         int tmpLength = tmpChain.getLength(! Settings.getBoolean("PTGLgraphComputation_B_CG_ignore_ligands"));
                         mapChainIdToLength.put(tmpChain.getPdbChainID(), tmpLength);
+			double tmpGyradius = tmpChain.getChainRadiusOfGyration("mass");
+                        mapChainIdToGyradius.put(tmpChain.getPdbChainID(), tmpGyradius);
 
                         // get AA sequence string for each chainName
                         for(Residue resi : tmpChain.getAllAAResidues()) {
@@ -854,6 +859,8 @@ public class ComplexGraph extends UAdjListGraph {
             BigDecimal tmpContacts = mapWeightNamesToMapEdgeValues.get(EdgeWeightType.ABSOLUTE_WEIGHT).get(e);
             int tmpNumRes1 = mapChainIdToLength.get(chainNamesInEdge.get(e)[0]);
             int tmpNumRes2 = mapChainIdToLength.get(chainNamesInEdge.get(e)[1]);
+	    double tmpGyradius1 = mapChainIdToGyradius.get(chainNamesInEdge.get(e)[0]);
+            double tmpGyradius2 = mapChainIdToGyradius.get(chainNamesInEdge.get(e)[1]);
             
             if (Settings.getInteger("PTGLgraphComputation_I_debug_level") > 3) {
                 System.out.println("[DEBUG LV 4] AdditiveLengthNormalization: tmpContacts | tmpNumRes1 | tmpNumRes2");
@@ -864,11 +871,19 @@ public class ComplexGraph extends UAdjListGraph {
             
             BigDecimal tmpAddNormWeight = ComplexGraphEdgeWeightTypes.computeAdditiveLengthNormlization(tmpContacts, tmpNumRes1, tmpNumRes2);
             BigDecimal tmpMultNormWeight = ComplexGraphEdgeWeightTypes.computeMultiplicativeLengthNormlization(tmpContacts, tmpNumRes1, tmpNumRes2);
+	    BigDecimal tmpMultIndNormWeight = ComplexGraphEdgeWeightTypes.computeIndividualMultiplicativeLengthNormlization(tmpContacts, tmpNumRes1, tmpNumRes2);
+            BigDecimal tmpAddIndNormWeight = ComplexGraphEdgeWeightTypes.computeIndividualAdditiveLengthNormlization(tmpContacts, tmpNumRes1, tmpNumRes2);
+            BigDecimal tmpAddGyrNormWeight = ComplexGraphEdgeWeightTypes.computeAdditiveGyrationNormlization(tmpContacts, tmpGyradius1, tmpGyradius2);
+            BigDecimal tmpAddGyrIndNormWeight = ComplexGraphEdgeWeightTypes.computeIndividualAdditiveGyrationNormlization(tmpContacts, tmpGyradius1, tmpGyradius2);
             
             curMinimumMultNormEdgeWeight = curMinimumMultNormEdgeWeight.min(tmpMultNormWeight);  // update min if necessary
             
             mapWeightNamesToMapEdgeValues.get(EdgeWeightType.ADDITIVE_LENGTH_NORMALIZATION).put(e, tmpAddNormWeight);
             mapWeightNamesToMapEdgeValues.get(EdgeWeightType.MULTIPLICATIVE_LENGTH_NORMALIZATION).put(e, tmpMultNormWeight);
+	    mapWeightNamesToMapEdgeValues.get(EdgeWeightType.MULTIPLICATIVE_INDIVIDUAL_NORMALIZATION).put(e, tmpMultIndNormWeight);
+            mapWeightNamesToMapEdgeValues.get(EdgeWeightType.ADDITIVE_INDIVIDUAL_NORMALIZATION).put(e, tmpAddIndNormWeight);
+            mapWeightNamesToMapEdgeValues.get(EdgeWeightType.ADDITIVE_GYRATION_NORMALIZATION).put(e, tmpAddGyrNormWeight);
+            mapWeightNamesToMapEdgeValues.get(EdgeWeightType.ADDITIVE_GYRATION_INDIVIDUAL_NORMALIZATION).put(e, tmpAddGyrIndNormWeight);
         }
         
         minimumMultiplicativeLengthNormalizedEdgeWeight = curMinimumMultNormEdgeWeight;

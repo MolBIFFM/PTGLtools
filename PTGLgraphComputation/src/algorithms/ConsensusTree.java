@@ -257,7 +257,7 @@ public class ConsensusTree {
                 xsw.writeStartElement("result");
                 xsw.writeAttribute("index", Integer.toString(i));
                 xsw.writeCharacters("\n");
-                results.get(i).writeXMLPresentation(labelMap, xsw);        
+                //results.get(i).writeXMLPresentation(labelMap, xsw);        // TODO: writeXMLPresentation is not available in ClusteringResult.java
                 xsw.writeCharacters("\n\t\t\t");
                 xsw.writeStartElement("edge_list");
                 for(String key: resultsCladeCount.get(i).keySet()){

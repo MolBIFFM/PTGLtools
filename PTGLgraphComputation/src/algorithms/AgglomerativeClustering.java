@@ -342,6 +342,14 @@ public class AgglomerativeClustering {
     }
     
     /**
+     * Get the labelMap. 
+     * @return labelMap
+     */
+    public Map<Integer,String> getlabelMap(){
+        return labelMap;
+    }
+    
+    /**
      * Tests agglomerative clustering implementation.
      */
     public static void main(String[] args) {

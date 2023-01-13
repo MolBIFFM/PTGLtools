@@ -4,6 +4,7 @@
  * Copyright Jan Niclas Wolf 2021. PTGLtools is free software, see the LICENSE and README files for details.
  *
  * @author jnw
+ * modified by fjg
  */
 package proteingraphs;
 

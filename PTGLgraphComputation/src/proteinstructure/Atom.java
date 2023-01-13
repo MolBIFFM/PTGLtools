@@ -90,7 +90,7 @@ public class Atom implements java.io.Serializable {
         di = distToPointFloat(a.getoCoordX(), a.getoCoordY(), a.getoCoordZ());
         deltaOriginal = di;
         deltaRounded = distToPoint(a.getCoordX(), a.getCoordY(), a.getCoordZ());
-        if((deltaRounded == 20 && deltaOriginal == 19) || (deltaRounded == 19 && deltaOriginal == 20)) {
+        if((deltaRounded == 20 && deltaOriginal == 19) || (deltaRounded == 19 && deltaOriginal == 20 ) || (deltaRounded == 21 && deltaOriginal == 20) || (deltaRounded == 20 && deltaOriginal == 21)) {
             System.out.println("Distance between atoms: " + deltaOriginal + " " + deltaRounded);};
         
         if(Settings.getBoolean("PTGLgraphComputation_B_contact_debug_dysfunct")) {

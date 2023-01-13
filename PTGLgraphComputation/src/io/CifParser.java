@@ -4,6 +4,7 @@
  * Copyright Tim Schäfer 2012. PTGLtools is free software, see the LICENSE and README files for details.
  *
  * @author ts
+ * modified by fjg
  */
 
 package io;
@@ -1087,9 +1088,9 @@ class CifParser {
         a.setCoordX(coordX);
         a.setCoordY(coordY);
         a.setCoordZ(coordZ);
-        a.setoCoordX(ocoordX);
-        a.setoCoordY(ocoordY);
-        a.setoCoordZ(ocoordZ);
+        //a.setoCoordX(ocoordX);
+        //a.setoCoordY(ocoordY);
+        //a.setoCoordZ(ocoordZ);
         a.setChemSym(chemSym);
         if((Settings.getBoolean("PTGLgraphComputation_B_handle_hydrogen_atoms_from_reduce") && chemSym.trim().equals("H"))) {
             a.setDsspResNum(null);

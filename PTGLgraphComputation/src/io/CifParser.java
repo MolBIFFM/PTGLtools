@@ -1088,9 +1088,9 @@ class CifParser {
         a.setCoordX(coordX);
         a.setCoordY(coordY);
         a.setCoordZ(coordZ);
-        //a.setoCoordX(ocoordX);
-        //a.setoCoordY(ocoordY);
-        //a.setoCoordZ(ocoordZ);
+        a.setoCoordX((double) ocoordX);
+        a.setoCoordY((double) ocoordY);
+        a.setoCoordZ((double) ocoordZ);
         a.setChemSym(chemSym);
         if((Settings.getBoolean("PTGLgraphComputation_B_handle_hydrogen_atoms_from_reduce") && chemSym.trim().equals("H"))) {
             a.setDsspResNum(null);

@@ -64,6 +64,39 @@ public class MathTools {
     }
     
     /**
+     * Sums up any number of Double arrays element wise.
+     * @param arrays any number of Integer arrays
+     * @return 
+     */
+    public static Double[] elementWiseSumDouble(Double[]... arrays) {
+        // check for trivial cases
+        if (arrays.length == 0) {
+            return null;
+        } else if (arrays.length == 1) {
+            return arrays[0];
+        }  // from now on: arrays length > 1
+        
+        // find the max and min length
+        Integer maxLength = arrays[0].length;
+        Integer minLength = arrays[0].length;
+        for (Double[] arr : arrays) {
+            maxLength = Math.max(maxLength, arr.length);
+            minLength = Math.min(minLength, arr.length);
+        }
+        
+        Double[] sumArr = new Double[maxLength];
+        
+        // now sum the values of existing
+        for (Double[] arr : arrays) {
+            for (int i = 0; i < arr.length; i++) {
+                sumArr[i] = (sumArr[i] == null ? arr[i] : sumArr[i] + arr[i]);  // assign if nothing set yet otherwise sum
+            }
+        }
+        
+        return sumArr;
+    }
+    
+    /**
      * Divides each element of an array by the same divisor.
      * @param arr Integer array
      * @param divisor

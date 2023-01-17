@@ -133,7 +133,7 @@ class Section {
                 break;
                 
             case "Assembly prediction (AP)":
-                settings.add(new Setting("PTGLgraphComputation_I_type_assembly_prediction", 'I', "0", "Whether to choose edges greedily (0), interactively (1), or random weighted choice (2)."));
+                settings.add(new Setting("PTGLgraphComputation_I_type_assembly_prediction", 'I', "0", "Whether to choose edges agglomerative (0), interactively (1), stochastic (2), or random (3)."));
                 settings.add(new Setting("PTGLgraphComputation_S_assembly_prediction_leaf_labels", 'S', "", "Comma-seperated labels for the leaves in the interactive prediction and output newick format. "
                         + "The labels are applied in the same order as in the PDB file. Will use chain IDs if not specified."));
                 settings.add(new Setting("PTGLgraphComputation_I_stochastic_iterations", 'I', "1000", "Number of iterations used in the stochastic clustering approach."));

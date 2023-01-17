@@ -7,6 +7,8 @@
  */
 package datastructures;
 
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
@@ -14,6 +16,18 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.xml.stream.XMLOutputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamWriter;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.transform.stream.StreamSource;
 import tools.DP;
 import proteingraphs.ComplexGraphEdgeWeightTypes;
 import proteingraphs.ComplexGraphEdgeWeightTypes.EdgeWeightType;
@@ -181,6 +195,25 @@ public class ClusteringResult {
             lines.add(weightType.name + ": " + consecutiveLargeInterfaceScores.get(weightType).toString());
         }
         return lines;
+    }
+    
+    public void writeXMLPresentation(Map<Integer, String> labelMap, XMLStreamWriter xsw){
+        try{       
+                xsw.writeStartElement("graph");
+                xsw.writeAttribute("newick", this.toNewickString(labelMap));
+                xsw.writeCharacters("\n\t");
+                xsw.writeStartElement("LIS");
+                for (EdgeWeightType weightType : EdgeWeightType.values()) {
+                    xsw.writeAttribute(weightType.toString(), consecutiveLargeInterfaceScores.get(weightType).toString());
+                }
+                xsw.writeCharacters("\n\t");
+                xsw.writeEndElement();
+                xsw.writeCharacters("\n");
+                xsw.writeEndElement();
+                xsw.flush();
+        }
+        catch(XMLStreamException e){
+        }
     }
     
     /**

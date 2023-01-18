@@ -83,16 +83,16 @@ public class Atom implements java.io.Serializable {
      */
     public Integer distToAtom(Atom a) {
         Integer di;
-        Integer deltaOriginal;
-        Integer deltaRounded;
+        //Integer deltaOriginal;
+        //Integer deltaRounded;
         //di = distToPoint(a.getCoordX(), a.getCoordY(), a.getCoordZ());
         // fjg: use the original coordinates at least to calculate the distance and then round it
         di = distToPointFloat(a.getoCoordX(), a.getoCoordY(), a.getoCoordZ());
-        deltaOriginal = di;
-        deltaRounded = distToPoint(a.getCoordX(), a.getCoordY(), a.getCoordZ());
+        //deltaOriginal = di;
+        //deltaRounded = distToPoint(a.getCoordX(), a.getCoordY(), a.getCoordZ());
         
-        if((deltaRounded == 20 && deltaOriginal == 19) || (deltaRounded == 19 && deltaOriginal == 20 ) || (deltaRounded == 21 && deltaOriginal == 20) || (deltaRounded == 20 && deltaOriginal == 21)) {
-            System.out.println("Distance between atoms: " + deltaOriginal + " " + deltaRounded);}
+        //if((deltaRounded == 20 && deltaOriginal == 19) || (deltaRounded == 19 && deltaOriginal == 20 ) || (deltaRounded == 21 && deltaOriginal == 20) || (deltaRounded == 20 && deltaOriginal == 21)) {
+        //    System.out.println("Distance between atoms: " + deltaOriginal + " " + deltaRounded);}
             
         if(Settings.getBoolean("PTGLgraphComputation_B_contact_debug_dysfunct")) {
             if(this.isCalphaAtom() && a.isCalphaAtom()) {
@@ -111,7 +111,7 @@ public class Atom implements java.io.Serializable {
      * @param dz Z coordinate as 10th of Angström in int
      * @return the euclidian distance, rounded to an int
      */
-    public Integer distToPoint(int dx, int dy, int dz) {
+    @Deprecated public Integer distToPoint(int dx, int dy, int dz) {
         Double dd = 0.0;
         Integer di;
         
@@ -478,7 +478,8 @@ public class Atom implements java.io.Serializable {
     public Integer getPdbResNum() { return(pdbResNum); }
     public Integer getDsspResNum() { return(dsspResNum); }
     public Integer getAtomType() { return(type); }
-    public String getCoordString() { return("(" + coordX + "," + coordY + "," + coordZ + ")"); }
+    //public String getCoordString() { return("(" + coordX + "," + coordY + "," + coordZ + ")"); }
+    public String getCoordString() { return("(" + ocoordX + "," + ocoordY + "," + ocoordZ + ")"); }
 
     // setters
     public void setAtomName(String s) { name = s; }
@@ -500,8 +501,11 @@ public class Atom implements java.io.Serializable {
     public void setChain(Chain c) { chain = c; }
     public void setModel(Model m) { model = m; }
     
+    //public Position3D getPosition3D() {
+    //    return new Position3D(coordX / 10.0f, coordY  / 10.0f, coordZ / 10.0f);
+    //}
     public Position3D getPosition3D() {
-        return new Position3D(coordX / 10.0f, coordY  / 10.0f, coordZ / 10.0f);
+        return new Position3D(ocoordX.floatValue() / 10.0f, ocoordY.floatValue()  / 10.0f, ocoordZ.floatValue() / 10.0f);
     }
 
 }

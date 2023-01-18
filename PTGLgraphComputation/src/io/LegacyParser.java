@@ -468,9 +468,9 @@ class LegacyParser {
         a.setChain(FileParser.getChainByPdbChainID(chainID));
         a.setPdbResNum(resNumPDB);
         a.setDsspResNum(resNumDSSP); // always 0 atm (default value and changed later?)
-        a.setCoordX(coordX);
-        a.setCoordY(coordY);
-        a.setCoordZ(coordZ);
+        a.setCoordX((double)coordX); // fjg: made it double, since we now only store the original values in Atom
+        a.setCoordY((double)coordY);
+        a.setCoordZ((double)coordZ);
         a.setChemSym(chemSym);
 
         if(curModelID != null) {

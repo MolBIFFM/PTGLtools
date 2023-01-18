@@ -500,9 +500,9 @@ abstract public class Molecule {
             //centroid[1] += a.getCoordY();
             //centroid[2] += a.getCoordZ();
             
-            centroid[0] += a.getoCoordX();
-            centroid[1] += a.getoCoordY();
-            centroid[2] += a.getoCoordZ();
+            centroid[0] += a.getCoordX();
+            centroid[1] += a.getCoordY();
+            centroid[2] += a.getCoordZ();
             
             // compute backbone centroid only for amino acids
             if (this.isAA()) {
@@ -526,9 +526,9 @@ abstract public class Molecule {
         //centroid[1] = (int) (Math.round((double) centroid[1] / this.atoms.size()));
         //centroid[2] = (int) (Math.round((double) centroid[2] / this.atoms.size()));
         
-        centroid[0] = (double) (Math.round((double) centroid[0] / this.atoms.size()));
-        centroid[1] = (double) (Math.round((double) centroid[1] / this.atoms.size()));
-        centroid[2] = (double) (Math.round((double) centroid[2] / this.atoms.size()));
+        centroid[0] = (double) (Math.round( centroid[0] / this.atoms.size()));
+        centroid[1] = (double) (Math.round( centroid[1] / this.atoms.size()));
+        centroid[2] = (double) (Math.round( centroid[2] / this.atoms.size()));
         
         this.centroidCoords = centroid;
         
@@ -537,9 +537,9 @@ abstract public class Molecule {
             //backboneCentroid[0] = (int) (Math.round((double) backboneCentroid[0] / numBackboneAtoms));
             //backboneCentroid[1] = (int) (Math.round((double) backboneCentroid[1] / numBackboneAtoms));
             //backboneCentroid[2] = (int) (Math.round((double) backboneCentroid[2] / numBackboneAtoms));
-            backboneCentroid[0] = (double) (Math.round((double) backboneCentroid[0] / numBackboneAtoms));
-            backboneCentroid[1] = (double) (Math.round((double) backboneCentroid[1] / numBackboneAtoms));
-            backboneCentroid[2] = (double) (Math.round((double) backboneCentroid[2] / numBackboneAtoms));
+            backboneCentroid[0] = (double) (Math.round( backboneCentroid[0] / numBackboneAtoms));
+            backboneCentroid[1] = (double) (Math.round( backboneCentroid[1] / numBackboneAtoms));
+            backboneCentroid[2] = (double) (Math.round( backboneCentroid[2] / numBackboneAtoms));
             
         } else {
             backboneCentroid[0] = centroid[0];
@@ -617,9 +617,9 @@ abstract public class Molecule {
         //Integer[] thisCentroidCoordinates = this.getCentroidCoords();
         Double[] thisCentroidCoordinates = this.getCentroidCoords();
         
-        helperCentroidAtom.setoCoordX(thisCentroidCoordinates[0]);
-        helperCentroidAtom.setoCoordY(thisCentroidCoordinates[1]);
-        helperCentroidAtom.setoCoordZ(thisCentroidCoordinates[2]);
+        helperCentroidAtom.setCoordX(thisCentroidCoordinates[0]);
+        helperCentroidAtom.setCoordY(thisCentroidCoordinates[1]);
+        helperCentroidAtom.setCoordZ(thisCentroidCoordinates[2]);
         
         //Integer[] rCentroidCoords = m.getCentroidCoords();
         Double[] rCentroidCoords = m.getCentroidCoords();
@@ -646,6 +646,7 @@ abstract public class Molecule {
 
     /**
      * Returns the type-specific atom radius of the component (type can be Residue, Ligand, Other, RNA).
+     * @return atomRadius the atom radius dependent if it is residue, ligand, rna or other
      */
     public Integer getAtomRadius() {
 

@@ -91,11 +91,11 @@ class CifParser {
     protected static HashMap<String, ArrayList<String[]>> chainwiseSseDict = new HashMap<>();  // chainID as key and a list of all SSE in that chain as value
 
     // - variables per (atom) line -
-    private static Integer atomSerialNumber, coordX, coordY, coordZ, molNumPDB, entityID;
-    private static Float ocoordX, ocoordY, ocoordZ;
+    private static Integer atomSerialNumber, molNumPDB, entityID;
+    //private static Float ocoordX, ocoordY, ocoordZ;
     private static String atomRecordName, atomName, chainID, altChainID, chemSym, altLoc, iCode, molNamePDB;
-    private static Double oCoordX, oCoordY, oCoordZ;            // the original coordinates in Angstroem (coordX are 10th part Angstroem)
-    private static Float oCoordXf, oCoordYf, oCoordZf;
+    private static Double coordX, coordY, coordZ;            // the original coordinates in Angstroem (coordX are 10th part Angstroem)
+    //private static Float oCoordXf, oCoordYf, oCoordZf;
     private static int lastLigandNumPDB = 0; // used to determine if atom belongs to new ligand residue
     private static String lastChainID = ""; // s.a.
     private static int lastRnaNumPDB = 0;
@@ -754,11 +754,10 @@ class CifParser {
 
         // - - atom - -
         // reset variables
-        atomSerialNumber = molNumPDB = coordX =  coordY = coordZ = null;
+        atomSerialNumber = molNumPDB = null;
         atomRecordName = atomName = molNamePDB = chainID = chemSym = altLoc = null;
         iCode = " "; // if column does not exist or ? || . is assigned use 1 blank (compare old parser)
-        oCoordX = oCoordY = oCoordZ = null;            // the original coordinates in Angstroem (coordX are 10th part Angstroem)
-        oCoordXf = oCoordYf = oCoordZf = null;
+        coordX = coordY = coordZ = null;            // the original coordinates in Angstroem (coordX are 10th part Angstroem)
 
         // chain name
         chainID = lineData[colHeaderPosMap.get("auth_asym_id")];      // chain ID as set by author --> preferably use this one for all kinds of tasks
@@ -815,40 +814,11 @@ class CifParser {
             }
         }
 
-        // coordX
+        // coordX, coordY, coordZ
         // for information on difference between ptgl and PTGLgraphComputation style look in old parser
-        if (Settings.getBoolean("PTGLgraphComputation_B_round_coordinates")) {
-            oCoordXf = Float.valueOf(lineData[colHeaderPosMap.get("Cartn_x")]) * 10;
-            coordX = Math.round(oCoordXf);
-            ocoordX = oCoordXf;
-        } else {
-            oCoordX = Double.valueOf(lineData[colHeaderPosMap.get("Cartn_x")]) * 10.0;
-            coordX = oCoordX.intValue();
-            ocoordX = oCoordX.floatValue();
-         }
-
-
-        // coordY
-        if (Settings.getBoolean("PTGLgraphComputation_B_round_coordinates")) {
-            oCoordYf = Float.valueOf(lineData[colHeaderPosMap.get("Cartn_y")]) * 10;
-            coordY = Math.round(oCoordYf);
-            ocoordY = oCoordYf;
-        } else {
-            oCoordY = Double.valueOf(lineData[colHeaderPosMap.get("Cartn_y")]) * 10.0;
-            coordY = oCoordY.intValue();
-            ocoordY = oCoordY.floatValue();
-        }
-
-        // coordZ
-        if (Settings.getBoolean("PTGLgraphComputation_B_round_coordinates")) {
-            oCoordZf = Float.valueOf(lineData[colHeaderPosMap.get("Cartn_z")]) * 10;
-            coordZ = Math.round(oCoordZf);
-            ocoordZ = oCoordZf;
-        } else {
-            oCoordZ = Double.valueOf(lineData[colHeaderPosMap.get("Cartn_z")]) * 10.0;
-            coordZ = oCoordZ.intValue(); 
-            ocoordZ = oCoordZ.floatValue();
-        }
+        coordX = Double.valueOf(lineData[colHeaderPosMap.get("Cartn_x")]) * 10.0;
+        coordY = Double.valueOf(lineData[colHeaderPosMap.get("Cartn_y")]) * 10.0;
+        coordZ = Double.valueOf(lineData[colHeaderPosMap.get("Cartn_z")]) * 10.0;
 
         // chemical symbol
         chemSym = lineData[colHeaderPosMap.get("type_symbol")];
@@ -1088,9 +1058,6 @@ class CifParser {
         a.setCoordX(coordX);
         a.setCoordY(coordY);
         a.setCoordZ(coordZ);
-        a.setoCoordX((double) ocoordX);
-        a.setoCoordY((double) ocoordY);
-        a.setoCoordZ((double) ocoordZ);
         a.setChemSym(chemSym);
         if((Settings.getBoolean("PTGLgraphComputation_B_handle_hydrogen_atoms_from_reduce") && chemSym.trim().equals("H"))) {
             a.setDsspResNum(null);

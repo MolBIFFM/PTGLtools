@@ -360,9 +360,9 @@ public class Chain implements java.io.Serializable {
                 //tmpCenter[0] += a.getCoordX();
                 //tmpCenter[1] += a.getCoordY();
                 //tmpCenter[2] += a.getCoordZ();
-                tmpCenter[0] += a.getoCoordX();
-                tmpCenter[1] += a.getoCoordY();
-                tmpCenter[2] += a.getoCoordZ();
+                tmpCenter[0] += a.getCoordX();
+                tmpCenter[1] += a.getCoordY();
+                tmpCenter[2] += a.getCoordZ();
                 atomNumber += 1;
             }
         }
@@ -375,9 +375,9 @@ public class Chain implements java.io.Serializable {
             //chainCentroid[0] = (int) (Math.round((double) tmpCenter[0] / atomNumber));
             //chainCentroid[1] = (int) (Math.round((double) tmpCenter[1] / atomNumber));
             //chainCentroid[2] = (int) (Math.round((double) tmpCenter[2] / atomNumber));
-            chainCentroid[0] = (double) (Math.round((double) tmpCenter[0] / atomNumber));
-            chainCentroid[1] = (double) (Math.round((double) tmpCenter[1] / atomNumber));
-            chainCentroid[2] = (double) (Math.round((double) tmpCenter[2] / atomNumber));
+            chainCentroid[0] = (double) (Math.round(tmpCenter[0] / atomNumber));
+            chainCentroid[1] = (double) (Math.round(tmpCenter[1] / atomNumber));
+            chainCentroid[2] = (double) (Math.round(tmpCenter[2] / atomNumber));
 
             if (Settings.getInteger("PTGLgraphComputation_I_debug_level") > 0) {
                 System.out.println("[DEBUG] Center of chain " + pdbChainID + " is at " + Arrays.toString(chainCentroid));

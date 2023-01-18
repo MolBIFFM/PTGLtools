@@ -35,12 +35,9 @@ public class Atom implements java.io.Serializable {
     private Integer type = null;               // atom type:  0=AA, 1=Ligand, 2=Ignored HETATM (e.g. 'DOD'-molecule atoms) 3=Ignored ATOM (e.g. H, Q)
     private Integer pdbResNum = null;
     private Integer dsspResNum = null;
-    private Integer coordX = null;              // 3D coordinate X from pdb file, converted to 10th part Angstroem
-    private Integer coordY = null;
-    private Integer coordZ = null;
-    private Double ocoordX = null;              // 3D coordinate X from pdb file, original
-    private Double ocoordY = null;
-    private Double ocoordZ = null;
+    private Double coordX = null;              // 3D coordinate X from pdb file, in the unit 0.1 Angstrom
+    private Double coordY = null;
+    private Double coordZ = null;
     private Integer pdbLineNum = null;
     private Chain chain = null;
     private String altLoc = null;
@@ -69,10 +66,10 @@ public class Atom implements java.io.Serializable {
         this.altLoc = altLoc;
     }
 
-    public Boolean isLigandAtom() { return this.type == ATOMTYPE_LIGAND; }
-    public Boolean isProteinAtom() { return this.type == ATOMTYPE_AA; }
-    public Boolean isOtherAtom() { return this.type == ATOMTYPE_IGNORED_LIGAND; }
-    public Boolean isRnaAtom() { return this.type == ATOMTYPE_RNA; }
+    public Boolean isLigandAtom() { return this.type.equals( ATOMTYPE_LIGAND); }
+    public Boolean isProteinAtom() { return this.type.equals(ATOMTYPE_AA); }
+    public Boolean isOtherAtom() { return this.type.equals(ATOMTYPE_IGNORED_LIGAND); }
+    public Boolean isRnaAtom() { return this.type.equals(ATOMTYPE_RNA); }
     
     
     /**
@@ -87,7 +84,7 @@ public class Atom implements java.io.Serializable {
         //Integer deltaRounded;
         //di = distToPoint(a.getCoordX(), a.getCoordY(), a.getCoordZ());
         // fjg: use the original coordinates at least to calculate the distance and then round it
-        di = distToPointFloat(a.getoCoordX(), a.getoCoordY(), a.getoCoordZ());
+        di = distToPointFloat(a.getCoordX(), a.getCoordY(), a.getCoordZ());
         //deltaOriginal = di;
         //deltaRounded = distToPoint(a.getCoordX(), a.getCoordY(), a.getCoordZ());
         
@@ -138,9 +135,9 @@ public class Atom implements java.io.Serializable {
         Double dd = 0.0;
         Integer di;
         
-        dd += (ocoordX - dx) * (ocoordX - dx);
-        dd += (ocoordY - dy) * (ocoordY - dy);
-        dd += (ocoordZ - dz) * (ocoordZ - dz);
+        dd += (coordX - dx) * (coordX - dx);
+        dd += (coordY - dy) * (coordY - dy);
+        dd += (coordZ - dz) * (coordZ - dz);
 
         // di = (int)Math.sqrt(dd);
         // jnw: lets round instead of truncate the result (comment fjg: analysis of the difference shows a significantly better behavior)
@@ -157,8 +154,9 @@ public class Atom implements java.io.Serializable {
      * @return the euclidian distance, rounded to an Integer
      */
     @Deprecated public Integer distToAtomOld(Atom a) {
-        Double distDouble = .0;
-        Integer distInt, dx, dy, dz, dd = 0;
+        Double distDouble;
+        Integer distInt;
+        Double dx, dy, dz, dd;
 
         dx = this.getCoordX() - a.getCoordX();
         dy = this.getCoordY() - a.getCoordY();
@@ -166,7 +164,7 @@ public class Atom implements java.io.Serializable {
 
         dd = dx * dx + dy * dy + dz * dz;
         distDouble = Math.sqrt(dd);
-        distInt = Integer.valueOf((int)Math.round(distDouble));
+        distInt = (int)Math.round(distDouble);
         
         if(Settings.getBoolean("PTGLgraphComputation_B_contact_debug_dysfunct")) {
             if(this.isCalphaAtom() && a.isCalphaAtom()) {
@@ -193,6 +191,8 @@ public class Atom implements java.io.Serializable {
      * to the atom (a positive Integer) if a contact exists, -1 otherwise. (This behavior saves
      * us from having to call the function twice during atom contact calculation, which is important
      * since we don't want to do useless Math.sqrt() operations (for performance reasons).
+     * @param a the other Atom
+     * @return true if contact exists, false otherwise
      */
     public Boolean atomContactTo(Atom a) {
 
@@ -430,15 +430,15 @@ public class Atom implements java.io.Serializable {
      */
     public Boolean hbondAtomAngleBetween(Atom a, Atom aa) {
     
-        Integer d1x = this.getCoordX() - a.getCoordX();
-        Integer d1y = this.getCoordY() - a.getCoordY();
-        Integer d1z = this.getCoordZ() - a.getCoordZ();
+        Double d1x = this.getCoordX() - a.getCoordX();
+        Double d1y = this.getCoordY() - a.getCoordY();
+        Double d1z = this.getCoordZ() - a.getCoordZ();
 
-        Integer d2x = aa.getCoordX() - a.getCoordX();
-        Integer d2y = aa.getCoordY() - a.getCoordY();
-        Integer d2z = aa.getCoordZ() - a.getCoordZ();
+        Double d2x = aa.getCoordX() - a.getCoordX();
+        Double d2y = aa.getCoordY() - a.getCoordY();
+        Double d2z = aa.getCoordZ() - a.getCoordZ();
 
-        Double angle = 0.0;
+        Double angle;
         angle = Math.acos((d1x * d2x + d1y * d2y + d1z * d2z) / (Math.sqrt(Math.pow(d1x,2) + Math.pow(d1y, 2) + Math.pow(d1z, 2)) * Math.sqrt(Math.pow(d2x, 2) + Math.pow(d2y, 2) + Math.pow(d2z, 2)))) * (180/Math.PI);
         
         if (angle > 90) {
@@ -455,7 +455,7 @@ public class Atom implements java.io.Serializable {
      * @return  true if they are the same, false otherwise
      */
     public Boolean equalsAtom(Atom other) {
-        return(this.pdbAtomNumber == other.pdbAtomNumber);
+        return(this.pdbAtomNumber.equals(other.pdbAtomNumber));
     }
 
     // getters
@@ -467,19 +467,15 @@ public class Atom implements java.io.Serializable {
     public Chain getChain() { return(chain); }
     public Model getModel() { return(model); }
     public Integer getPdbAtomNum() { return(pdbAtomNumber); }
-    public Integer getCoordX() { return(coordX); }
-    public Integer getCoordY() { return(coordY); }
-    public Integer getCoordZ() { return(coordZ); }
-    public Double getoCoordX() { return(ocoordX); }
-    public Double getoCoordY() { return(ocoordY); }
-    public Double getoCoordZ() { return(ocoordZ); }
+    public Double getCoordX() { return(coordX); }
+    public Double getCoordY() { return(coordY); }
+    public Double getCoordZ() { return(coordZ); }
     public Integer getPdbLineNum() { return(pdbLineNum); }
     public Molecule getMolecule() { return(molecule); }
     public Integer getPdbResNum() { return(pdbResNum); }
     public Integer getDsspResNum() { return(dsspResNum); }
     public Integer getAtomType() { return(type); }
-    //public String getCoordString() { return("(" + coordX + "," + coordY + "," + coordZ + ")"); }
-    public String getCoordString() { return("(" + ocoordX + "," + ocoordY + "," + ocoordZ + ")"); }
+    public String getCoordString() { return("(" + coordX + "," + coordY + "," + coordZ + ")"); }
 
     // setters
     public void setAtomName(String s) { name = s; }
@@ -487,12 +483,9 @@ public class Atom implements java.io.Serializable {
     public void setChainID(String s) { chainID = s; }
     public void setModelID(String s) { modelID = s; }
     public void setPdbAtomNum(Integer i) { pdbAtomNumber = i; }
-    public void setCoordX(Integer i) { coordX = i; }
-    public void setCoordY(Integer i) { coordY = i; }
-    public void setCoordZ(Integer i) { coordZ = i; }
-    public void setoCoordX(Double i) { ocoordX = i; }
-    public void setoCoordY(Double i) { ocoordY = i; }
-    public void setoCoordZ(Double i) { ocoordZ = i; }
+    public void setCoordX(Double i) { coordX = i; }
+    public void setCoordY(Double i) { coordY = i; }
+    public void setCoordZ(Double i) { coordZ = i; }
     public void setPdbLineNum(Integer i) { pdbLineNum = i; }
     public void setMolecule(Molecule m) { molecule = m; }
     public void setPdbResNum(Integer i) { pdbResNum = i; }
@@ -501,11 +494,8 @@ public class Atom implements java.io.Serializable {
     public void setChain(Chain c) { chain = c; }
     public void setModel(Model m) { model = m; }
     
-    //public Position3D getPosition3D() {
-    //    return new Position3D(coordX / 10.0f, coordY  / 10.0f, coordZ / 10.0f);
-    //}
     public Position3D getPosition3D() {
-        return new Position3D(ocoordX.floatValue() / 10.0f, ocoordY.floatValue()  / 10.0f, ocoordZ.floatValue() / 10.0f);
+        return new Position3D(coordX.floatValue() / 10.0f, coordY.floatValue()  / 10.0f, coordZ.floatValue() / 10.0f);
     }
 
 }

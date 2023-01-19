@@ -65,6 +65,7 @@ public class MathTools {
     
     /**
      * Sums up any number of Double arrays element wise.
+     * modified by fjg for higher input coordinate accuracy
      * @param arrays any number of Integer arrays
      * @return 
      */

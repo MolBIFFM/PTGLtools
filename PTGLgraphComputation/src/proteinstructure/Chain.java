@@ -4,6 +4,7 @@
  * Copyright Tim Schäfer 2012. PTGLtools is free software, see the LICENSE and README files for details.
  *
  * @author ts
+ * modified by fjg
  */
 
 package proteinstructure;
@@ -36,7 +37,6 @@ public class Chain implements java.io.Serializable {
     private Model model = null;                                                                                                                                                                                                                             // the Model of this Chain
     private ArrayList<String> homologues = null;     // a list of homologous chains (defined by PDB COMPND)
     private Integer atomNumber = 0;
-    //private final Integer[] chainCentroid = new Integer[3];  // X-/Y-/Z-coordinates as 10th of Angström of the center of all non-H atoms
     private final Double[] chainCentroid = new Double[3];  // X-/Y-/Z-coordinates as 10th of Angström of the center of all non-H atoms
     private Integer radiusFromCentroid = null;         // distance from center to farthest non-H atom. -1 if no protein-atoms
     private final Double[] centerOfMass = new Double[3];            // X-/Y-/Z-coordinates of the center of mass for the chain
@@ -93,7 +93,6 @@ public class Chain implements java.io.Serializable {
      * Retrieves (and computes if called 1st time) the coordinates of the chain centroid.
      * @return 
      */
-    //public Integer[] getChainCentroid() {
     public Double[] getChainCentroid() {   
         if (chainCentroid == null) {
             this.computeChainCentroidAndRadius();
@@ -357,9 +356,6 @@ public class Chain implements java.io.Serializable {
         tmpCenter[0] = tmpCenter[1] = tmpCenter[2] = 0.0;
         for (Molecule mol : molecules) {
             for (Atom a : mol.getAtoms()) {
-                //tmpCenter[0] += a.getCoordX();
-                //tmpCenter[1] += a.getCoordY();
-                //tmpCenter[2] += a.getCoordZ();
                 tmpCenter[0] += a.getCoordX();
                 tmpCenter[1] += a.getCoordY();
                 tmpCenter[2] += a.getCoordZ();
@@ -372,9 +368,6 @@ public class Chain implements java.io.Serializable {
         
         if (atomNumber > 0) {
         
-            //chainCentroid[0] = (int) (Math.round((double) tmpCenter[0] / atomNumber));
-            //chainCentroid[1] = (int) (Math.round((double) tmpCenter[1] / atomNumber));
-            //chainCentroid[2] = (int) (Math.round((double) tmpCenter[2] / atomNumber));
             chainCentroid[0] = (double) (Math.round(tmpCenter[0] / atomNumber));
             chainCentroid[1] = (double) (Math.round(tmpCenter[1] / atomNumber));
             chainCentroid[2] = (double) (Math.round(tmpCenter[2] / atomNumber));
@@ -388,7 +381,6 @@ public class Chain implements java.io.Serializable {
             int tmpCurrentDist;
             for (Molecule mol : molecules) {
                 for (Atom a : mol.getAtoms()) {
-                    //tmpCurrentDist = a.distToPoint(chainCentroid[0], chainCentroid[1], chainCentroid[2]);
                     tmpCurrentDist = a.distToPointFloat(chainCentroid[0], chainCentroid[1], chainCentroid[2]);
                     // System.out.println("[DEBUG] Distance to center from atom " + a.toString() + " is " + String.valueOf(tmpCurrentDist));
                     if (tmpCurrentDist > tmpBiggestDist) {
@@ -411,7 +403,7 @@ public class Chain implements java.io.Serializable {
    
     /**
      * Computes the center of mass and the radius of gyration for this chain.
-     * Added by FJG
+     * @author fjg
      */
     private void computeChainRadiusOfGyration(String method) {
         // should there be something for testing if it is part of the polypeptide chain or of the ligand? Is it done already?
@@ -495,8 +487,9 @@ public class Chain implements java.io.Serializable {
             }
                 
         } 
-
-        System.out.println("Rg = " + chainRadiusOfGyration);
+        if (Settings.getInteger("PTGLgraphComputation_I_debug_level") > 0) {
+                    System.out.println("Rg = " + chainRadiusOfGyration);
+                }
       
                 
     }

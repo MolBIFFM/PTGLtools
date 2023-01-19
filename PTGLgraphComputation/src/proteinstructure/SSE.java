@@ -4,6 +4,7 @@
  * Copyright Tim Schäfer 2012. PTGLtools is free software, see the LICENSE and README files for details.
  *
  * @author ts
+ * modified by fjg for higher input coordinate accuracy
  */
 
 package proteinstructure;
@@ -150,16 +151,12 @@ public class SSE extends SSEGraphVertex implements IDrawableVertex, java.io.Seri
         // compute start and end point with respect to the number of residues contributing to each
         // 1) sum up values
         for (int i = 0; i < numResForCentroid; i++) {            
-            //startPoint = tools.MathTools.elementWiseSum(startPoint, this.getMolecules().get(0 + i).getBackboneCentroidCoords());
-            //endPoint = tools.MathTools.elementWiseSum(endPoint, this.getMolecules().get(this.getMolecules().size() - 1 - i).getBackboneCentroidCoords());
             tmpStartPoint = tools.MathTools.elementWiseSumDouble(tmpStartPoint, this.getMolecules().get(0 + i).getBackboneCentroidCoords());
             tmpEndPoint = tools.MathTools.elementWiseSumDouble(tmpEndPoint, this.getMolecules().get(this.getMolecules().size() - 1 - i).getBackboneCentroidCoords());
         }
         
         // 2) divide values by number of residues and round
         for (int j = 0; j <= 2; j++) {
-            //startPoint[j] = Math.round(startPoint[j] / numResForCentroid);
-            //endPoint[j] = Math.round(endPoint[j] / numResForCentroid);
             startPoint[j] = (int) Math.round(tmpStartPoint[j] / numResForCentroid);
             endPoint[j] = (int) Math.round(tmpEndPoint[j] / numResForCentroid);
         }

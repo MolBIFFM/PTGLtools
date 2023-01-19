@@ -4,6 +4,7 @@
  * Copyright Tim Schäfer 2012. PTGLtools is free software, see the LICENSE and README files for details.
  *
  * @author ts
+ * modified by fjg
  */
 package proteinstructure;
 
@@ -45,10 +46,8 @@ abstract public class Molecule {
     public String plccSSEType = "N";                       // not part of any PTGLgraphComputation SSE by default
     public Boolean isPartOfDsspSse = false;                // whether this molecule is part of a valid SSE according to DSSP (which does NOT assign a SSE to *all* molecules)
     protected Integer centerSphereRadius = null;
-    //private Integer[] centroidCoords = null;               // x,y,z coordinates of residue centroid
     private Double[] centroidCoords = null;               // x,y,z coordinates of residue centroid
     private Integer centroidSphereRadius = null;           // distance from centroid to farthest atom (= radius of sphere around centroid encompassing all atoms)
-    //private Integer[] backboneCentroidCoords = null;       // x,y,z coordinates of residue centroid of backbone atoms only
     private Double[] backboneCentroidCoords = null;       // x,y,z coordinates of residue centroid of backbone atoms only
     public Integer entityID = null;                     //  ID of chain/ligand
 
@@ -279,12 +278,10 @@ abstract public class Molecule {
      * Calculates the sphere radius of the centroid of this residue and saves it to the class var centerSphereRadius.
      */
     private void calculateCentroidSphereRadius() {
-        //Integer[] centroidCoordinates = this.getCentroidCoords();
         Double[] centroidCoordinates = this.getCentroidCoords();
         Integer curDist, maxDist;
         curDist = maxDist = 0;
         for (Atom a : this.atoms) {
-            //curDist = a.distToPoint(centroidCoordinates[0], centroidCoordinates[1], centroidCoordinates[2]);
             curDist = a.distToPointFloat(centroidCoordinates[0], centroidCoordinates[1], centroidCoordinates[2]);
             if (curDist > maxDist) { maxDist = curDist; }
         }
@@ -306,7 +303,6 @@ abstract public class Molecule {
     }
     
     
-    //public Integer[] getCentroidCoords () {
     public Double[] getCentroidCoords () {
         // calculate if called for 1st time
         if (this.centroidCoords == null) {
@@ -316,7 +312,6 @@ abstract public class Molecule {
     }
     
     
-    //public Integer[] getBackboneCentroidCoords () {
     public Double[] getBackboneCentroidCoords () {    
         // calculate if called for 1st time
         if (this.backboneCentroidCoords == null) {
@@ -487,18 +482,12 @@ abstract public class Molecule {
      * Calculates the centroid of this residue (center of mass of all atoms) and saves it to class var centroidCoords.
      */
     private void calculateCentroid() {
-        //Integer[] centroid = {0,0,0};
         Double[] centroid = {0.0,0.0,0.0};
-        //Integer[] backboneCentroid = {0,0,0};
         Double[] backboneCentroid = {0.0,0.0,0.0};
         int numBackboneAtoms = 0;  // should be four, but you can never know if atoms are missing
         
         for (int i = 0; i < atoms.size(); i++) {
             Atom a = atoms.get(i);
-            
-            //centroid[0] += a.getCoordX();
-            //centroid[1] += a.getCoordY();
-            //centroid[2] += a.getCoordZ();
             
             centroid[0] += a.getCoordX();
             centroid[1] += a.getCoordY();
@@ -522,10 +511,6 @@ abstract public class Molecule {
             }
         }
         
-        //centroid[0] = (int) (Math.round((double) centroid[0] / this.atoms.size()));
-        //centroid[1] = (int) (Math.round((double) centroid[1] / this.atoms.size()));
-        //centroid[2] = (int) (Math.round((double) centroid[2] / this.atoms.size()));
-        
         centroid[0] = (double) (Math.round( centroid[0] / this.atoms.size()));
         centroid[1] = (double) (Math.round( centroid[1] / this.atoms.size()));
         centroid[2] = (double) (Math.round( centroid[2] / this.atoms.size()));
@@ -534,9 +519,6 @@ abstract public class Molecule {
         
         // assign normal centroid for non-amino acids
         if (this.isAA()) {
-            //backboneCentroid[0] = (int) (Math.round((double) backboneCentroid[0] / numBackboneAtoms));
-            //backboneCentroid[1] = (int) (Math.round((double) backboneCentroid[1] / numBackboneAtoms));
-            //backboneCentroid[2] = (int) (Math.round((double) backboneCentroid[2] / numBackboneAtoms));
             backboneCentroid[0] = (double) (Math.round( backboneCentroid[0] / numBackboneAtoms));
             backboneCentroid[1] = (double) (Math.round( backboneCentroid[1] / numBackboneAtoms));
             backboneCentroid[2] = (double) (Math.round( backboneCentroid[2] / numBackboneAtoms));
@@ -614,17 +596,14 @@ abstract public class Molecule {
      */
     private Integer centroidDistTo(Molecule m) {
         Atom helperCentroidAtom = new Atom();
-        //Integer[] thisCentroidCoordinates = this.getCentroidCoords();
         Double[] thisCentroidCoordinates = this.getCentroidCoords();
         
         helperCentroidAtom.setCoordX(thisCentroidCoordinates[0]);
         helperCentroidAtom.setCoordY(thisCentroidCoordinates[1]);
         helperCentroidAtom.setCoordZ(thisCentroidCoordinates[2]);
         
-        //Integer[] rCentroidCoords = m.getCentroidCoords();
         Double[] rCentroidCoords = m.getCentroidCoords();
         
-        //return helperCentroidAtom.distToPoint(rCentroidCoords[0], rCentroidCoords[1], rCentroidCoords[2]);
         return helperCentroidAtom.distToPointFloat(rCentroidCoords[0], rCentroidCoords[1], rCentroidCoords[2]);
     }
     

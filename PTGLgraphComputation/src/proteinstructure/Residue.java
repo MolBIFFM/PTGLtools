@@ -334,9 +334,9 @@ public class Residue extends Molecule implements java.io.Serializable {
             return super.getCenterAtom();
         }
         
-    	Atom a, b, center;
-        a = b = center = null;
-        Integer maxDistForAtom, dist = 0;      // just assign a small start value
+    	Atom b, center;
+        //a = b = center = null;
+        int maxDistForAtom, dist;
 //      //Integer atomRadius = Settings.getInteger("PTGLgraphComputation_I_aa_atom_radius");
 
         if(atoms.size() < 1) {

@@ -282,7 +282,7 @@ abstract public class Molecule {
         Integer curDist, maxDist;
         curDist = maxDist = 0;
         for (Atom a : this.atoms) {
-            curDist = a.distToPointFloat(centroidCoordinates[0], centroidCoordinates[1], centroidCoordinates[2]);
+            curDist = a.distToPointDouble(centroidCoordinates[0], centroidCoordinates[1], centroidCoordinates[2]);
             if (curDist > maxDist) { maxDist = curDist; }
         }
         
@@ -604,7 +604,7 @@ abstract public class Molecule {
         
         Double[] rCentroidCoords = m.getCentroidCoords();
         
-        return helperCentroidAtom.distToPointFloat(rCentroidCoords[0], rCentroidCoords[1], rCentroidCoords[2]);
+        return helperCentroidAtom.distToPointDouble(rCentroidCoords[0], rCentroidCoords[1], rCentroidCoords[2]);
     }
     
     

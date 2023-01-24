@@ -36,9 +36,9 @@ public class Atom implements java.io.Serializable {
     private Integer type = null;               // atom type:  0=AA, 1=Ligand, 2=Ignored HETATM (e.g. 'DOD'-molecule atoms) 3=Ignored ATOM (e.g. H, Q)
     private Integer pdbResNum = null;
     private Integer dsspResNum = null;
-    private Double coordX = null;              // 3D coordinate X from pdb file, in the unit 0.1 Angstrom
-    private Double coordY = null;
-    private Double coordZ = null;
+    private double coordX;              // 3D coordinate X from pdb file, in the unit 0.1 Angstrom
+    private double coordY;
+    private double coordZ;
     private Integer pdbLineNum = null;
     private Chain chain = null;
     private String altLoc = null;
@@ -79,10 +79,10 @@ public class Atom implements java.io.Serializable {
      * @param a the other Atom
      * @return the euclidian distance, rounded to an Integer
      */
-    public Integer distToAtom(Atom a) {
-        Integer di;
+    public int distToAtom(Atom a) {
+        int di;
         // fjg: use the original coordinates at least to calculate the distance and then round it
-        di = distToPointFloat(a.getCoordX(), a.getCoordY(), a.getCoordZ());
+        di = distToPointDouble(a.getCoordX(), a.getCoordY(), a.getCoordZ());
             
         if(Settings.getBoolean("PTGLgraphComputation_B_contact_debug_dysfunct")) {
             if(this.isCalphaAtom() && a.isCalphaAtom()) {
@@ -124,9 +124,9 @@ public class Atom implements java.io.Serializable {
      * @param dz Z coordinate as 10th of Angström in float
      * @return the euclidian distance, rounded to an int
      */
-    public Integer distToPointFloat(double dx, double dy, double dz) {
-        Double dd = 0.0;
-        Integer di;
+    public int distToPointDouble(double dx, double dy, double dz) {
+        double dd = 0.0;
+        int di;
         
         dd += (coordX - dx) * (coordX - dx);
         dd += (coordY - dy) * (coordY - dy);
@@ -220,8 +220,8 @@ public class Atom implements java.io.Serializable {
         }
 
 
-        Integer dist = this.distToAtom(a);
-        Integer maxDist = atomRadiusThis + atomRadiusOther;
+        int dist = this.distToAtom(a);
+        int maxDist = atomRadiusThis + atomRadiusOther;
 
         //if(dist < 0) {
         //    System.err.println("ERROR: Distance of atoms " + this.getPdbAtomNum() + " and " + a.getPdbAtomNum() + " is " + dist + ", but should be > 0.");
@@ -395,8 +395,8 @@ public class Atom implements java.io.Serializable {
         }
 
 
-        Double dist = this.distToAtom(a).doubleValue();
-        Double maxDist = atomRadiusThis + atomRadiusOther;
+        int dist = this.distToAtom(a);
+        double maxDist = atomRadiusThis + atomRadiusOther;
 
         //TODO: - check whether dist is <0? Why has it been removed in atomContactTo()?
         if( dist < maxDist) {
@@ -476,9 +476,9 @@ public class Atom implements java.io.Serializable {
     public void setChainID(String s) { chainID = s; }
     public void setModelID(String s) { modelID = s; }
     public void setPdbAtomNum(Integer i) { pdbAtomNumber = i; }
-    public void setCoordX(Double i) { coordX = i; }
-    public void setCoordY(Double i) { coordY = i; }
-    public void setCoordZ(Double i) { coordZ = i; }
+    public void setCoordX(double i) { coordX = i; }
+    public void setCoordY(double i) { coordY = i; }
+    public void setCoordZ(double i) { coordZ = i; }
     public void setPdbLineNum(Integer i) { pdbLineNum = i; }
     public void setMolecule(Molecule m) { molecule = m; }
     public void setPdbResNum(Integer i) { pdbResNum = i; }
@@ -488,7 +488,7 @@ public class Atom implements java.io.Serializable {
     public void setModel(Model m) { model = m; }
     
     public Position3D getPosition3D() {
-        return new Position3D(coordX.floatValue() / 10.0f, coordY.floatValue()  / 10.0f, coordZ.floatValue() / 10.0f);
+        return new Position3D((float) coordX / 10.0f, (float) coordY  / 10.0f, (float) coordZ / 10.0f);
     }
 
 }

@@ -94,7 +94,7 @@ class CifParser {
     private static Integer atomSerialNumber, molNumPDB, entityID;
     //private static Float ocoordX, ocoordY, ocoordZ;
     private static String atomRecordName, atomName, chainID, altChainID, chemSym, altLoc, iCode, molNamePDB;
-    private static Double coordX, coordY, coordZ;            // the original coordinates in Angstroem (coordX are 10th part Angstroem)
+    private static double coordX, coordY, coordZ;            // the original coordinates in Angstroem (coordX are 10th part Angstroem)
     //private static Float oCoordXf, oCoordYf, oCoordZf;
     private static int lastLigandNumPDB = 0; // used to determine if atom belongs to new ligand residue
     private static String lastChainID = ""; // s.a.
@@ -757,7 +757,7 @@ class CifParser {
         atomSerialNumber = molNumPDB = null;
         atomRecordName = atomName = molNamePDB = chainID = chemSym = altLoc = null;
         iCode = " "; // if column does not exist or ? || . is assigned use 1 blank (compare old parser)
-        coordX = coordY = coordZ = null;            // the original coordinates in Angstroem (coordX are 10th part Angstroem)
+        coordX = coordY = coordZ = 0.0;            // the original coordinates in Angstroem (coordX are 10th part Angstroem)
 
         // chain name
         chainID = lineData[colHeaderPosMap.get("auth_asym_id")];      // chain ID as set by author --> preferably use this one for all kinds of tasks
@@ -816,9 +816,9 @@ class CifParser {
 
         // coordX, coordY, coordZ
         // for information on difference between ptgl and PTGLgraphComputation style look in old parser
-        coordX = Double.valueOf(lineData[colHeaderPosMap.get("Cartn_x")]) * 10.0;
-        coordY = Double.valueOf(lineData[colHeaderPosMap.get("Cartn_y")]) * 10.0;
-        coordZ = Double.valueOf(lineData[colHeaderPosMap.get("Cartn_z")]) * 10.0;
+        coordX = Double.parseDouble(lineData[colHeaderPosMap.get("Cartn_x")]) * 10.0;
+        coordY = Double.parseDouble(lineData[colHeaderPosMap.get("Cartn_y")]) * 10.0;
+        coordZ = Double.parseDouble(lineData[colHeaderPosMap.get("Cartn_z")]) * 10.0;
 
         // chemical symbol
         chemSym = lineData[colHeaderPosMap.get("type_symbol")];

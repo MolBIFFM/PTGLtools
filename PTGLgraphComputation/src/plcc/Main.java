@@ -6462,7 +6462,7 @@ public class Main {
         
         
         Atom x, y;
-        Integer dist = null;
+        int dist = 0; // just assign a small start value
         Integer CAdist = a.distTo(b);
         MolContactInfo result = null;
 

@@ -25,9 +25,9 @@ public class Comp3DTools {
     public static Atom getCenterAtomOf(ArrayList<Atom> atoms) {
         Atom a, b, center;
         a = b = center = null;
-        Integer maxDistForAtom, dist = 0; // just assign a small start value
-        Integer MAXDIST = Integer.MAX_VALUE;   // just assign a *very* large start value
-        Integer totalMinMaxDist = MAXDIST;
+        int maxDistForAtom, dist = 0; // just assign a small start value
+        int MAXDIST = Integer.MAX_VALUE;   // just assign a *very* large start value
+        int totalMinMaxDist = MAXDIST;
         //Integer atomRadius = Settings.getInteger("PTGLgraphComputation_I_aa_atom_radius");
 
         if(atoms.size() < 1) {

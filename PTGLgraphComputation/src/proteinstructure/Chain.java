@@ -37,11 +37,11 @@ public class Chain implements java.io.Serializable {
     private Model model = null;                                                                                                                                                                                                                             // the Model of this Chain
     private ArrayList<String> homologues = null;     // a list of homologous chains (defined by PDB COMPND)
     private Integer atomNumber = 0;
-    private final Double[] chainCentroid = new Double[3];  // X-/Y-/Z-coordinates as 10th of Angström of the center of all non-H atoms
+    private final double[] chainCentroid = new double[3];  // X-/Y-/Z-coordinates as 10th of Angström of the center of all non-H atoms
     private Integer radiusFromCentroid = null;         // distance from center to farthest non-H atom. -1 if no protein-atoms
-    private final Double[] centerOfMass = new Double[3];            // X-/Y-/Z-coordinates of the center of mass for the chain
+    private final double[] centerOfMass = new double[3];            // X-/Y-/Z-coordinates of the center of mass for the chain
     private String radiusOfGyrationMethod = null;  // The method which was used to calculate the radius of gyration
-    private Double chainRadiusOfGyration = null;   // radius of gyration for this chain
+    private Double chainRadiusOfGyration;   // radius of gyration for this chain
     private Integer maxSeqNeighborAADist = null;    // largest distance between sequential residue neighbors excluding ligands (center to center)
     private String moleculeType = null;             // type of molecules that make up the chain, i.e. RNA or Residue
     
@@ -93,7 +93,7 @@ public class Chain implements java.io.Serializable {
      * Retrieves (and computes if called 1st time) the coordinates of the chain centroid.
      * @return 
      */
-    public Double[] getChainCentroid() {   
+    public double[] getChainCentroid() {   
         if (chainCentroid == null) {
             this.computeChainCentroidAndRadius();
         }
@@ -352,7 +352,7 @@ public class Chain implements java.io.Serializable {
      */
     private void computeChainCentroidAndRadius() {
         // compute center
-        Double[] tmpCenter = new Double[3];
+        double[] tmpCenter = new double[3];
         tmpCenter[0] = tmpCenter[1] = tmpCenter[2] = 0.0;
         for (Molecule mol : molecules) {
             for (Atom a : mol.getAtoms()) {
@@ -368,9 +368,9 @@ public class Chain implements java.io.Serializable {
         
         if (atomNumber > 0) {
         
-            chainCentroid[0] = (double) (Math.round(tmpCenter[0] / atomNumber));
-            chainCentroid[1] = (double) (Math.round(tmpCenter[1] / atomNumber));
-            chainCentroid[2] = (double) (Math.round(tmpCenter[2] / atomNumber));
+            chainCentroid[0] = tmpCenter[0] / atomNumber;
+            chainCentroid[1] = tmpCenter[1] / atomNumber;
+            chainCentroid[2] = tmpCenter[2] / atomNumber;
 
             if (Settings.getInteger("PTGLgraphComputation_I_debug_level") > 0) {
                 System.out.println("[DEBUG] Center of chain " + pdbChainID + " is at " + Arrays.toString(chainCentroid));
@@ -381,7 +381,7 @@ public class Chain implements java.io.Serializable {
             int tmpCurrentDist;
             for (Molecule mol : molecules) {
                 for (Atom a : mol.getAtoms()) {
-                    tmpCurrentDist = a.distToPointFloat(chainCentroid[0], chainCentroid[1], chainCentroid[2]);
+                    tmpCurrentDist = a.distToPointDouble(chainCentroid[0], chainCentroid[1], chainCentroid[2]);
                     // System.out.println("[DEBUG] Distance to center from atom " + a.toString() + " is " + String.valueOf(tmpCurrentDist));
                     if (tmpCurrentDist > tmpBiggestDist) {
                         tmpBiggestDist = tmpCurrentDist;
@@ -412,9 +412,9 @@ public class Chain implements java.io.Serializable {
         // I also tried a method from an official PyMOL script
         if ("mass".equals(method)) {
             // compute center of mass and the total mass
-            Double[] tmpCenter = new Double[3];
+            double[] tmpCenter = new double[3];
             tmpCenter[0] = tmpCenter[1] = tmpCenter[2] = 0.0;
-            Double tmpSumAtomWeights = 0.0;
+            double tmpSumAtomWeights = 0.0;
             for (Molecule mol : molecules) {
                 for (Atom a : mol.getAtoms()) {
                     tmpCenter[0] += a.getCoordX()*AtomWeights.get(a.getChemSym());
@@ -439,7 +439,7 @@ public class Chain implements java.io.Serializable {
                 }
 
                 // compute the radius of gyration
-                Double tmpGyradius;
+                double tmpGyradius;
                 tmpGyradius = 0.0;
                 for (Molecule mol : molecules) {
                     for (Atom a : mol.getAtoms()) {
@@ -472,7 +472,7 @@ public class Chain implements java.io.Serializable {
              
             if (atomNumber > 0) {
                 // compute the radius of gyration
-                Double tmpGyradius = 0.0;
+                double tmpGyradius = 0.0;
                 for (Molecule mol : molecules) {
                     for (Atom a : mol.getAtoms()) {
                         tmpGyradius +=  Math.pow(Math.sqrt(Math.pow((a.getCoordX()-chainCentroid[0]),2) + Math.pow((a.getCoordY()-chainCentroid[1]),2) + Math.pow((a.getCoordZ()-chainCentroid[2]),2)), 2);

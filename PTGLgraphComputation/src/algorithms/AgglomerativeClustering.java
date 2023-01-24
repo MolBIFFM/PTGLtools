@@ -58,7 +58,7 @@ public class AgglomerativeClustering {
         
         public Edge mergeEdgeIntoThis(Edge otherEdge, double lengthChainA, double lengthChainB) {
             if (this.normalizationType != otherEdge.normalizationType) {
-                DP.getInstance().e(CLASS_TAG, "Cannot merge edges of different normalization. Returning first edge and trying to got on. "
+                DP.getInstance().e(CLASS_TAG, "Cannot merge edges of different normalization. Returning first edge and trying to go on. "
                         + "Please report this bug to the developers.");
             }
             absoluteWeight += otherEdge.absoluteWeight;
@@ -117,7 +117,7 @@ public class AgglomerativeClustering {
     }
     
     /**
-     * Creates a new instance of the clustering to copy it completly. 
+     * Creates a new instance of the clustering to copy it completely. 
      * @param aggloClust
      * @return complete new instance 
      */
@@ -166,7 +166,7 @@ public class AgglomerativeClustering {
     }
             
     /**
-     * Performs a hirachical clustering algorithm on the given complex graph. 
+     * Performs a hierarchical clustering algorithm on the given complex graph. 
      * @return Clustered Tree
      */
     public ClusteringResult chainLengthClustering() {
@@ -286,9 +286,9 @@ public class AgglomerativeClustering {
     }
     
     /**
-     * Chooses an Edge by performing a roulett algorithm.
+     * Chooses an Edge by performing a roulette algorithm.
      * Probabilities are equal to edge weights. 
-     * @return index of choosen edge in array. 
+     * @return index of chosen edge in array. 
      */
     private int getEdgeIndexStochastic(){
         BigDecimal summed = new BigDecimal(0);

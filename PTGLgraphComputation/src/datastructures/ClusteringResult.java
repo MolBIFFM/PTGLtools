@@ -41,7 +41,7 @@ public class ClusteringResult {
         }
     }
     
-    public Boolean addMerge(Integer[] merge, int absoluteWeight, int chainLengthA, int chainLengthB) {
+    public Boolean addMerge(Integer[] merge, int absoluteWeight, double chainPropertyA, double chainPropertyB) {
         if (binary) {
             if (merge.length > 2) {
                 DP.getInstance().e(CLASS_TAG, "Tried adding a merge of more than two vertices to a binary clustering result. Rejecting merge and trying to go on. "
@@ -63,7 +63,7 @@ public class ClusteringResult {
         mapRepresentativeToVertices.put(merge[0], leafs);
         
         // update score
-        updateScores(absoluteWeight, chainLengthA, chainLengthB, leafs.size());
+        updateScores(absoluteWeight, chainPropertyA, chainPropertyB, leafs.size());
         //consecutiveLargeInterfaceScore = consecutiveLargeInterfaceScore.add(scoreFromThisMerge(absoluteWeight, leafs.size()));
         
         maxNumberMergedAtOnce = Math.max(maxNumberMergedAtOnce, merge.length);
@@ -76,11 +76,11 @@ public class ClusteringResult {
     }
     
     
-    private void updateScores(int absoluteWeight, double chainLengthA, double chainLengthB, int numberLeafs) {
+    private void updateScores(int absoluteWeight, double chainPropertyA, double chainPropertyB, int numberLeafs) {
         for (EdgeWeightType weightType : EdgeWeightType.values()) {
             BigDecimal prevValue = consecutiveLargeInterfaceScores.get(weightType);
-            consecutiveLargeInterfaceScores.put(weightType, prevValue.add(
-                    ComplexGraphEdgeWeightTypes.computeLengthNormalization(absoluteWeight, chainLengthA, chainLengthB, weightType)
+                consecutiveLargeInterfaceScores.put(weightType, prevValue.add(
+                    ComplexGraphEdgeWeightTypes.computeLengthNormalization(absoluteWeight, chainPropertyA, chainPropertyB, weightType)
                             .divide(BigDecimal.valueOf(numberLeafs), ComplexGraphEdgeWeightTypes.PRECISION, RoundingMode.HALF_UP)));
         }
     }

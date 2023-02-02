@@ -10,11 +10,13 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
 import proteingraphs.ComplexGraphEdgeWeightTypes;
+import proteinstructure.Chain;
 import settings.Settings;
 
 /**
@@ -56,7 +58,7 @@ public class ConsensusTree {
      */
     private ClusteringResult clustering(AgglomerativeClustering aggloClust){
         AgglomerativeClustering cluster = AgglomerativeClustering.newInstance(aggloClust);
-        return cluster.chainLengthClustering();
+        return cluster.chainInformationClustering();
     }
     
     /**
@@ -314,23 +316,24 @@ public class ConsensusTree {
             {6, 7, 12}
         };
         
-        Map<Integer, Integer> chainLengths = new HashMap<>();
-        chainLengths.put(0, 40);
-        chainLengths.put(1, 8);
-        chainLengths.put(2, 10);
-        chainLengths.put(3, 20);
-        chainLengths.put(4, 5);
-        chainLengths.put(5, 12);
-        chainLengths.put(6, 15);
-        chainLengths.put(7, 11);
-        chainLengths.put(8, 7);
+        Map<Integer, Double> chainProperties = new HashMap<>();
+        chainProperties.put(0, 40.0);
+        chainProperties.put(1, 8.0);
+        chainProperties.put(2, 10.0);
+        chainProperties.put(3, 20.0);
+        chainProperties.put(4, 5.0);
+        chainProperties.put(5, 12.0);
+        chainProperties.put(6, 15.0);
+        chainProperties.put(7, 11.0);
+        chainProperties.put(8, 7.0);
         
+        List<Chain> dummyChainList = null; // dummy list to satisfy the constructor; this list is only needed for gyradius normalization, so these normalizations are not possible to test here unless we create some suitable chain instances for this example
         Map<Integer, String> labelMap = new HashMap<>();
-        for (Integer vertexId : chainLengths.keySet()) {
+        for (Integer vertexId : chainProperties.keySet()) {
             labelMap.put(vertexId, String.valueOf(vertexId));
         }
         
-        AgglomerativeClustering clustering = new AgglomerativeClustering(edgeList, chainLengths, ComplexGraphEdgeWeightTypes.EdgeWeightType.ADDITIVE_LENGTH_NORMALIZATION, labelMap);
+        AgglomerativeClustering clustering = new AgglomerativeClustering(edgeList, chainProperties, ComplexGraphEdgeWeightTypes.EdgeWeightType.ADDITIVE_LENGTH_NORMALIZATION, labelMap, dummyChainList);
         ConsensusTree ct = new ConsensusTree(clustering, 1, labelMap);
         ClusteringResult cr = ct.computeConsensus();
         ct.writeStatistics("test");

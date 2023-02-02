@@ -11,17 +11,24 @@ import datastructures.ClusteringResult;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.IntStream;
+import java.util.stream.Collectors;
 import java.util.Scanner;
 import java.util.Random; 
 import static java.util.stream.Collectors.toList;
 import proteingraphs.ComplexGraphEdgeWeightTypes.EdgeWeightType;
 import proteingraphs.ComplexGraphEdgeWeightTypes;
+import proteinstructure.Atom;
+import proteinstructure.Chain;
+import static proteinstructure.Chain.AtomWeights;
+import proteinstructure.Molecule;
 import tools.DP;
 import settings.Settings;
 
@@ -36,9 +43,11 @@ public class AgglomerativeClustering {
     private static final Random RANDOM = new Random(); 
     
     private ArrayList<Edge> edges;
-    private final Map<Integer, Integer> chainLengths;
+    private final Map<Integer, Double> chainProperties;
     private final EdgeWeightType weightType;
     private final Map<Integer, String> labelMap;
+    private final List<Chain> chains;
+    private Map<String, List<String>> mergedChains;
     private int curStepNum;
     
     class Edge implements Comparable<Edge> {
@@ -56,13 +65,14 @@ public class AgglomerativeClustering {
             this.normalizedWeight = normalizedWeight;            
         }
         
-        public Edge mergeEdgeIntoThis(Edge otherEdge, double lengthChainA, double lengthChainB) {
+        public Edge mergeEdgeIntoThis(Edge otherEdge, double propertyChainA, double propertyChainB) {
             if (this.normalizationType != otherEdge.normalizationType) {
                 DP.getInstance().e(CLASS_TAG, "Cannot merge edges of different normalization. Returning first edge and trying to go on. "
                         + "Please report this bug to the developers.");
             }
             absoluteWeight += otherEdge.absoluteWeight;
-            normalizedWeight = ComplexGraphEdgeWeightTypes.computeLengthNormalization(absoluteWeight, lengthChainA, lengthChainB, normalizationType);
+            normalizedWeight = ComplexGraphEdgeWeightTypes.computeLengthNormalization(absoluteWeight, propertyChainA, propertyChainB, normalizationType);
+
             return this;
         }
         
@@ -128,11 +138,12 @@ public class AgglomerativeClustering {
     /**
      * Constructor of an agglomerative clustering.Class cannot be static so that it can hold instances of nested class Edge.
      * @param edgeList Array of [vertex ID 1, vertex ID 2, edge weight]
-     * @param chainLengths
+     * @param chainProperties
      * @param weightType
      * @param labelMap
+     * @param chains
      */   
-    public AgglomerativeClustering(int[][] edgeList, Map<Integer, Integer> chainLengths, EdgeWeightType weightType, Map<Integer, String> labelMap) {
+    public AgglomerativeClustering(int[][] edgeList, Map<Integer, Double> chainProperties, EdgeWeightType weightType, Map<Integer, String> labelMap, List<Chain> chains) {
         this.curStepNum = 0;
         
         this.edges = new ArrayList<>();
@@ -141,16 +152,24 @@ public class AgglomerativeClustering {
                 DP.getInstance().e(CLASS_TAG, "Got an edge without two particpating vertices. Skipping edge and trying to go on. "
                         + "Please report this bug to the developers.");
                 continue;
-            } 
-            BigDecimal normalizedWeight = ComplexGraphEdgeWeightTypes.computeLengthNormalization(edge[2], chainLengths.get(edge[0]), chainLengths.get(edge[1]), 
+            }
+            
+            BigDecimal normalizedWeight;
+            
+            normalizedWeight = ComplexGraphEdgeWeightTypes.computeLengthNormalization(edge[2], chainProperties.get(edge[0]), chainProperties.get(edge[1]), 
                     weightType);
 
             edges.add(new Edge(edge[0], edge[1], edge[2], weightType, normalizedWeight));
         }
         
-        this.chainLengths = new HashMap<>(chainLengths);  // Shallow copy to not change chain lengths outside of this class
+        this.chainProperties = new HashMap<>(chainProperties);  // Shallow copy to not change chain lengths outside of this class
         this.weightType = weightType;
         this.labelMap = labelMap;
+        this.chains = chains;
+        this.mergedChains = new HashMap<>();
+        for (HashMap.Entry<Integer,String> entry : labelMap.entrySet()) {
+            mergedChains.put(entry.getValue(), Arrays.asList(entry.getValue()));
+        }
     }
     
     /**
@@ -159,21 +178,23 @@ public class AgglomerativeClustering {
      */
     public AgglomerativeClustering(AgglomerativeClustering aggloClust){
         this.edges = new ArrayList<>(aggloClust.edges);
-        this.chainLengths = new HashMap<>(aggloClust.chainLengths);
+        this.chainProperties = new HashMap<>(aggloClust.chainProperties);
         this.weightType = aggloClust.weightType;
         this.labelMap = new HashMap<>(aggloClust.labelMap);
         this.curStepNum = 0;
+        this.chains = aggloClust.chains;
+        this.mergedChains = new HashMap<>(aggloClust.mergedChains);
     }
             
     /**
      * Performs a hierarchical clustering algorithm on the given complex graph. 
      * @return Clustered Tree
      */
-    public ClusteringResult chainLengthClustering() {
+    public ClusteringResult chainInformationClustering() {
         ClusteringResult clusteringResult = new ClusteringResult(true);
     
         while (edges.size() > 0) {
-            chainLengthClusteringStep(clusteringResult);
+            chainInformationClusteringStep(clusteringResult);
             
             if (Settings.getInteger("PTGLgraphComputation_I_debug_level") > 1) {
                 System.out.println("[DEBUG LV 2] Merges after step " + curStepNum);
@@ -184,7 +205,7 @@ public class AgglomerativeClustering {
         return clusteringResult;
     }
     
-    private void chainLengthClusteringStep(ClusteringResult clusteringResult) {
+    private void chainInformationClusteringStep(ClusteringResult clusteringResult) {
         // 1) sort by normalized weight
         Collections.sort(edges, Collections.reverseOrder(new EdgeComparatorNormalizedWeight()));
         
@@ -216,8 +237,8 @@ public class AgglomerativeClustering {
         clusteringResult.addMerge(
                 IntStream.of(curEdge.getVertices()).boxed().toArray(Integer[]::new), 
                 curEdge.absoluteWeight,
-                chainLengths.get(curEdge.v1),
-                chainLengths.get(curEdge.v2));
+                chainProperties.get(curEdge.v1),
+                chainProperties.get(curEdge.v2));
         
         int v1 = curEdge.v1;
         int v2 = curEdge.v2;
@@ -225,11 +246,26 @@ public class AgglomerativeClustering {
         // 2.1) remove edge between merged vertices
         edges.remove(mergeEdgeIndex);
         
-        // 2.2) update chain lengths
-        int combinedChainLength = chainLengths.get(v1) + chainLengths.get(v2);
-        chainLengths.replace(v1, combinedChainLength);  // v1 is representative
-        chainLengths.remove(v2);
-
+        // 2.2) update chain lengths or chain gyradii
+        if(weightType.shortName.equals("addGyrInd") || weightType.shortName.equals("addGyr")){
+            // update the mergedChains List: mergedChains.get(labelMap.get(v2)) should be added to the list of mergedChains.get(labelMap.get(v1))
+            // and the entry mergedChains.get(labelMap.get(v2)) should be deleted
+            ArrayList<String> merge = new ArrayList<>();
+            merge.addAll(mergedChains.get(labelMap.get(v1)));
+            merge.addAll(mergedChains.get(labelMap.get(v2)));
+            mergedChains.put(labelMap.get(v1), merge);
+            mergedChains.remove(labelMap.get(v2));
+            // do the recalculation with the new cluster
+            //System.out.println("Merged chains list: " + mergedChains.get(labelMap.get(v1)));
+            double recalculatedChainGyradius = recomputeChainRadiusOfGyration("mass", mergedChains.get(labelMap.get(v1))); 
+            chainProperties.replace(v1, recalculatedChainGyradius);  // v1 is representative
+            chainProperties.remove(v2);
+        } else {
+            double combinedChainLength = chainProperties.get(v1) + chainProperties.get(v2);
+            chainProperties.replace(v1, combinedChainLength);  // v1 is representative
+            chainProperties.remove(v2);
+        }
+     
         // 2.3 update edges
         HashMap<Edge, Edge> edgeMap = new HashMap<>();
         edges.forEach(edge -> {
@@ -240,7 +276,7 @@ public class AgglomerativeClustering {
                 int updatedV2 = (edge.getVertices()[1] == v2 ? v1 : edge.getVertices()[1]);
                 int absoluteWeight = edge.getAbsoluteWeight();
 
-                BigDecimal updatedNomalizedWeight = ComplexGraphEdgeWeightTypes.computeLengthNormalization(absoluteWeight, chainLengths.get(updatedV1), chainLengths.get(updatedV2), 
+                BigDecimal updatedNomalizedWeight = ComplexGraphEdgeWeightTypes.computeLengthNormalization(absoluteWeight, chainProperties.get(updatedV1), chainProperties.get(updatedV2), 
                     weightType);
                 updatedEdge = new Edge(updatedV1, updatedV2, absoluteWeight, weightType, updatedNomalizedWeight);
             } 
@@ -248,7 +284,8 @@ public class AgglomerativeClustering {
             // try to add updated edge
             if (edgeMap.containsKey(updatedEdge)) {
                 // duplicate edge -> merge the two edges
-                edgeMap.get(updatedEdge).mergeEdgeIntoThis(updatedEdge, chainLengths.get(updatedEdge.v1), chainLengths.get(updatedEdge.v2));
+                    edgeMap.get(updatedEdge).mergeEdgeIntoThis(updatedEdge, chainProperties.get(updatedEdge.v1), chainProperties.get(updatedEdge.v2));
+
             } else {
                 edgeMap.put(updatedEdge, updatedEdge);
             }
@@ -258,7 +295,82 @@ public class AgglomerativeClustering {
         curStepNum++;
     }
     
-    
+    private double recomputeChainRadiusOfGyration(String method, List<String> mergedChainsList) {
+        // The radius of gyration can be calculated with mass weighting or according to the geometrical center
+
+        Double chainRadiusOfGyration = null;
+        if ("mass".equals(method)) {
+            double[] tmpCenter = new double[3];
+            double[] centerOfMass = new double[3];
+            tmpCenter[0] = tmpCenter[1] = tmpCenter[2] = 0.0;
+            double tmpSumAtomWeights = 0.0;
+            for (Chain currChainL1 : chains){
+                //System.out.println("Merged chains list: " + mergedChainsList);
+                //System.out.println("Current Chain ID: " + currChainL1.getPdbChainID());
+                // look for chain matches with the mergedChainsList
+                if (mergedChainsList.stream().anyMatch(s -> s.contains(currChainL1.getPdbChainID()))) {
+                    //System.out.println("Match! - Chain ID: " + currChainL1.getPdbChainID());
+                    // compute center of mass and the total mass for all chains
+                    for (Molecule mol : currChainL1.getMolecules()) {
+                        if(Settings.getBoolean("PTGLgraphComputation_B_CG_ignore_ligands")){
+                            if(!mol.isLigand()){
+                                for (Atom a : mol.getAtoms()) {
+                                    //System.out.println("Begin current Atom: " + a);
+                                    tmpCenter[0] += a.getCoordX()*AtomWeights.get(a.getChemSym());
+                                    tmpCenter[1] += a.getCoordY()*AtomWeights.get(a.getChemSym());
+                                    tmpCenter[2] += a.getCoordZ()*AtomWeights.get(a.getChemSym());
+                                    tmpSumAtomWeights += AtomWeights.get(a.getChemSym());
+                                }
+                            }
+                        } else {
+                            for (Atom a : mol.getAtoms()) {
+                                //System.out.println("Begin current Atom: " + a);
+                                tmpCenter[0] += a.getCoordX()*AtomWeights.get(a.getChemSym());
+                                tmpCenter[1] += a.getCoordY()*AtomWeights.get(a.getChemSym());
+                                tmpCenter[2] += a.getCoordZ()*AtomWeights.get(a.getChemSym());
+                                tmpSumAtomWeights += AtomWeights.get(a.getChemSym());
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // there could be the case that only RNA/DNA atoms are in a chain
+            // in this case radius is set to -1
+            if (tmpSumAtomWeights > 0) {
+                centerOfMass[0] =  tmpCenter[0] / tmpSumAtomWeights;
+                centerOfMass[1] =  tmpCenter[1] / tmpSumAtomWeights;
+                centerOfMass[2] =  tmpCenter[2] / tmpSumAtomWeights;
+
+                if (Settings.getInteger("PTGLgraphComputation_I_debug_level") > 0) {
+                    System.out.println("[DEBUG] Center of mass of chains " + mergedChainsList + " is at " + Arrays.toString(centerOfMass));
+                }
+                // compute the radius of gyration
+                double tmpGyradius;
+                tmpGyradius = 0.0;
+                
+                // And here comes the same loop again since now we have the center of mass
+                for (Chain currChainL2 : chains){
+                    if (mergedChainsList.stream().anyMatch(s -> s.contains(currChainL2.getPdbChainID()))) {
+                        for (Molecule mol : currChainL2.getMolecules()) {
+                            for (Atom a : mol.getAtoms()) {
+                                tmpGyradius +=  AtomWeights.get(a.getChemSym())*Math.pow(Math.sqrt(Math.pow((a.getCoordX()-centerOfMass[0]),2) + Math.pow((a.getCoordY()-centerOfMass[1]),2) + Math.pow((a.getCoordZ()-centerOfMass[2]),2)), 2);
+                            }
+                        }
+                    }
+                }
+                // calculate chainRadiusOfGyration
+                chainRadiusOfGyration = Math.sqrt(tmpGyradius / tmpSumAtomWeights);
+            } else {
+                DP.getInstance().w("The chains " + mergedChainsList + " seem not to hold protein atoms. No center can be detected.", 2);
+                chainRadiusOfGyration =  -1.0;
+            }  
+        }
+        //System.out.println("Gyradius: " + chainRadiusOfGyration);
+        return chainRadiusOfGyration;
+    }
+    // TODO: implement Gyradius recalculation with geometrical center and implement this option in the settings!
+ 
     /**
      * Print a table of all edges and ask user for an input until it is a valid edge index.
      * @return valid edge index as int
@@ -401,33 +513,34 @@ public class AgglomerativeClustering {
             {6, 7, 12}
         };
         
-        Map<Integer, Integer> chainLengths = new HashMap<>();
-        chainLengths.put(0, 40);
-        chainLengths.put(1, 8);
-        chainLengths.put(2, 10);
-        chainLengths.put(3, 20);
-        chainLengths.put(4, 5);
-        chainLengths.put(5, 12);
-        chainLengths.put(6, 15);
-        chainLengths.put(7, 11);
-        chainLengths.put(8, 7);
+        Map<Integer, Double> chainProperties = new HashMap<>();
+        chainProperties.put(0, 40.0);
+        chainProperties.put(1, 8.0);
+        chainProperties.put(2, 10.0);
+        chainProperties.put(3, 20.0);
+        chainProperties.put(4, 5.0);
+        chainProperties.put(5, 12.0);
+        chainProperties.put(6, 15.0);
+        chainProperties.put(7, 11.0);
+        chainProperties.put(8, 7.0);
         
+        List<Chain> dummyChainList = null; // dummy list to satisfy the constructor; this list is only needed for gyradius normalization, so these normalizations are not possible to test here unless we create some suitable chain instances for this example
         Map<Integer, String> labelMap = new HashMap<>();
-        for (Integer vertexId : chainLengths.keySet()) {
+        for (Integer vertexId : chainProperties.keySet()) {
             labelMap.put(vertexId, String.valueOf(vertexId));
         }
 
-        AgglomerativeClustering clustering = new AgglomerativeClustering(edgeList, chainLengths, EdgeWeightType.ADDITIVE_LENGTH_NORMALIZATION, labelMap);
+        AgglomerativeClustering clustering = new AgglomerativeClustering(edgeList, chainProperties, EdgeWeightType.ADDITIVE_LENGTH_NORMALIZATION, labelMap, dummyChainList);
         
-        ClusteringResult cr = clustering.chainLengthClustering();        
+        ClusteringResult cr = clustering.chainInformationClustering();        
         
         System.out.println(cr.toNewickString());
         
-        clustering = new AgglomerativeClustering(edgeList, chainLengths, EdgeWeightType.MULTIPLICATIVE_LENGTH_NORMALIZATION, labelMap);
-        clustering.chainLengthClustering();
+        clustering = new AgglomerativeClustering(edgeList, chainProperties, EdgeWeightType.MULTIPLICATIVE_LENGTH_NORMALIZATION, labelMap, dummyChainList);
+        clustering.chainInformationClustering();
         
-        clustering = new AgglomerativeClustering(edgeList, chainLengths, EdgeWeightType.ABSOLUTE_WEIGHT, labelMap);
-        clustering.chainLengthClustering();
+        clustering = new AgglomerativeClustering(edgeList, chainProperties, EdgeWeightType.ABSOLUTE_WEIGHT, labelMap, dummyChainList);
+        clustering.chainInformationClustering();
         
         System.out.println("FINISHED CLUSTERING TEST AND EXITING");
         System.exit(0);

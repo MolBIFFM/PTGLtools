@@ -86,7 +86,8 @@ public class ComplexGraph extends UAdjListGraph {
     public Map<Vertex, String> proteinNodeMap;
     private Map<Vertex, String> labelNodeMap;  // for now, used for labels in interactive assembly prediction and output newick string
     public Map<Vertex, String> molMap;  // contains for each vertex (= protein chain) the corresponding molecule name
-    public Map<Vertex, Integer> chainLengthMap;  // used for the GML file output
+    public Map<Vertex, Double> chainLengthMap;  // used for the GML file output
+    public Map<Vertex, Double> chainGyradiusMap;  // used for the GML file output
     public Map<Vertex, String> chainTypeMap;
     private Map<Integer, Vertex> mapVertexIdVertex = new HashMap<>();
     public Map<List<Integer>, Integer> numSSEContacts;
@@ -150,6 +151,7 @@ public class ComplexGraph extends UAdjListGraph {
         labelNodeMap = createVertexMap();
         molMap = createVertexMap();
         chainLengthMap = createVertexMap();
+        chainGyradiusMap = createVertexMap();
         chainTypeMap = createVertexMap();
         
         molIDs = new HashSet<>();
@@ -266,7 +268,8 @@ public class ComplexGraph extends UAdjListGraph {
                         proteinNodeMap.put(v, tmpChain.getPdbChainID());
                         labelNodeMap.put(v, labelList.length > curNum ? labelList[curNum] : tmpChain.getPdbChainID());
                         molMap.put(v, FileParser.getMetaInfo(pdbid, tmpChain.getPdbChainID()).getMolName());  // get the mol name from the ProtMetaInfo
-                        chainLengthMap.put(v, tmpChain.getLength(! Settings.getBoolean("PTGLgraphComputation_B_CG_ignore_ligands")));
+                        chainLengthMap.put(v, (double) tmpChain.getLength(! Settings.getBoolean("PTGLgraphComputation_B_CG_ignore_ligands")));
+                        chainGyradiusMap.put(v, tmpChain.getChainRadiusOfGyration("mass", ! Settings.getBoolean("PTGLgraphComputation_B_CG_ignore_ligands")));
 
                         chainTypeMap.put(v, allChains.get(j).getMoleculeType());
                         mapVertexIdVertex.put(Integer.parseInt(v.toString()), v);
@@ -275,7 +278,7 @@ public class ComplexGraph extends UAdjListGraph {
 
                         int tmpLength = tmpChain.getLength(! Settings.getBoolean("PTGLgraphComputation_B_CG_ignore_ligands"));
                         mapChainIdToLength.put(tmpChain.getPdbChainID(), tmpLength);
-			double tmpGyradius = tmpChain.getChainRadiusOfGyration("mass");
+			double tmpGyradius = tmpChain.getChainRadiusOfGyration("mass", ! Settings.getBoolean("PTGLgraphComputation_B_CG_ignore_ligands"));
                         mapChainIdToGyradius.put(tmpChain.getPdbChainID(), tmpGyradius);
 
                         // get AA sequence string for each chainName
@@ -847,11 +850,11 @@ public class ComplexGraph extends UAdjListGraph {
                 }
             }
         } // end of loop over all res contacts
-        computeLengthNormalizedEdgeWeights();  // do this here instead of in loop, so we need to compute it only once
+        computeNormalizedEdgeWeights();  // do this here instead of in loop, so we need to compute it only once
     }
     
     
-    private void computeLengthNormalizedEdgeWeights() {
+    private void computeNormalizedEdgeWeights() {
         BigDecimal curMinimumMultNormEdgeWeight = BigDecimal.ONE;
         
         for (Edge e : mapWeightNamesToMapEdgeValues.get(EdgeWeightType.ABSOLUTE_WEIGHT).keySet()) {
@@ -913,9 +916,18 @@ public class ComplexGraph extends UAdjListGraph {
                 continue;
             }
             System.out.println("    " + weightType.name);
-            AgglomerativeClustering clustering = 
-                    new AgglomerativeClustering(getEdgesAsArray(), vertexMapToVertexIdMap(chainLengthMap), weightType, vertexMapToVertexIdMap(labelNodeMap));
             
+            AgglomerativeClustering clustering;
+            if(weightType.shortName.equals("addGyrInd") || weightType.shortName.equals("addGyr")){
+                // Maybe a different constructor is needed to deal with the gyradius instead of the length, but the best would be to leave everything behind the same, except for some Double/Integer things
+                // provide the chain instances, which can then be accessed by allChains.get(i)
+                clustering = 
+                        new AgglomerativeClustering(getEdgesAsArray(),  vertexMapToVertexIdMap(chainGyradiusMap), weightType, vertexMapToVertexIdMap(labelNodeMap), allChains);
+            }
+            else{
+                clustering = 
+                        new AgglomerativeClustering(getEdgesAsArray(), vertexMapToVertexIdMap(chainLengthMap), weightType, vertexMapToVertexIdMap(labelNodeMap), allChains);
+            }
             
             ClusteringResult clusteringResult;
             if(Settings.getInteger("PTGLgraphComputation_I_type_assembly_prediction") == 2){
@@ -925,7 +937,7 @@ public class ComplexGraph extends UAdjListGraph {
                 consensus.writeStatistics(this.pdbid+"_"+weightType.toString());
             }
             else{
-                clusteringResult = clustering.chainLengthClustering();
+                clusteringResult = clustering.chainInformationClustering();
             }
             
             System.out.println("      " + clusteringResult.toNewickString(vertexMapToVertexIdMap(labelNodeMap)));
@@ -1758,6 +1770,24 @@ public class ComplexGraph extends UAdjListGraph {
             @Override
             public String write(Vertex o) {
                 return chainLengthMap.get(o).toString();
+            }
+        });
+        
+        // add a new line per node holding the chain's radius of gyration
+        gw.addVertexAttrWriter(new GMLWriter.AttrWriter<Vertex>() {
+            @Override
+            public String getAttribute() {
+                return TextTools.formatAsCaseStyle(Arrays.asList("chain", "gyradius"), snakeCase);
+            }
+
+            @Override
+            public boolean hasValue(Vertex o) {
+                return chainGyradiusMap.containsKey(o);
+            }
+
+            @Override
+            public String write(Vertex o) {
+                return chainGyradiusMap.get(o).toString();
             }
         });
         

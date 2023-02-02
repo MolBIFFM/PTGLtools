@@ -82,11 +82,11 @@ public final class ComplexGraphEdgeWeightTypes {
         }
     }
     
-    public static BigDecimal computeAdditiveLengthNormlization(BigDecimal numResContacts, int lengthChainA, int lengthChainB) {
+    public static BigDecimal computeAdditiveLengthNormlization(BigDecimal numResContacts, double lengthChainA, double lengthChainB) {
         return numResContacts.divide(BigDecimal.valueOf(lengthChainA).add(BigDecimal.valueOf(lengthChainB)), PRECISION, RoundingMode.HALF_UP);
     }
     
-    public static BigDecimal computeMultiplicativeLengthNormlization(BigDecimal numResContacts, int lengthChainA, int lengthChainB) {
+    public static BigDecimal computeMultiplicativeLengthNormlization(BigDecimal numResContacts, double lengthChainA, double lengthChainB) {
         return numResContacts.divide(BigDecimal.valueOf(lengthChainA).multiply(BigDecimal.valueOf(lengthChainB)), PRECISION, RoundingMode.HALF_UP);
     }
     
@@ -94,23 +94,23 @@ public final class ComplexGraphEdgeWeightTypes {
         return multNorm.divide(smallestMultNorm, PRECISION, RoundingMode.HALF_UP);
     }
     
-    public static BigDecimal computeSqrtAdditiveLengthNormlization(BigDecimal numResContacts, int lengthChainA, int lengthChainB) {
+    public static BigDecimal computeSqrtAdditiveLengthNormlization(BigDecimal numResContacts, double lengthChainA, double lengthChainB) {
         return numResContacts.divide(BigDecimal.valueOf(Math.sqrt(lengthChainA + lengthChainB)), PRECISION, RoundingMode.HALF_UP);
     }
     
-    public static BigDecimal computeLogAdditiveLengthNormlization(BigDecimal numResContacts, int lengthChainA, int lengthChainB) {
+    public static BigDecimal computeLogAdditiveLengthNormlization(BigDecimal numResContacts, double lengthChainA, double lengthChainB) {
         return numResContacts.divide(BigDecimal.valueOf(Math.log(lengthChainA + lengthChainB)), PRECISION, RoundingMode.HALF_UP);
     }
     
-    public static BigDecimal computeMinAdditiveLengthNormlization(BigDecimal numResContacts, int lengthChainA, int lengthChainB) {
+    public static BigDecimal computeMinAdditiveLengthNormlization(BigDecimal numResContacts, double lengthChainA, double lengthChainB) {
         return numResContacts.divide(BigDecimal.valueOf(Math.min(lengthChainA, lengthChainB)), PRECISION, RoundingMode.HALF_UP);
     }
     
-    public static BigDecimal computeIndividualMultiplicativeLengthNormlization(BigDecimal numResContacts, int lengthChainA, int lengthChainB) {
+    public static BigDecimal computeIndividualMultiplicativeLengthNormlization(BigDecimal numResContacts, double lengthChainA, double lengthChainB) {
         return (numResContacts.divide(BigDecimal.valueOf(lengthChainA), PRECISION, RoundingMode.HALF_UP)).multiply(numResContacts.divide(BigDecimal.valueOf(lengthChainB), PRECISION, RoundingMode.HALF_UP));
     }
     
-    public static BigDecimal computeIndividualAdditiveLengthNormlization(BigDecimal numResContacts, int lengthChainA, int lengthChainB) {
+    public static BigDecimal computeIndividualAdditiveLengthNormlization(BigDecimal numResContacts, double lengthChainA, double lengthChainB) {
         return (numResContacts.divide(BigDecimal.valueOf(lengthChainA), PRECISION, RoundingMode.HALF_UP)).add(numResContacts.divide(BigDecimal.valueOf(lengthChainB), PRECISION, RoundingMode.HALF_UP));
     }
     
@@ -126,25 +126,25 @@ public final class ComplexGraphEdgeWeightTypes {
         BigDecimal normalizedWeight;
         switch (weightType) {
                 case ADDITIVE_LENGTH_NORMALIZATION:
-                    normalizedWeight = computeAdditiveLengthNormlization(BigDecimal.valueOf(numResContacts), (int)lengthChainA, (int)lengthChainB);
+                    normalizedWeight = computeAdditiveLengthNormlization(BigDecimal.valueOf(numResContacts), lengthChainA, lengthChainB);
                     break;
                 case MULTIPLICATIVE_LENGTH_NORMALIZATION:
-                    normalizedWeight = computeMultiplicativeLengthNormlization(BigDecimal.valueOf(numResContacts), (int)lengthChainA, (int)lengthChainB);
+                    normalizedWeight = computeMultiplicativeLengthNormlization(BigDecimal.valueOf(numResContacts), lengthChainA, lengthChainB);
                     break;
                 case SQRT_ADDITIVE_LENGTH_NORMALIZATION:
-                    normalizedWeight = computeSqrtAdditiveLengthNormlization(BigDecimal.valueOf(numResContacts), (int)lengthChainA, (int)lengthChainB);
+                    normalizedWeight = computeSqrtAdditiveLengthNormlization(BigDecimal.valueOf(numResContacts), lengthChainA, lengthChainB);
                     break;
                 case LOG_ADDITIVE_LENGTH_NORMALIZATION:
-                    normalizedWeight = computeLogAdditiveLengthNormlization(BigDecimal.valueOf(numResContacts), (int)lengthChainA, (int)lengthChainB);
+                    normalizedWeight = computeLogAdditiveLengthNormlization(BigDecimal.valueOf(numResContacts), lengthChainA, lengthChainB);
                     break;
                 case MIN_LENGTH_NORMALIZATION:
-                    normalizedWeight = computeMinAdditiveLengthNormlization(BigDecimal.valueOf(numResContacts), (int)lengthChainA, (int)lengthChainB);
+                    normalizedWeight = computeMinAdditiveLengthNormlization(BigDecimal.valueOf(numResContacts), lengthChainA, lengthChainB);
                     break;
                 case MULTIPLICATIVE_INDIVIDUAL_NORMALIZATION:
-                    normalizedWeight = computeIndividualMultiplicativeLengthNormlization(BigDecimal.valueOf(numResContacts), (int)lengthChainA, (int)lengthChainB);
+                    normalizedWeight = computeIndividualMultiplicativeLengthNormlization(BigDecimal.valueOf(numResContacts), lengthChainA, lengthChainB);
                     break;
                 case ADDITIVE_INDIVIDUAL_NORMALIZATION:
-                    normalizedWeight = computeIndividualAdditiveLengthNormlization(BigDecimal.valueOf(numResContacts), (int)lengthChainA, (int)lengthChainB);
+                    normalizedWeight = computeIndividualAdditiveLengthNormlization(BigDecimal.valueOf(numResContacts), lengthChainA, lengthChainB);
                     break;
                 case ADDITIVE_GYRATION_NORMALIZATION:
                     normalizedWeight = computeAdditiveGyrationNormlization(BigDecimal.valueOf(numResContacts), lengthChainA, lengthChainB);

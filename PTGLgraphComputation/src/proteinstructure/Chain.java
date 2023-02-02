@@ -54,20 +54,20 @@ public class Chain implements java.io.Serializable {
        put("N",14.007);
        put("O",15.999);
        put("F",18.998);
-       put("Na",22.990);
-       put("Mg",24.305);
+       put("NA",22.990);
+       put("MG",24.305);
        put("P",30.974);
        put("S",32.06);
-       put("Cl",35.45);
+       put("CL",35.45);
        put("K",39.098);
        put("Ca",40.078);
        put("Cr",51.996);
-       put("Mn",54.938);
-       put("Fe",55.845);
-       put("Co",58.933);
-       put("Ni",58.693);
-       put("Cu",63.546);
-       put("Zn",65.38);
+       put("MN",54.938);
+       put("FE",55.845);
+       put("CO",58.933);
+       put("NI",58.693);
+       put("CU",63.546);
+       put("ZN",65.38);
        put("W",183.84);
     }};
     
@@ -116,11 +116,17 @@ public class Chain implements java.io.Serializable {
         /**
      * Retrieves (and computes if called 1st time) the radius of gyration of the chain.
      * @param method
+     * @param includeLigands
      * @return 
      */
-    public Double getChainRadiusOfGyration(String method) {
+    public Double getChainRadiusOfGyration(String method, boolean includeLigands) {
         if (chainRadiusOfGyration == null || !radiusOfGyrationMethod.equals(method)) {
+            if (includeLigands) {
+                System.out.println("To include ligands in the Gyradius calculation is not yet implemented. Continue without the ligands included!");
+                this.computeChainRadiusOfGyration(method);
+            } else {
             this.computeChainRadiusOfGyration(method);
+            }
             radiusOfGyrationMethod = method;
         }
         return(chainRadiusOfGyration); 
@@ -417,6 +423,7 @@ public class Chain implements java.io.Serializable {
             double tmpSumAtomWeights = 0.0;
             for (Molecule mol : molecules) {
                 for (Atom a : mol.getAtoms()) {
+                    //System.out.println("Begin current Atom: " + a);
                     tmpCenter[0] += a.getCoordX()*AtomWeights.get(a.getChemSym());
                     tmpCenter[1] += a.getCoordY()*AtomWeights.get(a.getChemSym());
                     tmpCenter[2] += a.getCoordZ()*AtomWeights.get(a.getChemSym());

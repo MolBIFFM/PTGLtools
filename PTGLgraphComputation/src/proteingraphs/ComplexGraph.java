@@ -241,7 +241,7 @@ public class ComplexGraph extends UAdjListGraph {
         calculateNumChainInteractions(preprocessedResContacts);
         createEdges(preprocessedResContacts);
         
-        assemblyPrediction();
+        //assemblyPrediction();
     }
     
     

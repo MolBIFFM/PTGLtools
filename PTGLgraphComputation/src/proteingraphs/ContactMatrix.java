@@ -1014,6 +1014,7 @@ public class ContactMatrix {
             for(Integer j = 0; j < sseList.size(); j++) {
                 if(this.sseContactExistsPos(i, j)) {
                     pg.addContact(i, j, spatialSSE[i][j]);
+                    pg.addContactWeight(i, j,this.getContacts("TT", i, j));
                 }
 
             }

@@ -82,6 +82,15 @@ public class ClusteringResult {
                 consecutiveLargeInterfaceScores.put(weightType, prevValue.add(
                     ComplexGraphEdgeWeightTypes.computeLengthNormalization(absoluteWeight, chainPropertyA, chainPropertyB, weightType)
                             .divide(BigDecimal.valueOf(numberLeafs), ComplexGraphEdgeWeightTypes.PRECISION, RoundingMode.HALF_UP)));
+                // TODO: These scores have to calculated with the corresponding chainProperty, either chain lengths or chain radius of gyration
+                //if(weightType.shortName.equals("addGyr") || weightType.shortName.equals("add")){
+                //    System.out.println("Method: " + weightType.shortName);
+                //    System.out.println("PreviousValue: " + prevValue);
+                //    System.out.println("PropAPropBLeafs: " + chainPropertyA + " " + chainPropertyB + " " + numberLeafs);
+                //    System.out.println("NormalizedWeight: " + ComplexGraphEdgeWeightTypes.computeLengthNormalization(absoluteWeight, chainPropertyA, chainPropertyB, weightType)
+                //            .divide(BigDecimal.valueOf(numberLeafs), ComplexGraphEdgeWeightTypes.PRECISION, RoundingMode.HALF_UP));
+                //    System.out.println("CurrentValue: " + consecutiveLargeInterfaceScores.get(weightType));
+                //}
         }
     }
     

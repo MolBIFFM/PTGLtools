@@ -118,6 +118,9 @@ public abstract class SSEGraph extends SimpleAttributedGraphAdapter implements I
     /** The edge matrix defining contacts and the type of spatial relation. */
     protected Integer[ ][ ] matrix;               // contacts and spatial relations between pairs of SSEs
     
+    /** The edge matrix holding the number of contacts. */
+    protected Integer[ ][ ] contNumMatrix;               // number of contacts of SSEs
+    
     /** The matrix holding distances of vertices in the graph (shortest paths between them). */
     protected Integer[ ][ ] distMatrix;           // distances of the vertices within this graph
     protected Boolean isProteinGraph;             // true if this is a protein graph, false if this is a folding graph (a connected component of the protein graph)    
@@ -193,6 +196,8 @@ public abstract class SSEGraph extends SimpleAttributedGraphAdapter implements I
         if(this.size == 0) { DP.getInstance().w("SSEGraph", "Trying to create graph from empty vertex list."); }
         this.matrix = new Integer[size][size];
         this.distMatrix = new Integer[size][size];      // distances in graph
+        this.contNumMatrix = new Integer[size][size];
+        
         this.isProteinGraph = true;
         this.parent = null;
         this.connectedComponents = new ArrayList<FoldingGraph>();
@@ -844,7 +849,7 @@ public abstract class SSEGraph extends SimpleAttributedGraphAdapter implements I
 
 
     /**
-     * Adds an edge labeled with spatialRelation between vertices x and y.
+     * Adds an edge labeled with spatialRelation between vertices x and y, additionally adds the edge weights.
      */
     public void addContact(Integer x, Integer y, Integer spatialRelation) {
         
@@ -865,6 +870,13 @@ public abstract class SSEGraph extends SimpleAttributedGraphAdapter implements I
         matrix[y][x] = spatialRelation;
         
         this.setSpatOrder(null);      // spatOrder has to be re-computed!
+
+    }
+    
+    public void addContactWeight(Integer x, Integer y, Integer numberOfContacts) {
+                                       
+        contNumMatrix[x][y] = numberOfContacts;
+        contNumMatrix[y][x] = numberOfContacts;
     }
 
     /**
@@ -1095,6 +1107,25 @@ public abstract class SSEGraph extends SimpleAttributedGraphAdapter implements I
         
     }
     
+    
+    /**
+     * Determines the number of contacts for the edge e=(v1, v2).
+     * @param v1 first vertex of the edge
+     * @param v2 second vertex of the edge
+     * @return number of contacts between both vertices as Integer or NULL if no such edge exists in this graph
+     */
+    public Integer getNumResLevContacts(Integer v1, Integer v2) {
+        if(this.containsEdge(v1, v2)) {
+            return(this.contNumMatrix[v1][v2]);
+        }
+        else {
+            System.err.println("WARNING: SSEGraph.getEdgeLabel(): No such edge: (" + v1 + "," + v2 + ").");
+            return(0);
+        }
+        
+    }
+    
+      
     
     
     /**
@@ -2650,7 +2681,7 @@ E	3	3	3
     
     /**
      * Returns the SSEString of the graph in sequence order, e.g., "HHEHEHEHEHEHHEEHL".
-     * @return the SSEString in AA sequence order, e.g., "HHEHEHEHEHEHHEEHL".
+     * @return the SSEString in AA sequence order, e.g., "HHEHEHEHEHEHHEEHL".matrix[x][y] > 0
      */
     public String getSSEStringSequential() {
         String s = "";
@@ -3004,7 +3035,9 @@ E	3	3	3
             
             //gmlf += "    label \"(" + src + ", " + tgt + ":" + this.getEdgeLabel(src, tgt) +  ")\"\n";
             gmlf.append("    label \"").append(this.getEdgeLabel(src, tgt)).append("\"\n");
-            gmlf.append("    ").append(EdgeProperty.SPATREL).append(" \"").append(this.getEdgeLabel(src, tgt)).append("\"\n");            
+            gmlf.append("    ").append(EdgeProperty.SPATREL).append(" \"").append(this.getEdgeLabel(src, tgt)).append("\"\n");   
+            
+            gmlf.append("    absoluteWeight ").append(this.getNumResLevContacts(src, tgt)).append("\n");
             
             gmlf.append(endEdge).append("\n");
         }

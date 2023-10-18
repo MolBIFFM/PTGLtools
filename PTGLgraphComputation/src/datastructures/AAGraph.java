@@ -41,6 +41,8 @@ public class AAGraph extends SparseGraph<Molecule, AAEdgeInfo> implements IGraph
     
     /** PDB chain identifier. */
     private String chainid;
+    
+    ArrayList<Integer> numberOfContacts = new ArrayList<>();
 
     
     /** Constructor
@@ -59,6 +61,7 @@ public class AAGraph extends SparseGraph<Molecule, AAEdgeInfo> implements IGraph
         for(int i = 0; i < contacts.size(); i++) {
             if(contactSatisfiesRules(contacts.get(i))) {
                 this.addEdgeFromRCI(contacts.get(i));
+                this.numberOfContacts.add(contacts.get(i).getNumContactsTotal());
             }
         }
         this.pdbid = "";
@@ -619,7 +622,8 @@ public class AAGraph extends SparseGraph<Molecule, AAEdgeInfo> implements IGraph
             gmlf.append(startEdge).append("\n");
             gmlf.append("    source ").append(src).append("\n");
             gmlf.append("    target ").append(tgt).append("\n");                        
-            gmlf.append("    weight ").append(this.getEdgeDistance(src, tgt)).append("\n");                        
+            gmlf.append("    distance ").append(this.getEdgeDistance(src, tgt)).append("\n"); 
+            gmlf.append("    weight ").append(this.numberOfContacts.get(allEdges.indexOf(edge))).append("\n"); 
             gmlf.append("    spatial \"").append("m").append("\"\n");   // required for graphlet analyser
             gmlf.append(endEdge).append("\n");
         }

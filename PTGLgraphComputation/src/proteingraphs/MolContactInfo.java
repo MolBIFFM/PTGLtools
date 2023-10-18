@@ -456,7 +456,7 @@ public class MolContactInfo {
     public boolean describesAnyContact() {
         return(this.getNumContactsTotal() > 0 || this.getNumLigContactsTotal() > 0);
     }
-
+    
     /**
      * Determines whether the molecule pair described by this RCI has enough contacts on atom levels to count as PPI.
      * For the pair to be in contact, at least two contacts of any kind or one disulphide bridge contact must present.

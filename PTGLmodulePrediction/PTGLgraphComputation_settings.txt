@@ -1,0 +1,1032 @@
+##### PTGLgraphComputation SETTINGS #####
+
+# This file contains the settings for PTGLtools's PTGLgraphComputation as key-value pairs per line.
+# The character after 'PTGLgraphComputation' indicates which data type is expected: B(oolean), S(tring), L(ist), I(nteger) or F(loat)
+# The file is structured in sections which either belong to user, advanced or developer settings.
+
+### User settings ###
+
+## General settings ##
+
+# Whether the mmCIF parser should be used on the provided PDB coordinates file.
+# Default: 'true'
+PTGLgraphComputation_B_use_mmCIF_parser=true
+
+# Output directory for all created files.
+# Default: '.'
+PTGLgraphComputation_S_output_dir=.
+
+# Whether graphs are computed and output.
+# Default: 'true'
+PTGLgraphComputation_B_calc_draw_graphs=true
+
+# Whether graph visualizations are output.
+# Default: 'true'
+PTGLgraphComputation_B_draw_graphs=true
+
+# Whether to force parsing and processing only a certain PDB chain.
+# Default: 'false'
+PTGLgraphComputation_B_force_chain=false
+
+# The forced chain ID, only used when PTGLgraphComputation_B_force_chain is true.
+# Default: 'A'
+PTGLgraphComputation_S_forced_chain_id=A
+
+
+## Amino Acid Graphs (AAG) ##
+
+# Whether Amino Acid Graph visualizations are output. Uses grid visualization.
+# Default: 'false'
+PTGLgraphComputation_B_draw_aag=false
+
+# Whether Amino Acid Graphs should include ligands.
+# Default: 'false'
+PTGLgraphComputation_B_aminoacidgraphs_include_ligands=false
+
+# Whether to quit the program after computation of Amino Acid Graphs.
+# Default: 'false'
+PTGLgraphComputation_B_quit_after_aag=false
+
+# Whether to write Amino Acid Graph visualizations in PNG format.
+# Default: 'false'
+PTGLgraphComputation_B_img_AAG_output_format_PNG=false
+
+# Whether to write Amino Acid graph visualizations in PDF format.
+# Default: 'false'
+PTGLgraphComputation_B_img_AAG_output_format_PDF=false
+
+
+## Protein Graph (PG) ##
+
+# Whether to skip chains without any SSEs (i.e., contain only ligands) in Protein Graphs.
+# Default: 'true'
+PTGLgraphComputation_B_skip_empty_chains=true
+
+# Whether to write Protein Graph visualizations in PNG format.
+# Default: 'true'
+PTGLgraphComputation_B_img_output_format_PNG=true
+
+# Whether to write Protein Graph visualizations in PDF format.
+# Default: 'false'
+PTGLgraphComputation_B_img_output_format_PDF=false
+
+
+## Graph types ##
+
+# Whether alpha-beta graphs are output.
+# Default: 'true'
+PTGLgraphComputation_B_graphtype_albe=true
+
+# Whether alpha-beta graphs with ligands are output.
+# Default: 'true'
+PTGLgraphComputation_B_graphtype_albelig=true
+
+# Whether alpha graphs are output.
+# Default: 'true'
+PTGLgraphComputation_B_graphtype_alpha=true
+
+# Whether alpha graphs with ligands are output.
+# Default: 'true'
+PTGLgraphComputation_B_graphtype_alphalig=true
+
+# Whether beta graphs are output.
+# Default: 'true'
+PTGLgraphComputation_B_graphtype_beta=true
+
+# Whether beta graphs with ligands are output.
+# Default: 'true'
+PTGLgraphComputation_B_graphtype_betalig=true
+
+
+## Folding Graph (FG) ##
+
+# Whether Folding Graphs (connected components of a Protein Graph) are computed. This does NOT mean they are drawn.
+# Default: 'false'
+PTGLgraphComputation_B_folding_graphs=false
+
+# Whether Folding Graphs visualizations are output.
+# Default: 'true'
+PTGLgraphComputation_B_draw_folding_graphs=true
+
+# Whether to write Folding Graph visualizations in PNG format.
+# Default: 'true'
+PTGLgraphComputation_B_img_FG_output_format_PNG=true
+
+# Whether to write Folding Graph visualizations in PDF format.
+# Default: 'false'
+PTGLgraphComputation_B_img_FG_output_format_PDF=false
+
+# Whether KEY notation of Folding Graphs is computed and output (only applies if 'PTGLgraphComputation_B_folding_graphs' is 'true').
+# Default: 'true'
+PTGLgraphComputation_B_foldgraphtype_KEY=true
+
+# Whether ADJ notation of Folding Graphs is computed and output (only applies if 'PTGLgraphComputation_B_folding_graphs' is 'true').
+# Default: 'true'
+PTGLgraphComputation_B_foldgraphtype_ADJ=true
+
+# Whether RED notation of Folding Graphs is computed and output (only applies if 'PTGLgraphComputation_B_folding_graphs' is 'true').
+# Default: 'true'
+PTGLgraphComputation_B_foldgraphtype_RED=true
+
+# Whether SEQ notation of Folding Graphs is computed and output (only applies if 'PTGLgraphComputation_B_folding_graphs' is 'true').
+# Default: 'true'
+PTGLgraphComputation_B_foldgraphtype_SEQ=true
+
+# Whether DEF notation of Folding Graphs is computed and output (only applies if 'PTGLgraphComputation_B_folding_graphs' is 'true').
+# Default: 'false'
+PTGLgraphComputation_B_foldgraphtype_DEF=false
+
+
+## Complex Graph (CG) ##
+
+# Whether Complex Graphs are computed and drawn.
+# Default: 'false'
+PTGLgraphComputation_B_complex_graphs=false
+
+# The lowest number of interchain residue contacts where an edge in Complex Graphs is drawn.
+# Default: '1'
+PTGLgraphComputation_I_CG_contact_threshold=1
+
+# Whether ligands should be ignored. If not, they may be part of the chain they are added to by the authors of the PDB file. This influences the (number of) contacts. May be superseded in the future by placing ligands in own chain.
+# Default: 'true'
+PTGLgraphComputation_B_CG_ignore_ligands=true
+
+# Whether to write Complex Graph visualizations in PNG format.
+# Default: 'true'
+PTGLgraphComputation_B_img_CG_output_format_PNG=true
+
+# Whether to write Complex Graph visualizations in PDF format.
+# Default: 'false'
+PTGLgraphComputation_B_img_CG_output_format_PDF=false
+
+
+## Structure visualization ##
+
+# Whether to compute and print Jmol commands to visualize Protein Graphs in 3D.
+# Default: 'true'
+PTGLgraphComputation_B_Jmol_graph_vis_commands=true
+
+# Whether to compute and print Jmol commands to color the residues of Protein Graphs blue in 3D.
+# Default: 'false'
+PTGLgraphComputation_B_Jmol_graph_vis_resblue_commands=false
+
+
+## Assembly prediction (AP) ##
+
+# Whether to choose edges greedily (0), interactively (1), or random weighted choice (2).
+# Default: '0'
+PTGLgraphComputation_I_type_assembly_prediction=0
+
+# Comma-seperated labels for the leaves in the interactive prediction and output newick format. The labels are applied in the same order as in the PDB file. Will use chain IDs if not specified.
+# Default: ''
+PTGLgraphComputation_S_assembly_prediction_leaf_labels=
+
+# Number of iterations used in the stochastic clustering approach.
+# Default: '1000'
+PTGLgraphComputation_I_stochastic_iterations=1000
+
+# Comma-seperated list of the weight types to use for the assembly prediction. For each weight type, a prediction is done. Valid choices are: abs,add,mult,lucMult,sqrt,logAdd,min,multInd,addInd,addGyr,addGyrInd.
+# Default: 'abs,add,mult,lucMult,sqrt,logAdd,min,multInd,addInd,addGyr,addGyrInd'
+PTGLgraphComputation_L_AP_weight_types=abs,add,addInd,addGyr,addGyrInd
+
+
+### Advanced settings ###
+
+## Prints / Error handling ##
+
+# Whether to suppress all output. Cluster mode, not recommended for normal usage.
+# Default: 'false'
+PTGLgraphComputation_B_silent=false
+
+# Whether to print only high-level status information.
+# Default: 'true'
+PTGLgraphComputation_B_only_essential_output=true
+
+# Whether to print residue contacts to stdout (slower)
+# Default: 'false'
+PTGLgraphComputation_B_print_contacts=false
+
+# Whether to suppress all warnings.
+# Default: 'false'
+PTGLgraphComputation_B_no_warn=false
+
+# Whether to suppress all warnings related to parsing of atoms and other data from the PDB and SSE input files.
+# Default: 'true'
+PTGLgraphComputation_B_no_parse_warn=true
+
+# Whether to suppress all warnings related to not implemented function.
+# Default: 'true'
+PTGLgraphComputation_B_no_not_impl_warn=true
+
+# Whether to print a single line informing the user that silent mode is set in silent mode (includes PDB ID of current file).
+# Default: 'true'
+PTGLgraphComputation_B_print_silent_notice=true
+
+# Whether to print warnings when a setting is not defined in the config file and internal defaults are used.
+# Default: 'true'
+PTGLgraphComputation_B_warn_cfg_fallback_to_default=true
+
+
+## Performance ##
+
+# Whether to compute atom contacts separated by chain. Faster but does not detect contacts between different chains and thus cannot be used for Complex Graph computation.
+# Default: 'false'
+PTGLgraphComputation_B_separate_contacts_by_chain=false
+
+# Abort all processing of PDB files with worse resolution than provided with this setting in Angstroem as a float. If set to 20.0, the program will terminate and NOT further process a PDB file which is detected to have a resolution of more than 20 A. Set to a negative value like -1.0 to disable this, and thus parse all PDB files, no matter the resolution.
+# Default: '10.0'
+PTGLgraphComputation_F_abort_if_pdb_resolution_worse_than=10.0
+
+# Abort all processing of PDB files with too few molecules as defined by the given value of the setting as integer. If set to 30, the program will terminate and NOT further process a PDB file which is detected to have less than 30 molecules. Set to a negative value like -1 to disable this, and thus parse all PDB files, no matter the molecule count.
+# Default: '30'
+PTGLgraphComputation_I_abort_if_num_molecules_below=30
+
+# Whether to abort if the protein has more than 'PTGLgraphComputation_I_skip_num_atoms_threshold' atoms.
+# Default: 'false'
+PTGLgraphComputation_B_skip_too_large=false
+
+# The maximal number of atoms per PDB file if 'PTGLgraphComputation_B_skip_too_large' is true. In that case, PTGLgraphComputation will abort for PDB files with more atoms.
+# Default: '80000'
+PTGLgraphComputation_I_skip_num_atoms_threshold=80000
+
+# Whether to use contact computation speedup based on comparison of chain spheres.
+# Default: 'true'
+PTGLgraphComputation_B_chain_spheres_speedup=true
+
+# Whether to use centroid of atoms instead of C_alpha for contact computation. Recommended use only with PTGLgraphComputation_B_chain_spheres_speedup.
+# Default: 'true'
+PTGLgraphComputation_B_centroid_method=true
+
+# Whether 3D atom coordinates should be rounded or truncated one decimal place.
+# Default: 'true'
+PTGLgraphComputation_B_round_coordinates=true
+
+# The directory where temporary files can be created. You need write access to it, of course.
+# Default: '.'
+PTGLgraphComputation_S_temp_dir=.
+
+
+## Parser ##
+
+# Whether RNA should be parsed and included in graph formalism and visualisation (WIP).
+# Default: 'true'
+PTGLgraphComputation_B_include_rna=true
+
+# Whether the PDB file should be checked for multiple models and if so convert those models to chains.
+# Default: 'false'
+PTGLgraphComputation_B_convert_models_to_chains=false
+
+# The model to use if multiple models exist in the PDB file.
+# Default: '1'
+PTGLgraphComputation_I_defaultModel=1
+
+# Whether models should be skipped for all methods.
+# Default: 'true'
+PTGLgraphComputation_B_always_skip_models=true
+
+# The amino acid code used to mark a ligand residue.
+# Default: 'J'
+PTGLgraphComputation_S_ligAACode=J
+
+# The minimum number of atoms a ligand needs to consist of to count as an SSE.
+# Default: '1'
+PTGLgraphComputation_I_lig_min_atoms=1
+
+# The maximum number of atoms a ligand has to consist of to count as an SSE. Set to <0 for unlimited.
+# Default: '-1'
+PTGLgraphComputation_I_lig_max_atoms=-1
+
+
+## Secondary Structure Element (SSE) ##
+
+# The SSE code used to mark an SSE of type ligand.
+# Default: 'L'
+PTGLgraphComputation_S_ligSSECode=L
+
+# The SSE code used to mark an SSE of type RNA
+# Default: 'R'
+PTGLgraphComputation_S_rnaSseCode=R
+
+# The minimal length in AAs a non-ligand SSE must have to be considered (PTGL-style filtering of very short SSEs)
+# Default: '3'
+PTGLgraphComputation_I_min_SSE_length=3
+
+# Whether all isolated beta bridges (DSSP SSE type: B) should be changed to betastrands (DSSP SSE type: E)
+# Default: 'true'
+PTGLgraphComputation_B_change_dssp_sse_b_to_e=true
+
+# Whether two strands should be fused to one strand, when there is only one AA (with DSSP SSE ' ') between them.
+# Default: 'true'
+PTGLgraphComputation_B_fill_gaps=true
+
+# Whether coils (DSSP SSE type ' ') should be considered as own vertices.
+# Default: 'false'
+PTGLgraphComputation_B_include_coils=false
+
+# The amino acid code used to mark a coiled region residue.
+# Default: 'C'
+PTGLgraphComputation_S_coilSSECode=C
+
+# whether to merge different helix types if they are adjacent in the primary structure.
+# Default: 'true'
+PTGLgraphComputation_B_merge_helices=true
+
+# The maximal distance in amino acids of the primary sequence where helices are merged when 'PTGLgraphComputation_B_merge_helices' is true. The (default) value 0 means only directly adjacent SSEs are merged.
+# Default: '0'
+PTGLgraphComputation_I_merge_helices_max_dist=0
+
+
+## SSE orientation ##
+
+# Whether to use double difference mode for computation of orientation of SSEs. False invokes vector-mode instead.
+# Default: 'false'
+PTGLgraphComputation_B_spatrel_use_dd=false
+
+# Vector mode: How many residues to use for centroid computation of start and end point of vector for SSE.
+# Default: '4'
+PTGLgraphComputation_I_spatrel_vector_num_res_centroids=4
+
+# Vector mode: Degrees to which SSEs are classified to be parallel.
+# Default: '65'
+PTGLgraphComputation_I_spatrel_max_deg_parallel=65
+
+# Vector mode: Degrees from which SSEs are classified to be antiparallel in vector mode.
+# Default: '115'
+PTGLgraphComputation_I_spatrel_min_deg_antip=115
+
+# Double difference mode: All values <= the one given here are considered antiparallel. This is for E/E (strand/strand) interactions.
+# Default: '0'
+PTGLgraphComputation_I_spatrel_dd_largest_antip_ee=0
+
+# Double difference mode: All values >= the one given here are considered parallel. This is for E/E (strand/strand) interactions. Note that the range in between these 2 values is considered mixed (none in the case of E/E).
+# Default: '1'
+PTGLgraphComputation_I_spatrel_dd_smallest_parallel_ee=1
+
+# Double difference mode: Same as above, but for H/H (helix/helix) interactions.
+# Default: '-8'
+PTGLgraphComputation_I_spatrel_dd_largest_antip_hh=-8
+
+# Double difference mode: Same as above, but for H/H (helix/helix) interactions.
+# Default: '8'
+PTGLgraphComputation_I_spatrel_dd_smallest_parallel_hh=8
+
+# Double difference mode: Same as above, but for H/E or E/H interactions.
+# Default: '-6'
+PTGLgraphComputation_I_spatrel_dd_largest_antip_he=-6
+
+# Double difference mode: Same as above, but for H/E or E/H interactions.
+# Default: '6'
+PTGLgraphComputation_I_spatrel_dd_smallest_parallel_he=6
+
+# Double difference mode: Same as above, this is the default for other interactions (e.g., coil/helix).
+# Default: '-7'
+PTGLgraphComputation_I_spatrel_dd_largest_antip_def=-7
+
+# Double difference mode: Same as above, this is the default for other interactions.
+# Default: '7'
+PTGLgraphComputation_I_spatrel_dd_smallest_parallel_def=7
+
+
+## Contact definition ##
+
+# The atom radius of protein atoms in 10th part Angstroem (setting 20 here means 2 A)
+# Default: '20'
+PTGLgraphComputation_I_aa_atom_radius=20
+
+# The atom radius of RNA atoms in 10th part Angstroem (setting 20 here means 2 A)
+# Default: '20'
+PTGLgraphComputation_I_rna_atom_radius=20
+
+# The atom radius of ligand atoms in 10th part Angstroem (setting 30 here means 3 A)
+# Default: '30'
+PTGLgraphComputation_I_lig_atom_radius=30
+
+# The maximum number of contacts of a certain type that is counted for a residue pair. Set it to something very large if you don't want any limit (Integer.MAX_VALUE comes to mind). The PTGL uses a setting of 1 (so if a pair has 3 B/B contacts and 2 C/B contacts, it is is counted as 1 B/B and 1 C/B.)
+# Default: '1'
+PTGLgraphComputation_I_max_contacts_per_type=1
+
+# Whether contacts transitive by ligands should be considered for the contact calculation, and subsequently in the complex graphs.
+# Default: 'false'
+PTGLgraphComputation_CTL=false
+
+# The additive distance of ligand-protein contacts considered for contacts transitive by ligands in 100th part Angstroem (setting 500 here means 5 A).
+# Default: '500'
+PTGLgraphComputation_CTL_range=500
+
+# The linear factor to weight contacts transitive by ligands (setting 1.0 here means factorisation by 1).
+# Default: '1.0'
+PTGLgraphComputation_CTL_edge_weight=1.0
+
+# Whether all amino acids of a protein graph should be connected sequentially, from N to C terminus, with contacts of type backbone.
+# Default: 'false'
+PTGLgraphComputation_B_forceBackboneContacts=false
+
+
+## AAG ##
+
+# If set to a value greater than zero, only contacts from residues more than or exactly this value apart in the sequence can have a contact.Can be used to force network of long-range contacts, ignoring backbone connections. Contacts between residues from different chains always are accepted. This will split the graph into many connected components.
+# Default: '0'
+PTGLgraphComputation_I_aag_min_residue_seq_distance_for_contact=0
+
+# If set to a value greater than zero, only contacts from residues less than or exactly this value apart in the sequence can for a contact. Can be used to force network of short-range contacts, ignoring long-range connections. Also ignores all contacts to residues from other chains.
+# Default: '0'
+PTGLgraphComputation_I_aag_max_residue_seq_distance_for_contact=0
+
+# Whether to compute and output combined amino acid graphs (one for all chains) as well.
+# Default: 'false'
+PTGLgraphComputation_B_AAgraph_allchainscombined=false
+
+# Whether to compute and output amino acid graphs per chain as well.
+# Default: 'false'
+PTGLgraphComputation_B_AAgraph_perchain=false
+
+
+## Database (DB) connection ##
+
+# Whether to write any data to the PostgreSQL database.
+# Default: 'false'
+PTGLgraphComputation_B_useDB=false
+
+# Database name
+# Default: 'vplg'
+PTGLgraphComputation_S_db_name=vplg
+
+# Hostname or IP of the DB server
+# Default: '127.0.0.1'
+PTGLgraphComputation_S_db_host=127.0.0.1
+
+# DB server port
+# Default: '5432'
+PTGLgraphComputation_I_db_port=5432
+
+# DB username
+# Default: 'vplg'
+PTGLgraphComputation_S_db_username=vplg
+
+# DB password (empty if local is TRUST for this user)
+# Default: ''
+PTGLgraphComputation_S_db_password=
+
+# Whether the DB connection gets set to autocommit when created.
+# Default: 'false'
+PTGLgraphComputation_B_db_use_autocommit=false
+
+
+## DB settings ##
+
+# [DEPRECATED] The base path for graph visualizations for the database. The relative path to the path given here is used to locate the graph image on disk.
+# Default: '/srv/www/htdocs/vplgweb/data/'
+PTGLgraphComputation_S_graph_image_base_path=/srv/www/htdocs/vplgweb/data/
+
+# Whether inserts into the database should use batch mode instead of many single queries whenever possible. Only implemented for a few queries for which it may make sense.
+# Default: 'false'
+PTGLgraphComputation_B_db_use_batch_inserts=false
+
+# [DEPRECATED] Whether to write the protein graph strings to the database in the different formats like XML, GML, TGF, etc. They are currently written to disk only by default, and NULL values are inserted into the DB, because we do not use the DB fields for anything atm.
+# Default: 'false'
+PTGLgraphComputation_B_write_graphstrings_to_database_pg=false
+
+# [DEPRECATED] Whether to write the folding graph strings to the database in the different formats like XML, GML, TGF, etc. They are currently written to disk only by default, and NULL values are inserted into the DB, because we do not use the DB fields for anything atm.
+# Default: 'false'
+PTGLgraphComputation_B_write_graphstrings_to_database_fg=false
+
+# [DEPRECATED] Whether to write the complex graph strings to the database in the different formats like XML, GML, TGF, etc. They are currently written to disk only by default, and NULL values are inserted into the DB, because we do not use the DB fields for anything atm.
+# Default: 'false'
+PTGLgraphComputation_B_write_graphstrings_to_database_cg=false
+
+# [DEPRECATED] Whether to write the amino acid graph strings to the database in the different formats like XML, GML, TGF, etc. They are currently written to disk only by default, and NULL values are inserted into the DB, because we do not use the DB fields for anything atm.
+# Default: 'false'
+PTGLgraphComputation_B_write_graphstrings_to_database_aag=false
+
+# Write a list of PDB IDs which are currently in the database to the file 'db_content_proteins.txt', then exit.
+# Default: 'false'
+PTGLgraphComputation_B_report_db_proteins=false
+
+# Whether to rewrite string data like ligand atom formulas before inserting into DB.
+# Default: 'false'
+PTGLgraphComputation_B_uglySQLhacks=false
+
+
+## DB structure search ##
+
+# Search a linear notation (input) in a proteinstructure (input)
+# Default: 'false'
+PTGLgraphComputation_B_matrix_structure_search=false
+
+# Search a linear notation (input) in the database, ignores any given proteinstructure as input
+# Default: 'false'
+PTGLgraphComputation_B_matrix_structure_search_db=false
+
+# The linear notation of a PG for the matrix structure comparison.
+# Default: ''
+PTGLgraphComputation_S_linear_notation=
+
+# The type of linear notation (adj or red) for matrix structure comparison.
+# Default: ''
+PTGLgraphComputation_S_linear_notation_type=
+
+# alpha, beta or albe = The graph type of the PG graph of the linear notation.
+# Default: ''
+PTGLgraphComputation_S_linear_notation_graph_type=
+
+
+## FG ##
+
+# The minimum size of a Folding Graph to be drawn. Setting this to 1 or 0 draws all of them, including isolated vertices.
+# Default: '3'
+PTGLgraphComputation_I_min_fgraph_size_draw=3
+
+# The minimum size of a Folding Graph to be written to the database. Setting this to 1 or 0 saves all of them, including isolated vertices.
+# Default: '1'
+PTGLgraphComputation_I_min_fgraph_size_write_to_db=1
+
+# The minimum size of a Folding Graph to be written to a file in formats like GML. Setting this to 1 or 0 exports all of them to files, including isolated vertices.
+# Default: '3'
+PTGLgraphComputation_I_min_fgraph_size_write_to_file=3
+
+# Whether to use alternative crossover arcs in KEY notation. The alternative arcs cut through other SSEs, the default ones use a vertical central line and shift the center to avoid this.
+# Default: 'true'
+PTGLgraphComputation_B_key_use_alternate_arcs=true
+
+# Whether to add the notation string to the FG images.
+# Default: 'false'
+PTGLgraphComputation_B_print_notations_on_fg_images=false
+
+# Whether to save linear notations of Folding Graphs to a text file.
+# Default: 'true'
+PTGLgraphComputation_B_output_fg_linear_notations_to_file=true
+
+# Whether special rules should be used for computing the ADJ and RED notations of FGs. These special rules were not used in the latest PTGL version by PM, but it seems in older versions.
+# Default: 'true'
+PTGLgraphComputation_B_special_linnot_rules_for_bifurcated_adj_and_red=true
+
+
+## PG ##
+
+# Whether to save Protein Graphs to text files in Graph Modelling Language (GML) format.
+# Default: 'true'
+PTGLgraphComputation_B_output_GML=true
+
+# Whether to save Protein Graphs to text files in Trivial Graph Format (TGF).
+# Default: 'false'
+PTGLgraphComputation_B_output_TGF=false
+
+# Whether to save Protein Graphs to text files in DOT language format).
+# Default: 'false'
+PTGLgraphComputation_B_output_DOT=false
+
+# Whether to save Protein Graphs to text files in Kavosh format.
+# Default: 'false'
+PTGLgraphComputation_B_output_kavosh=false
+
+# Whether to treat the graphs as directed for the Kavosh output. If set to true, each edge (a, b) will appear twice in the output file: once as (a, b) and again as (b, a).
+# Default: 'true'
+PTGLgraphComputation_B_kavosh_format_directed=true
+
+# Whether to save Protein Graphs to text files in edge list format with a vertex type list file.
+# Default: 'false'
+PTGLgraphComputation_B_output_eld=false
+
+# Whether to save Protein Graphs to text files in PTGLgraphComputation format.
+# Default: 'false'
+PTGLgraphComputation_B_output_plcc=false
+
+# Whether to save Protein Graphs to text files in the PTGL format used by the Perl script to compute Folding Graph notations.
+# Default: 'false'
+PTGLgraphComputation_B_output_perlfg=false
+
+# Whether to save Protein Graphs to text files in JSON format.
+# Default: 'true'
+PTGLgraphComputation_B_output_json=true
+
+# Whether to save Protein Graphs to text files in XML format.
+# Default: 'true'
+PTGLgraphComputation_B_output_xml=true
+
+# Whether to save Protein Graphs to text files in GEXF format.
+# Default: 'false'
+PTGLgraphComputation_B_output_gexf=false
+
+# The version of the GEFX file format to use. Supported are '1.1' and '1.2'.
+# Default: '1.1'
+PTGLgraphComputation_S_gexf_format_version=1.1
+
+# Whether to save Protein Graphs to text files in SVG format for interactive mode.
+# Default: 'true'
+PTGLgraphComputation_B_output_msvg=true
+
+# Whether to save Protein Graphs to text files in CytoscapeJS format.
+# Default: 'false'
+PTGLgraphComputation_B_output_cytoscapejs=false
+
+# The field separator used when writing meta data to exported graphs.
+# Default: '|'
+PTGLgraphComputation_S_graph_metadata_splitstring=|
+
+# Whether to add meta data to exported GML format graphs in comments. Note: Not all programs parse comments correctly.
+# Default: 'false'
+PTGLgraphComputation_B_add_metadata_comments_GML=false
+
+# Whether to add meta data to exported DOT format graphs in comments. Note: Not all programs parse comments correctly.
+# Default: 'false'
+PTGLgraphComputation_B_add_metadata_comments_DOT=false
+
+# Whether to compute graph metrics such as cluster coefficient for PGs. Slower!
+# Default: 'false'
+PTGLgraphComputation_B_compute_graph_metrics=false
+
+
+## CG ##
+
+# [EXPERIMENTAL] Whether to draw ligand-centered Complex Graphs. This means one graph for each ligand in a PDB file, each showing all SSEs (regardless of chain) the ligand is in contact with.
+# Default: 'false'
+PTGLgraphComputation_B_draw_ligandcomplexgraphs=false
+
+# Whether to save Complex Graphs (including SSE info) to a text file in Graph Modelling Language (GML) format.
+# Default: 'true'
+PTGLgraphComputation_B_output_compgraph_GML=true
+
+# Whether to save Complex Graphs (including SSE info) to a text file in Trivial Graph Format (TGF) format.
+# Default: 'false'
+PTGLgraphComputation_B_output_compgraph_TGF=false
+
+# Whether to save Complex Graphs (including SSE info) to a text file in DOT format.
+# Default: 'false'
+PTGLgraphComputation_B_output_compgraph_DOT=false
+
+# Whether to save Complex Graphs (including SSE info) to a text file in Kavosh format.
+# Default: 'false'
+PTGLgraphComputation_B_output_compgraph_kavosh=false
+
+# Whether to save Complex Graphs (including SSE info) to a text file in edge list format with a vertex type list file.
+# Default: 'false'
+PTGLgraphComputation_B_output_compgraph_eld=false
+
+# Whether to save Complex Graphs (including SSE info) to a text file in PTGLgraphComputation format.
+# Default: 'false'
+PTGLgraphComputation_B_output_compgraph_plcc=false
+
+# Whether to save Complex Graphs (including SSE info) to a text file in JSON format.
+# Default: 'false'
+PTGLgraphComputation_B_output_compgraph_JSON=false
+
+# Whether to save Complex Graphs (including SSE info) to a text file in XGMML format.
+# Default: 'false'
+PTGLgraphComputation_B_output_compgraph_XML=false
+
+# Whether to write a CSV file containing all contacts used for Complex Graph computation.
+# Default: 'false'
+PTGLgraphComputation_B_writeComplexContactCSV=false
+
+
+## Motifs ##
+
+# Whether to search for motifs in the FG linear notations (after computing and writing them to the DB).
+# Default: 'true'
+PTGLgraphComputation_B_compute_motifs=true
+
+# Whether to search for tim barrel motif in FGs if PTGLgraphComputation_B_compute_motifs is true.
+# Default: 'false'
+PTGLgraphComputation_B_compute_tim=false
+
+
+## Cluster mode ##
+
+# Whether to write extra output files used only in cluster mode, like GML albe graph file list.
+# Default: 'false'
+PTGLgraphComputation_B_clustermode=false
+
+# Whether to write output images to a PDB-style sub directory structure under the output directory instead of writing them in there directly. This is useful if you want to process the whole PDB because most filesystems will get into trouble with tens of thousands of files in a single directory. The directory structure will be chosen from the meta data, i.e., PDB ID, chain, graph type, etc.
+# Default: 'false'
+PTGLgraphComputation_B_output_images_dir_tree=false
+
+# Whether to write output graph text files to a PDB-style sub directory structure under the output directory instead of writing them in there directly. This is useful if you want to process the whole PDB because most filesystems will get into trouble with tens of thousands of files in a single directory. The directory structure will be chosen from the meta data, i.e., PDB ID, chain, graph type, etc.
+# Default: 'false'
+PTGLgraphComputation_B_output_textfiles_dir_tree=false
+
+# Whether to write HTML navigation files to the output directory tree. Only used if PTGLgraphComputation_B_output_textfiles_dir_tree is true as well.
+# Default: 'false'
+PTGLgraphComputation_B_output_textfiles_dir_tree_html=false
+
+# Whether to write the core PTGLweb HTML files to the output directory tree. Only used if PTGLgraphComputation_B_output_textfiles_dir_tree is true as well. These are the main page, search form and other stuff which is only needed once for the whole website.
+# Default: 'false'
+PTGLgraphComputation_B_output_textfiles_dir_tree_core_html=false
+
+# Whether to write data on the complex graph to the protein result HTML webpage (if available).
+# Default: 'true'
+PTGLgraphComputation_B_html_add_complex_graph_data=true
+
+
+## DB: representative chains ##
+
+# Whether this PTGLgraphComputation run should assign the representative PDB chains from the XML file in the info table of the database and then exit. Requires path to XML file. Should be run BEFORE filling on a therefore empty database.
+# Default: 'false'
+PTGLgraphComputation_B_set_pdb_representative_chains_pre=false
+
+# Whether the old labels should be removed from all chains in the info table before the new ones are applied. Removed means all chains are considered NOT part of the representative set.
+# Default: 'true'
+PTGLgraphComputation_B_set_pdb_representative_chains_remove_old_labels_pre=true
+
+# Whether this PTGLgraphComputation run should assign the representative PDB chains from the XML file in the info table of the database and then exit. Requires path to XML file. Should be run AFTER filling on a therefore non-empty database.
+# Default: 'false'
+PTGLgraphComputation_B_set_pdb_representative_chains_post=false
+
+# Whether the old labels should be removed from all chains in the chains table before the new ones are applied. Removed means all chains are considered NOT part of the representative set.
+# Default: 'true'
+PTGLgraphComputation_B_set_pdb_representative_chains_remove_old_labels_post=true
+
+# The path to the XML file containing the representative PDB chains from the PDB. You can get the file from the RCSB PDB REST web service.
+# Default: 'representatives.xml'
+PTGLgraphComputation_S_representative_chains_xml_file=representatives.xml
+
+
+## Image settings ##
+
+# Whether the graph images are created with header line with info on the graph type, PDB and chain ID.
+# Default: 'true'
+PTGLgraphComputation_B_graphimg_header=true
+
+# Whether the graph images are created with footer line with info on the vertices.
+# Default: 'true'
+PTGLgraphComputation_B_graphimg_footer=true
+
+# Whether the graph images are created with a legend that explains the color codes and SSE symbols. This is part of the footer.
+# Default: 'true'
+PTGLgraphComputation_B_graphimg_legend=true
+
+# Whether the legend should contain all possible edge and vertex types, i.e., even those not occurring in the current image.
+# Default: 'false'
+PTGLgraphComputation_B_graphimg_legend_always_all=false
+
+# Whether the start vertex index of the linear notation in the parent graph is written to the image.
+# Default: 'false'
+PTGLgraphComputation_B_graphimg_add_linnot_start_vertex=false
+
+# Size of the left image margin in pixels.
+# Default: '80'
+PTGLgraphComputation_I_img_margin_left=80
+
+# Size of the top image margin in pixels.
+# Default: '40'
+PTGLgraphComputation_I_img_margin_top=40
+
+# Size of the right image margin in pixels.
+# Default: '40'
+PTGLgraphComputation_I_img_margin_right=40
+
+# Size of the bottom image margin in pixels.
+# Default: '40'
+PTGLgraphComputation_I_img_margin_bottom=40
+
+# The distance between two consecutive vertices in the output image, in pixels.
+# Default: '50'
+PTGLgraphComputation_I_img_vert_dist=50
+
+# The radius of a vertex in the output image, in pixels.
+# Default: '10'
+PTGLgraphComputation_I_img_vert_radius=10
+
+# The height of the header area in the output image, in pixels.
+# Default: '40'
+PTGLgraphComputation_I_img_header_height=40
+
+# The height of the footer area in the output image, in pixels. The footer is used to print the legend.
+# Default: '180'
+PTGLgraphComputation_I_img_footer_height=180
+
+# The default font used in output image labels. This has to be a valid font name, of course.
+# Default: 'TimesRoman'
+PTGLgraphComputation_S_img_default_font=TimesRoman
+
+# The default font size used in output images.
+# Default: '16'
+PTGLgraphComputation_I_img_default_font_size=16
+
+# The legend font size used in output images.
+# Default: '16'
+PTGLgraphComputation_I_img_legend_font_size=16
+
+# The vertical distance between two lines of text in the image, e.g., in the footer.
+# Default: '40'
+PTGLgraphComputation_I_img_text_line_height=40
+
+# The minimum size of the image area where the graph is drawn.
+# Default: '160'
+PTGLgraphComputation_I_img_min_img_height=160
+
+# The minimum size of the arc area within the image area.
+# Default: '100'
+PTGLgraphComputation_I_img_min_arc_height=100
+
+# The minimum image width in pixels, used in output images.
+# Default: '900'
+PTGLgraphComputation_I_img_minPageWidth=900
+
+# The minimum image height in pixels, used in output images.
+# Default: '600'
+PTGLgraphComputation_I_img_minPageHeight=600
+
+
+## Output settings ##
+
+# Whether a csv file with the number of residues in each chain is created.
+# Default: 'false'
+PTGLgraphComputation_B_csv_number_residues_chains=false
+
+# Whether a csv file with the interchain residue-residue contacts is created.
+# Default: 'false'
+PTGLgraphComputation_B_csv_contacts_inter=false
+
+# Whether a csv file with the inter- and intrachain residue-residue contacts is created.
+# Default: 'false'
+PTGLgraphComputation_B_csv_contacts_intra_inter=false
+
+# Whether the PTGL text files (e.g., those required by the bet_neo) are written. Not writing them is faster but this program cannot replace the PTGL tool 'geom_neo' anymore if this is deactivated.
+# Default: 'false'
+PTGLgraphComputation_B_ptgl_text_output=false
+
+# Whether keys in all GML files should be written in snake case, i.e., with under scores instead of camel case. HINT: Originally, GML does not support snake case and so may some parsers for GML files.
+# Default: 'false'
+PTGLgraphComputation_B_gml_snake_case=false
+
+# Whether the PTGL text files geo.dat for SSE level contacts are written to a text file.
+# Default: 'false'
+PTGLgraphComputation_B_ptgl_geodat_output=false
+
+
+## DB: similarity search ##
+
+# [EXPERIMENTAL] Whether to search for the most similar protein.
+# Default: 'false'
+PTGLgraphComputation_B_search_similar=false
+
+# Used only when PTGLgraphComputation_B_search_similar is true. The protein PDB ID to use as a pattern during the similarity search.
+# Default: '8icd'
+PTGLgraphComputation_S_search_similar_PDBID=8icd
+
+# Used only when PTGLgraphComputation_B_search_similar is true. The protein chain ID to use as a pattern during the similarity search.
+# Default: 'A'
+PTGLgraphComputation_S_search_similar_chainID=A
+
+# Used only when PTGLgraphComputation_B_search_similar is true. The graph type to use as a pattern during the similarity search.
+# Default: 'albelig'
+PTGLgraphComputation_S_search_similar_graphtype=albelig
+
+# Used only when PTGLgraphComputation_B_search_similar is true. The number of results to print (e.g., 3 for the 3 most similar proteins in the DB).
+# Default: '5'
+PTGLgraphComputation_I_search_similar_num_results=5
+
+# Used only when PTGLgraphComputation_B_search_similar is true. The similarity measure to use, valid settings: string_sse, graph_set, graph_compat
+# Default: 'string_sse'
+PTGLgraphComputation_S_search_similar_method=string_sse
+
+# Whether to compute graphlet similarities in the DB and then exit. It depends on other settings which graphlet sims are actually computed.
+# Default: 'false'
+PTGLgraphComputation_B_compute_graphlet_similarities=false
+
+# The method used to compute a similarity score from a pair of graphlet vectors. Valid options are: RGF=relative graphlet frequency distance, CUS=custom.
+# Default: 'RGF'
+PTGLgraphComputation_S_search_similar_graphlet_scoretype=RGF
+
+# Whether to compute graphlet similarities for Protein Graphs. Only used if PTGLgraphComputation_B_compute_graphlet_similarities is true.
+# Default: 'false'
+PTGLgraphComputation_B_compute_graphlet_similarities_pg=false
+
+# Whether to compute graphlet similarities for Complex Graphs. Only used if PTGLgraphComputation_B_compute_graphlet_similarities is true.
+# Default: 'false'
+PTGLgraphComputation_B_compute_graphlet_similarities_cg=false
+
+# Whether to compute graphlet similarities for Amino Acid Graphs. Only used if PTGLgraphComputation_B_compute_graphlet_similarities is true.
+# Default: 'false'
+PTGLgraphComputation_B_compute_graphlet_similarities_aag=false
+
+# The number of the most similar protein chain to store in the database after graphlet similarity computation. Set to n to store the n most similar for each chain.
+# Default: '25'
+PTGLgraphComputation_I_compute_all_graphlet_similarities_num_to_save_in_db=25
+
+# Determines the graphlets from the array in the DB which are considered for similarity computation. This is the index of the first (start) graphlet used. Do not forget to also set the end index properly. This is inclusive.
+# Default: '0'
+PTGLgraphComputation_I_compute_all_graphlet_similarities_start_graphlet_index=0
+
+# Determines the graphlets from the array in the DB which are considered for similarity computation. This is the index of the last (end) graphlet used. Do not forget to also set the start index properly. This is inclusive.
+# Default: '29'
+PTGLgraphComputation_I_compute_all_graphlet_similarities_end_graphlet_index=29
+
+# The length of the graphlet vector in the database (the PostgreSQL SQL array). This is the number of graphlets used to compute similarity.
+# Default: '30'
+PTGLgraphComputation_I_number_of_graphlets=30
+
+# Whether to write a chains file containing all chain names of the currently handled PDB file. Can be used by GraphletAnalyzer later to construct graph file names for all chains.
+# Default: 'false'
+PTGLgraphComputation_B_write_chains_file=false
+
+
+## Random tree generation ##
+
+# Whether to generate a random binary tree.
+# Default: 'false'
+PTGLgraphComputation_B_generate_random_binary_tree=false
+
+# Whether the generated tree should be rooted or not.
+# Default: 'true'
+PTGLgraphComputation_B_tree_rooted=true
+
+# How many leafs the tree should contain.
+# Default: '4'
+PTGLgraphComputation_I_tree_number_leafs=4
+
+# Comma-seperated labels for the leaves. Must exacly match the number of PTGLgraphComputation_I_tree_number_leafs. Will use IDs from 0..n if empty.
+# Default: ''
+PTGLgraphComputation_S_leaf_labels=
+
+
+### Developer settings ###
+
+## Deprecated ##
+
+# [DEPRECATED] Whether to suppress chain break info while parsing DSSP file (handy for some DSSP files for CIF data).
+# Default: 'false'
+PTGLgraphComputation_B_no_chain_break_info=false
+
+# [DEPRECATED] Whether to show a warning about splitting the DSSP file when multiple models are detected in a PDB file.
+# Default: 'false'
+PTGLgraphComputation_B_split_dsspfile_warning=false
+
+
+## Debug ##
+
+# Debug level. Higher value means more output.
+# Default: '0'
+PTGLgraphComputation_I_debug_level=0
+
+# Whether to compare the computed SSE level contacts to those in the geom_neo output file that is supplied.
+# Default: 'false'
+PTGLgraphComputation_B_debug_compareSSEContacts=false
+
+# The path to the geo.dat file to use for SSE level contact comparison.
+# Default: 'geo.dat_ptgl'
+PTGLgraphComputation_S_debug_compareSSEContactsFile=geo.dat_ptgl
+
+# Atom level contact debugging mode. WARNING: When this is true, PTGLgraphComputation will abort after the first few residues and produce wrong overall results!
+# Default: 'false'
+PTGLgraphComputation_B_contact_debug_dysfunct=false
+
+# Exit after parsing. WARNING: When this is true, PTGLgraphComputation will abort after parsing and not produce results!
+# Default: 'false'
+PTGLgraphComputation_B_debug_only_parse=false
+
+# Exit after contact computation. WARNING: When this is true, PTGLgraphComputation will abort after contact computation and not produce results!
+# Default: 'false'
+PTGLgraphComputation_B_debug_only_contact_comp=false
+
+
+## Disabled ##
+
+# [DISABLED] Whether to parse binding site data from the REMARK 800 and SITE lines of legacy PDB file.
+# Default: 'false'
+PTGLgraphComputation_B_parse_binding_sites=false
+
+# [DISABLED] Determines whether ligand contacts are included in the <pdbid>.geolig file.
+# Default: 'true'
+PTGLgraphComputation_B_write_lig_geolig=true
+
+# [DISABLED] Whether to ignore the assignement of a ligand to a chain in the PDB file, and assign a ligand to each chain it has contacts with. WARNING: This setting is ignored and off atm.
+# Default: 'false'
+PTGLgraphComputation_B_consider_all_ligands_for_each_chain=false
+
+# [DISABLED] Determines whether the complex graph is drawn with all nodes of the same type.
+# Default: 'false'
+PTGLgraphComputation_B_complex_graph_same=false
+
+# [DISABLED] Determines whether the complex graph is drawn with nodes of different type for each mere.
+# Default: 'false'
+PTGLgraphComputation_B_complex_graph_mere=false
+
+# [DISABLED] The solvent accessible surface value that is written to the dssplig file for ligands (not used atm)
+# Default: '20'
+PTGLgraphComputation_I_ligSAS=20
+
+# [DISABLED] Whether a Ramachandran plot is drawn to a file for each chain (slower).
+# Default: 'false'
+PTGLgraphComputation_B_ramachandran_plot=false
+
+# [DISABLED] File extension of images. Not used for graph images anymore; applies to Ramaplot etc only.
+# Default: '.png'
+PTGLgraphComputation_S_img_output_fileext=.png
+
+
+## Alternate AAG ##
+
+# [EXPERIMENTAL] Whether to parse hydrogen atoms added to PDB files by the external Reduce software.
+# Default: 'false'
+PTGLgraphComputation_B_handle_hydrogen_atoms_from_reduce=false
+
+# [EXPERIMENTAL] Whether to use alternate residue contact model by A. Scheck. Skips all computations except AA graphs.
+# Default: 'false'
+PTGLgraphComputation_B_alternate_aminoacid_contact_model=false
+
+# [EXPERIMENTAL] Whether to use alternate residue contact model including ligands by A. Scheck. Skips all computations except AA graphs.
+# Default: 'false'
+PTGLgraphComputation_B_alternate_aminoacid_contact_model_with_ligands=false
+
+

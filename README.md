@@ -11,6 +11,7 @@ Each top-level directory contains one software part of this package.
 
 - 'PTGLgraphComputation' (formerly labeled PLCC) is the main part of PTGLtools computing graphs representing the topology of three-dimensional protein structures
 - 'PTGLdynamics' [unpublished & WIP]: Pipeline to analyze snapshots of MD simulation with PTGLgraphComputation
+- 'PTGLmodulePrediction: Pipeline to predict biological modules based on protein graphs
 - 'splitpdb': splits a multi-model legacy PDB file into single PDB files of one model
 - 'graphletAnalyzer': finds graphlets in graph modeling language (GML) files
 - 'bk': implementation of the Bron_Kerbosch algorithm to find cliques
